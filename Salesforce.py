@@ -41,9 +41,11 @@ class Authentication:
         loginBodyData = {'grant_type':'password','client_id':loginClientId,'client_secret':loginClientSecret,'username':loginUsername, 'password':loginPassword}
 
         response = WebService.Tools.postHTResponse(baseOAuthUrl, loginBodyData, '')
-        jsonResponse = json.loads(response.text)
 
-        print(jsonResponse)
+        try:
+            jsonResponse = json.loads(response.data)
+        except:
+            jsonResponse = response.data
 
         return jsonResponse
 
@@ -177,12 +179,22 @@ class Tooling:
     # @param instanceUrl        This is the instance_url value received from the 
     #                           login response
     ##
-    def runTestsAsynchronous(classIds, accessToken, instanceUrl):
-        testAsyncUri = '/runTestsAsynchronous/?classids='
+    # def runTestsAsynchronous(classIds, accessToken, instanceUrl):
+    #     testAsyncUri = '/runTestsAsynchronous/?classids='
+    #     headerDetails = {'Authorization': 'Bearer ' + accessToken,'X-PrettyPrint':1}
+    #     urlEncodedClassIds = urllib.parse.quote(classIds)
+
+    #     response = WebService.Tools.getHTResponse(instanceUrl + Tooling.baseToolingUri + testAsyncUri + urlEncodedClassIds, headerDetails)
+    #     jsonResponse = json.loads(response.text)
+
+    #     return jsonResponse
+
+    def runTestsAsynchronousList(classIds, accessToken, instanceUrl):
+        testAsyncUri = '/runTestsAsynchronous/'
         headerDetails = {'Authorization': 'Bearer ' + accessToken,'X-PrettyPrint':1}
         urlEncodedClassIds = urllib.parse.quote(classIds)
 
-        response = WebService.Tools.getHTResponse(instanceUrl + Tooling.baseToolingUri + testAsyncUri + urlEncodedClassIds, headerDetails)
+        response = WebService.Tools.postHTResponse(instanceUrl + Tooling.baseToolingUri + testAsyncUri + urlEncodedClassIds, classIds, headerDetails)
         jsonResponse = json.loads(response.text)
 
         return jsonResponse
