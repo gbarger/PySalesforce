@@ -43,9 +43,9 @@ class Authentication:
         response = WebService.Tools.postHTResponse(baseOAuthUrl, loginBodyData, '')
 
         try:
-            jsonResponse = json.loads(response.data)
+            jsonResponse = json.loads(response.text)
         except:
-            jsonResponse = response.data
+            jsonResponse = response.text
 
         return jsonResponse
 
