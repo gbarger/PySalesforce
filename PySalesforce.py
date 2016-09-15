@@ -1,10 +1,33 @@
-#!/Library/Frameworks/Python.framework/Versions/3.5/bin/python3
+#!/usr/bin/python3
 
-#TODO: Figure out what's wrong with Tooling.completions
+# TODO: 
+# implement patch in WebService so I can implement SObject Rows REST API for record updates
+# implement delete in WebService so I can implement SObject Rows REST API for record deletes
+# Figure out what's wrong with Tooling.completions
+# Possibly pull current version from https://yourInstance.salesforce.com/services/data/ - ? Maybe not because of deprecation breaking methods
 
 import json
 import WebService
 import urllib
+
+apiVersion = '37.0'
+
+##
+# This method will be used to generated headers. The documentation shows 
+# that there are header options availble, but doesn't do a good job of 
+# explaining what they're for or what they do, so I'm leaving this here to
+# generate the headers. For now it will just be a static header with the 
+# accessToken and X-PrettyPrint.
+#
+# @param accessToken        This is the access_token value received from the 
+#                           login response
+# @return                   Returns a header that has the required values for
+#                           the tooling API.
+#
+def getStandardHeader(accessToken):
+    # return {'Authorization': 'Bearer ' + accessToken,'X-PrettyPrint':1}
+    objectHeader = {"Authorization": "Bearer " + accessToken,"Content-Type": "application/json"}
+    return objectHeader
 
 class Authentication:
     ##
@@ -80,22 +103,11 @@ class Authentication:
 
         return jsonResponse
 
+##
+# The purpose of this class is to expose the Salesforce Tooling API methods
+##
 class Tooling:
-    baseToolingUri = '/services/data/v37.0/tooling'
-
-    ##
-    # This method will be used to generated headers. The documentation shows 
-    # that there are header options availble, but doesn't do a good job of 
-    # explaining what they're for or what they do, so I'm leaving this here to
-    # generate the headers. For now it will just be a static header with the 
-    # accessToken and X-PrettyPrint.
-    #
-    # @param accessToken        This is the access_token value received from the 
-    #                           login response
-    #
-    def getToolingHeader(accessToken):
-        # return {'Authorization': 'Bearer ' + accessToken,'X-PrettyPrint':1}
-        return {'Authorization': 'Bearer ' + accessToken,'Content-Type': 'application/json'}
+    baseToolingUri = '/services/data/v' + apiVersion + '/tooling'
 
     ##
     # Retrieves available code completions of the referenced type for Apex system 
@@ -106,11 +118,13 @@ class Tooling:
     # @param accessToken         This is the access_token value received from the 
     #                            login response
     # @param instanceUrl         This is the instance_url value received from the 
-    #                            login response         
+    #                            login response
+    # @return                    Returns the completion values for the specified 
+    #                            type like apex.
     ##
     def completions(completionsType, accessToken, instanceUrl):
         completionsUri = '/completions?type='
-        headerDetails = Tooling.getToolingHeader(accessToken)
+        headerDetails = getStandardHeader(accessToken)
         urlEncodedType = urllib.parse.quote(completionsType)
 
         response = WebService.Tools.getHTResponse(instanceUrl + Tooling.baseToolingUri + completionsUri + urlEncodedType, headerDetails)
@@ -132,10 +146,12 @@ class Tooling:
     #                            login response
     # @param instanceUrl         This is the instance_url value received from the 
     #                            login response
+    # @return                    returns the response result from executing the 
+    #                            salesforce script
     ##
     def executeAnonymous(codeString, accessToken, instanceUrl):
         executeAnonymousUri = '/executeAnonymous/?anonymousBody='
-        headerDetails = Tooling.getToolingHeader(accessToken)
+        headerDetails = getStandardHeader(accessToken)
         urlEncodedCode = urllib.parse.quote(codeString)
 
         response = WebService.Tools.getHTResponse(instanceUrl + Tooling.baseToolingUri + executeAnonymousUri + urlEncodedCode, headerDetails)
@@ -151,17 +167,20 @@ class Tooling:
     # apply to virtual entities. If the query result is too large, it’s broken up 
     # into batches. The response contains the first batch of results and a query 
     # identifier. The identifier can be used in a request to retrieve the next 
-    # batch.
+    # batch. A list of the tooling api objects can be found here: 
+    # https://developer.salesforce.com/docs/atlas.en-us.api_tooling.meta/api_tooling/reference_objects_list.htm
     #
     # @param queryString         the query to be executed
     # @param accessToken         This is the access_token value received from the 
     #                            login response
     # @param instanceUrl         This is the instance_url value received from the 
     #                            login response
+    # @return                    returns a JSON object with the results of the 
+    #                            query.
     ##
     def query(queryString, accessToken, instanceUrl):
         queryUri = '/query/?q='
-        headerDetails = {'Authorization': 'Bearer ' + accessToken,'X-PrettyPrint':1}
+        headerDetails = getStandardHeader(accessToken)
         urlEncodedQuery = urllib.parse.quote(queryString)
 
         response = WebService.Tools.getHTResponse(instanceUrl + Tooling.baseToolingUri + queryUri + urlEncodedQuery, headerDetails)
@@ -170,31 +189,151 @@ class Tooling:
         return jsonResponse
 
     ##
-    # This method runs the tests provided with the class Ids, then returns the 
-    # direct results from the Salesforce tooling API.
+    # This method runs the tests provided with the class Ids or suite Ids, then 
+    # returns the direct results from the Salesforce tooling API.
     #
     # @param classIds           List of comma separated class Ids to run the tests
+    # @param suiteIds           List of suite ids to run
+    # @param maxFailedTests     The max number of failed tests
+    # @param maxFailedTests     To stop the test run from executing new tests 
+    #                           after a given number of tests fail, set to an 
+    #                           integer value from 0 to 1,000,000. To allow all 
+    #                           tests in your run to execute, regardless of how 
+    #                           many tests fail, omit maxFailedTests or set it
+    #                           to -1
+    # @param testLevel          The testLevel parameter is optional. If you don’t 
+    #                           provide a testLevel value, we use RunSpecifiedTests.
+    #                           values:
+    #                               RunSpecifiedTests - Only the tests that you 
+    #                                   specify are run.
+    #                               RunLocalTests - All tests in your org are run, 
+    #                                   except the ones that originate from installed
+    #                                   managed packages. Omit identifiers for 
+    #                                   specific tests when you use this value.
+    #                               RunAllTestsInOrg - All tests are run. The 
+    #                                   tests include all tests in your org, 
+    #                                   including tests of managed packages. Omit 
+    #                                   identifiers for specific tests when you 
+    #                                   use this value.
     # @param accessToken        This is the access_token value received from the 
     #                           login response
     # @param instanceUrl        This is the instance_url value received from the 
     #                           login response
+    # @return                   returns the Id of the test run
     ##
-    # def runTestsAsynchronous(classIds, accessToken, instanceUrl):
-    #     testAsyncUri = '/runTestsAsynchronous/?classids='
-    #     headerDetails = {'Authorization': 'Bearer ' + accessToken,'X-PrettyPrint':1}
-    #     urlEncodedClassIds = urllib.parse.quote(classIds)
-
-    #     response = WebService.Tools.getHTResponse(instanceUrl + Tooling.baseToolingUri + testAsyncUri + urlEncodedClassIds, headerDetails)
-    #     jsonResponse = json.loads(response.text)
-
-    #     return jsonResponse
-
-    def runTestsAsynchronousList(classIds, accessToken, instanceUrl):
+    def runTestsAsynchronousList(classIds, suiteIds, maxFailedTests, testLevel, accessToken, instanceUrl):
         testAsyncUri = '/runTestsAsynchronous/'
-        headerDetails = {'Authorization': 'Bearer ' + accessToken,'X-PrettyPrint':1}
-        urlEncodedClassIds = urllib.parse.quote(classIds)
+        headerDetails = getStandardHeader(accessToken)
 
-        response = WebService.Tools.postHTResponse(instanceUrl + Tooling.baseToolingUri + testAsyncUri + urlEncodedClassIds, classIds, headerDetails)
+        dataBody = {}
+
+        if classIds != None:
+            dataBody['classids'] = classIds
+
+        if suiteIds != None:
+            dataBody['suiteids'] = suiteIds
+
+        if maxFailedTests != None:
+            dataBody['maxFailedTests'] = maxFailedTests
+
+        if testLevel != None:
+            dataBody['testLevel'] = testLevel
+
+        jsonDataBody = json.dumps(dataBody)
+
+        response = WebService.Tools.postHTResponse(instanceUrl + Tooling.baseToolingUri + testAsyncUri, jsonDataBody, headerDetails)
+        jsonResponse = json.loads(response.text)
+
+        return jsonResponse
+
+    ##
+    # This method runs specified tests in the testArray with more control than 
+    # the runTestsAsynchronousList method by allowing you to specify which methods
+    # you'd like to run with each test class.
+    #
+    # @param testArray      This is an array of tests that you'd like to run with
+    #                       the specified methods if you wish. Like the 
+    #                       runTestsAsynchronousList method, you can also specify
+    #                       the maxFailedTests and testLevel values
+    #                       e.g.
+    #                           [
+    #                             {"classId": "01pD0000000Fhy9IAC",
+    #                              "testMethods": ["testMethod1","testMethod2", "testMethod3"]},
+    #                             {"classId": "01pD0000000FhyEIAS",
+    #                              "testMethods": ["testMethod1","testMethod2", "testMethod3"]},
+    #                             {"maxFailedTests": "2"},
+    #                             {"testLevel": "RunSpecifiedTests"}
+    #                           ]
+    # @param accessToken    This is the access_token value received from the 
+    #                       login response
+    # @param instanceUrl    This is the instance_url value received from the 
+    #                       login response
+    # @return               returns the Id of the test run
+    ##
+    def runTestsAsynchronousJson(testArray, accessToken, instanceUrl):
+        testAsyncUri = '/runTestsAsynchronous/'
+        headerDetails = getStandardHeader(accessToken)
+        dataBody = {'tests': testArray}
+        jsonDataBody = json.dumps(dataBody)
+
+        response = WebService.Tools.postHTResponse(instanceUrl + Tooling.baseToolingUri + testAsyncUri, jsonDataBody, headerDetails)
+        jsonResponse = json.loads(response.text)
+
+        return jsonResponse
+
+##
+# This class provides a front end for the Salesforce standard REST API. More details
+# about this can be found here: https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/intro_what_is_rest_api.htm
+# You can get more details about each of the methods by looking in the reference
+# section of the documentation.
+##
+class Standard:
+    baseStandardUri = '/services/data/'
+
+    ##
+    # Lists summary information about each Salesforce version currently available, 
+    # including the version, label, and a link to each version's root.
+    #
+    # @param accessToken    This is the access_token value received from the 
+    #                       login response
+    # @param instanceUrl    This is the instance_url value received from the 
+    #                       login response
+    # @return               Returns an object with the list of Salesforce versions
+    ##
+    def versions(accessToken, instanceUrl):
+        headerDetails = getStandardHeader(accessToken)
+
+        response = WebService.Tools.getHTResponse(instanceUrl + Standard.baseStandardUri, headerDetails)
+        jsonResponse = json.loads(response.text)
+
+        return jsonResponse
+
+    ##
+    # This method returns the available resources (API services) available for 
+    # the supplied version number.
+    #
+    # @param versionNumString   This is the version number as a string, e.g. 37.0
+    # @param accessToken        This is the access_token value received from the 
+    #                           login response
+    # @param instanceUrl        This is the instance_url value received from the 
+    #                           login response
+    # @return                   Returns an object containing the list of availble
+    #                           reousrces for this version number.
+    ##
+    def resourcesByVersion(versionNumString, accessToken, instanceUrl):
+        headerDetails = getStandardHeader(accessToken)
+
+        response = WebService.Tools.getHTResponse(instanceUrl + Standard.baseStandardUri + 'v' + versionNumString + '/', headerDetails)
+        jsonResponse = json.loads(response.text)
+
+        return jsonResponse
+
+    def query(queryString, accessToken, instanceUrl):
+        queryUri = '/query/?q='
+        headerDetails = getStandardHeader(accessToken)
+        urlEncodedQuery = urllib.parse.quote(queryString)
+
+        response = WebService.Tools.getHTResponse(instanceUrl + Standard.baseStandardUri + 'v' + apiVersion + queryUri + urlEncodedQuery, headerDetails)
         jsonResponse = json.loads(response.text)
 
         return jsonResponse
