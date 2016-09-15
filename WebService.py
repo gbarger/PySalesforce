@@ -19,7 +19,7 @@ class Tools:
             for e in sys.exc_info():
                 errors += " " + repr(e)
             
-            print ("Unable to reach " + str(URL) + ": " + errors)
+            print ("Errors with response from {}: {}".format(str(URL), errors))
             sys.exit(68) # code: host name unknown
         
         return response
@@ -45,9 +45,24 @@ class Tools:
         return response
 
     def patchHTResponse(URL, dataBody, headerDetails):
-    	response = ""
+        response = ""
 
-    	return response
+        try:
+            req = requests.Request('PATCH', URL, data=dataBody, headers=headerDetails)
+            prepReq = req.prepare()
+            session = requests.Session()
+            session.mount('https://', sslHttpAdapter())
+            response = session.send(prepReq)
+        except:
+            errors = "";
+            
+            for e in sys.exc_info():
+                errors += " " + repr(e)
+            
+            print ("Errors with response from {}: {}".format(str(URL), errors))
+            sys.exit(68) # code: host name unknown
+
+        return response
 
 class sslHttpAdapter(requests.adapters.HTTPAdapter):
     def init_poolmanager(self, connections, maxsize, block=False):

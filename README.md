@@ -5,6 +5,7 @@ The purpose of this project is to replicate the Salesforce REST APIs in a Python
 
 As I work on replicating the APIs, I'll link to the Salesforce documentation here.
 - [Tooling API](https://developer.salesforce.com/docs/atlas.en-us.api_tooling.meta/api_tooling/intro_rest_resources.htm)
+- [REST API](https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/intro_what_is_rest_api.htm)
 
 ##Notes
 *******

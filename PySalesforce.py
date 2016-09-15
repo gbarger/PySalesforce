@@ -328,6 +328,91 @@ class Standard:
 
         return jsonResponse
 
+    ##
+    # Provides the details requested for the specified record. In practice, if you
+    # provide an explicit list of fields, it will be just like a query for that
+    # record, but if you leave the fields blank, this will return a lot if not
+    # all fields. I'm not sure about that because the description of what is 
+    # returned if you leave the fields empty isn't explaind in the API documentaiton
+    #
+    # @param object           The API name of the object.
+    # @param recordId         The record Id you're trying to retreive
+    # @param fieldListString  List of comma separated values for fields to retrieve
+    # @param accessToken      This is the access_token value received from the 
+    #                         login response
+    # @param instanceUrl      This is the instance_url value received from the 
+    #                         login response
+    # @param return           returns the record with the explicit field list, or
+    #                         all (or a lot) of the fields if the fieldListString
+    #                         is None.
+    ##
+    def getSObjectRow(object, recordId, fieldListString, accessToken, instanceUrl):
+        getRowUri = '/sobjects/' + object + '/' + recordId
+        headerDetails = getStandardHeader(accessToken)
+
+        if fieldListString != None:
+            getRowUri = getRowUri + '?fields=' + fieldListString
+
+        response = WebService.Tools.getHTResponse(instanceUrl + Standard.baseStandardUri + 'v' + apiVersion + getRowUri, headerDetails)
+        jsonResponse = json.loads(response.text)
+
+        return jsonResponse
+
+    ##
+    # Updates a specific record with the data in the recordJson param
+    #
+    # @param object         The API name of the object.
+    # @param recordId       The record Id you're trying to update
+    # @param recordJson     The JSON describing the fields you want to update on
+    #                       the given object. You should pass in a python object
+    #                       and it will be converted to a json string to send the
+    #                       request. This object is just the key value paris
+    #                       for the record update. e.g.:
+    #                           {
+    #                               'BillingCity': 'Bellevue',
+    #                               'BillingState': 'WA'
+    #                           }
+    # @param accessToken    This is the access_token value received from the 
+    #                       login response
+    # @param instanceUrl    This is the instance_url value received from the 
+    #                       login response
+    # @param return         This only returns 'Update Successful' if the update 
+    #                       worked, or returns an error message if the update 
+    #                       wasn't successful. The response isn't more detailed
+    #                       because Salesforce returns no text, only a response
+    #                       code of 204
+    ##
+    def updateSObjectRow(object, recordId, recordJson, accessToken, instanceUrl):
+        patchRowUri = '/sobjects/' + object + '/' + recordId
+        headerDetails = getStandardHeader(accessToken)
+
+        dataBodyJson = json.dumps(recordJson)
+
+        response = WebService.Tools.patchHTResponse(instanceUrl + Standard.baseStandardUri + 'v' + apiVersion + patchRowUri, dataBodyJson, headerDetails)
+        responseText = ""
+
+        if response.status_code is 204:
+            responseText = "Update Successful"
+        else:
+            responseText = response.text
+
+        return responseText
+
+    ##
+    # Executes the specified SOQL query. If the query results are too large, the 
+    # response contains the first batch of results and a query identifier in the 
+    # nextRecordsUrl field of the response. The identifier can be used in an 
+    # additional request to retrieve the next batch.
+    #
+    # @param queryString    This query you'd like to run
+    # @param accessToken    This is the access_token value received from the 
+    #                       login response
+    # @param instanceUrl    This is the instance_url value received from the 
+    #                       login response
+    # @return               returns the query results, if they are too large, 
+    #                       then it will also return a nextRecordsUrl to get
+    #                       more records.
+    ##
     def query(queryString, accessToken, instanceUrl):
         queryUri = '/query/?q='
         headerDetails = getStandardHeader(accessToken)
