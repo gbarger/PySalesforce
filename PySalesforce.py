@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 
 # TODO: 
-# implement patch in WebService so I can implement SObject Rows REST API for record updates
 # implement delete in WebService so I can implement SObject Rows REST API for record deletes
 # Figure out what's wrong with Tooling.completions
 # Possibly pull current version from https://yourInstance.salesforce.com/services/data/ - ? Maybe not because of deprecation breaking methods
@@ -13,21 +12,116 @@ import urllib
 apiVersion = '37.0'
 
 ##
-# This method will be used to generated headers. The documentation shows 
-# that there are header options availble, but doesn't do a good job of 
-# explaining what they're for or what they do, so I'm leaving this here to
-# generate the headers. For now it will just be a static header with the 
-# accessToken and X-PrettyPrint.
-#
-# @param accessToken        This is the access_token value received from the 
-#                           login response
-# @return                   Returns a header that has the required values for
-#                           the tooling API.
-#
-def getStandardHeader(accessToken):
-    # return {'Authorization': 'Bearer ' + accessToken,'X-PrettyPrint':1}
-    objectHeader = {"Authorization": "Bearer " + accessToken,"Content-Type": "application/json"}
-    return objectHeader
+# This is a collection of utilities that will need to be reused bye the methods
+# within the classes.
+##
+class Util:
+    ##
+    # This method will be used to generated headers. The documentation shows 
+    # that there are header options availble, but doesn't do a good job of 
+    # explaining what they're for or what they do, so I'm leaving this here to
+    # generate the headers. For now it will just be a static header with the 
+    # accessToken and X-PrettyPrint.
+    #
+    # @param accessToken        This is the access_token value received from the 
+    #                           login response
+    # @return                   Returns a header that has the required values for
+    #                           the standard API.
+    #
+    def getStandardHeader(accessToken):
+        # return {'Authorization': 'Bearer ' + accessToken,'X-PrettyPrint':1}
+        objectHeader = {"Authorization": "Bearer " + accessToken,"Content-Type": "application/json"}
+        return objectHeader
+
+    ##
+    # @param accessToken        This is the access_token value received from the 
+    #                           login response
+    # @return                   Returns a header that has the required values for
+    #                           the bulk API. Namely, this takes the standard 
+    #                           header and adds gzip encoding, which is recommended
+    #                           by Salesforce to reduce the size of the responses.
+    #                           This works becuase requests will automatically
+    #                           unzip the zipped responses.
+    ##
+    def getBulkHeader(accessToken):
+        bulkHeader = Util.getStandardHeader(accessToken)
+        #bulkHeader['Content-Encoding'] = 'gzip'
+        return bulkHeader
+
+    ##
+    # This method will be used to generate the bulk job body that is then used to 
+    # send operation batches to Salesforce for processing. This is
+    #
+    # @param objectApiName      REQUIRED: The object name this job will perform
+    #                           operations on
+    # @param operationType      REQUIRED: This is the type of operation that will 
+    #                           be run with this request. Possible values include: 
+    #                               delete, insert, query, upsert, update, and hardDelete
+    # @param assignmentRuleId   The ID of a specific assignment rule to run for 
+    #                           a case or a lead. The assignment rule can be active 
+    #                           or inactive.
+    # @param concurrencyMode    Can't update after creation. The concurrency mode 
+    #                           for the job. The valid values are:
+    #                               Parallel: Process batches in parallel mode. 
+    #                                   This is the default value.
+    #                               Serial: Process batches in serial mode. 
+    #                                   Processing in parallel can cause database 
+    #                                   contention. When this is severe, the job 
+    #                                   may fail. If you're experiencing this issue, 
+    #                                   submit the job with serial concurrency mode. 
+    #                                   This guarantees that batches are processed 
+    #                                   one at a time. Note that using this option 
+    #                                   may significantly increase the processing 
+    #                                   time for a job.
+    # @param externalIdFieldName  REQUIRED WITH UPSERT. The name of the external 
+    #                             ID field for an upsert().
+    # @param numberRetries      The number of times that Salesforce attempted to 
+    #                           save the results of an operation. The repeated 
+    #                           attempts are due to a problem, such as a lock 
+    #                           contention.
+    # @param jobState           REQUIRED IF CREATING, CLOSING OR ABORIGN A JOB. 
+    #                           The current state of processing for the job:
+    #                           Values:
+    #                               Open: The job has been created, and batches 
+    #                                   can be added to the job.
+    #                               Closed: No new batches can be added to this 
+    #                                   job. Batches associated with the job may 
+    #                                   be processed after a job is closed. You 
+    #                                   cannot edit or save a closed job.
+    #                               Aborted: The job has been aborted. You can 
+    #                                   abort a job if you created it or if you 
+    #                                   have the “Manage Data Integrations” 
+    #                                   permission.
+    #                               Failed: The job has failed. Batches that were 
+    #                                   successfully processed can't be rolled back. 
+    #                                   The BatchInfoList contains a list of all 
+    #                                   batches for the job. From the results of 
+    #                                   BatchInfoList, results can be retrieved 
+    #                                   for completed batches. The results indicate 
+    #                                   which records have been processed. The 
+    #                                   numberRecordsFailed field contains the 
+    #                                   number of records that were not processed 
+    #                                   successfully.
+    ##
+    def getBulkJobBody(objectApiName, operationType, assignmentRuleId=None, concurrencyMode=None, externalIdFieldName=None, numberRetries=None, jobState=None):
+        bulkJobBody = {'operation': operationType, 'object': objectApiName, 'contentType': 'JSON'}
+
+        if assignmentRuleId != None:
+            bulkJobBody['assignmentRuleId'] = assignmentRuleId
+
+        if concurrencyMode != None:
+            bulkJobBody['concurrencyMode'] = concurrencyMode
+
+        if externalIdFieldName != None:
+            bulkJobBody['externalIdFieldName'] = externalIdFieldName
+
+        if numberRetries != None:
+            bulkJobBody['numberRetries'] = numberRetries
+
+        if jobState != None:
+            bulkJobBody['state'] = jobState
+
+        return bulkJobBody
 
 class Authentication:
     ##
@@ -124,7 +218,7 @@ class Tooling:
     ##
     def completions(completionsType, accessToken, instanceUrl):
         completionsUri = '/completions?type='
-        headerDetails = getStandardHeader(accessToken)
+        headerDetails = Util.getStandardHeader(accessToken)
         urlEncodedType = urllib.parse.quote(completionsType)
 
         response = WebService.Tools.getHTResponse(instanceUrl + Tooling.baseToolingUri + completionsUri + urlEncodedType, headerDetails)
@@ -151,7 +245,7 @@ class Tooling:
     ##
     def executeAnonymous(codeString, accessToken, instanceUrl):
         executeAnonymousUri = '/executeAnonymous/?anonymousBody='
-        headerDetails = getStandardHeader(accessToken)
+        headerDetails = Util.getStandardHeader(accessToken)
         urlEncodedCode = urllib.parse.quote(codeString)
 
         response = WebService.Tools.getHTResponse(instanceUrl + Tooling.baseToolingUri + executeAnonymousUri + urlEncodedCode, headerDetails)
@@ -180,7 +274,7 @@ class Tooling:
     ##
     def query(queryString, accessToken, instanceUrl):
         queryUri = '/query/?q='
-        headerDetails = getStandardHeader(accessToken)
+        headerDetails = Util.getStandardHeader(accessToken)
         urlEncodedQuery = urllib.parse.quote(queryString)
 
         response = WebService.Tools.getHTResponse(instanceUrl + Tooling.baseToolingUri + queryUri + urlEncodedQuery, headerDetails)
@@ -223,7 +317,7 @@ class Tooling:
     ##
     def runTestsAsynchronousList(classIds, suiteIds, maxFailedTests, testLevel, accessToken, instanceUrl):
         testAsyncUri = '/runTestsAsynchronous/'
-        headerDetails = getStandardHeader(accessToken)
+        headerDetails = Util.getStandardHeader(accessToken)
 
         dataBody = {}
 
@@ -272,7 +366,7 @@ class Tooling:
     ##
     def runTestsAsynchronousJson(testArray, accessToken, instanceUrl):
         testAsyncUri = '/runTestsAsynchronous/'
-        headerDetails = getStandardHeader(accessToken)
+        headerDetails = Util.getStandardHeader(accessToken)
         dataBody = {'tests': testArray}
         jsonDataBody = json.dumps(dataBody)
 
@@ -301,7 +395,7 @@ class Standard:
     # @return               Returns an object with the list of Salesforce versions
     ##
     def versions(accessToken, instanceUrl):
-        headerDetails = getStandardHeader(accessToken)
+        headerDetails = Util.getStandardHeader(accessToken)
 
         response = WebService.Tools.getHTResponse(instanceUrl + Standard.baseStandardUri, headerDetails)
         jsonResponse = json.loads(response.text)
@@ -321,7 +415,7 @@ class Standard:
     #                           reousrces for this version number.
     ##
     def resourcesByVersion(versionNumString, accessToken, instanceUrl):
-        headerDetails = getStandardHeader(accessToken)
+        headerDetails = Util.getStandardHeader(accessToken)
 
         response = WebService.Tools.getHTResponse(instanceUrl + Standard.baseStandardUri + 'v' + versionNumString + '/', headerDetails)
         jsonResponse = json.loads(response.text)
@@ -348,7 +442,7 @@ class Standard:
     ##
     def getSObjectRow(object, recordId, fieldListString, accessToken, instanceUrl):
         getRowUri = '/sobjects/' + object + '/' + recordId
-        headerDetails = getStandardHeader(accessToken)
+        headerDetails = Util.getStandardHeader(accessToken)
 
         if fieldListString != None:
             getRowUri = getRowUri + '?fields=' + fieldListString
@@ -384,7 +478,7 @@ class Standard:
     ##
     def updateSObjectRow(object, recordId, recordJson, accessToken, instanceUrl):
         patchRowUri = '/sobjects/' + object + '/' + recordId
-        headerDetails = getStandardHeader(accessToken)
+        headerDetails = Util.getStandardHeader(accessToken)
 
         dataBodyJson = json.dumps(recordJson)
 
@@ -415,10 +509,33 @@ class Standard:
     ##
     def query(queryString, accessToken, instanceUrl):
         queryUri = '/query/?q='
-        headerDetails = getStandardHeader(accessToken)
+        headerDetails = Util.getStandardHeader(accessToken)
         urlEncodedQuery = urllib.parse.quote(queryString)
 
         response = WebService.Tools.getHTResponse(instanceUrl + Standard.baseStandardUri + 'v' + apiVersion + queryUri + urlEncodedQuery, headerDetails)
         jsonResponse = json.loads(response.text)
 
         return jsonResponse
+
+##
+# This class is used for doing bulk operations. Please use this and not the Standard 
+# class singular methods when you're performing DML operations. This is faster and 
+# will use fewer of your API calls.
+# API details here: https://developer.salesforce.com/docs/atlas.en-us.api_asynch.meta/api_asynch/asynch_api_intro.htm
+# examples here: https://trailhead-salesforce-com.firelayers.net/en/api_basics/api_basics_bulk
+##
+class Bulk:
+    baseBulkUri = '/services/async' + apiVersion
+
+    def updateSObjectRows(objectApiName, recordsJson, accessToken, instanceUrl):
+        bulkUpdateUri = '/job'
+        headerDetails = Util.getBulkHeader(accessToken)
+        bodyDetails = Util.getBulkJobBody('update', objectApiName, None, None)
+
+        jsonDataBody = json.dumps(bodyDetails)
+
+        response = WebService.Tools.postHTResponse(instanceUrl + Bulk.baseBulkUri + bulkUpdateUri, jsonDataBody, headerDetails)
+        #jsonResponse = json.loads(response.text)
+        print('bulk update response code: {}, and text{}'.format(response.status_code, response.text))
+
+        return response
