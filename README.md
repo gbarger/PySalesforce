@@ -1,11 +1,19 @@
 ##PySalesforce
 **************
-
 The purpose of this project is to replicate the Salesforce REST APIs in a Python library.
 
-As I work on replicating the APIs, I'll link to the Salesforce documentation here.
+##Usage
+*******
+The authentication method used in PySalesforce.Authentication.getOAuthLogin uses the Salesforce OAuth Password flow. You can choose to build and use your own authentication method, but if you want to use the OAuth flow, you'll need to create a connected app in Salesforce. YOu can do this from Setup->Create->Apps, then scroll down to the bottom and click the New button for Connected Apps. THE Callback URL is irrelavent, so you can put in anything you want. Make sure the Selected Scope OAuth Scopes = Full Access. After setting it up you'll receive a Consumer Key and Consumer Secret, which are the loginClientId and loginClientSecret parameters in the getOAuthLogin method respectively.
+
+##Salesforce Documentation
+***************
+As I continue to update this library, I'll be adding reference links to the Salesforce documentation.
+- [List of Salseforce APIs](https://developer.salesforce.com/page/Salesforce_APIs)
 - [Tooling API](https://developer.salesforce.com/docs/atlas.en-us.api_tooling.meta/api_tooling/intro_rest_resources.htm)
 - [REST API](https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/intro_what_is_rest_api.htm)
+- [Bulk API](https://developer.salesforce.com/docs/atlas.en-us.api_asynch.meta/api_asynch/asynch_api_intro.htm)
+- [Bulk API Trailhead Example](https://trailhead-salesforce-com.firelayers.net/en/api_basics/api_basics_bulk)
 
 ##Notes
 *******
