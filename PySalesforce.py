@@ -1,7 +1,8 @@
 #!/usr/bin/python3
 
 # TODO: 
-# implement something to check in on bulk job status
+# implement splitting of large batches to avoid breaking 10k limit with bulk jobs
+# implement return of bulk job status record details
 # implement delete in WebService so I can implement SObject Rows REST API for record deletes
 # Figure out what's wrong with Tooling.completions
 # Possibly pull current version from https://yourInstance.salesforce.com/services/data/ - ? Maybe not because of deprecation breaking methods
@@ -9,6 +10,7 @@
 import json
 import WebService
 import urllib
+import time
 
 apiVersion = '37.0'
 
@@ -335,7 +337,7 @@ class Tooling:
         if testLevel != None:
             dataBody['testLevel'] = testLevel
 
-        jsonDataBody = json.dumps(dataBody)
+        jsonDataBody = json.dumps(dataBody, indent=4, separators=(',', ': '))
 
         response = WebService.Tools.postHTResponse(instanceUrl + Tooling.baseToolingUri + testAsyncUri, jsonDataBody, headerDetails)
         jsonResponse = json.loads(response.text)
@@ -370,7 +372,7 @@ class Tooling:
         testAsyncUri = '/runTestsAsynchronous/'
         headerDetails = Util.getStandardHeader(accessToken)
         dataBody = {'tests': testArray}
-        jsonDataBody = json.dumps(dataBody)
+        jsonDataBody = json.dumps(dataBody, indent=4, separators=(',', ': '))
 
         response = WebService.Tools.postHTResponse(instanceUrl + Tooling.baseToolingUri + testAsyncUri, jsonDataBody, headerDetails)
         jsonResponse = json.loads(response.text)
@@ -482,7 +484,7 @@ class Standard:
         patchRowUri = '/sobjects/' + object + '/' + recordId
         headerDetails = Util.getStandardHeader(accessToken)
 
-        dataBodyJson = json.dumps(recordJson)
+        dataBodyJson = json.dumps(recordJson, indent=4, separators=(',', ': '))
 
         response = WebService.Tools.patchHTResponse(instanceUrl + Standard.baseStandardUri + 'v' + apiVersion + patchRowUri, dataBodyJson, headerDetails)
         responseText = ""
@@ -530,37 +532,62 @@ class Bulk:
     baseBulkUri = '/services/async/' + apiVersion
 
     ##
+    # This method is used for printing job status
+    ##
+    def getJobStatus(jobId, pollingWait, accessToken, instanceUrl):
+        statusUri = '/job'
+        headerDetails = Util.getBulkHeader(accessToken)
+
+        print("Status check for job: {}".format(jobId))
+        while True:
+            response = WebService.Tools.getHTResponse(instanceUrl + Bulk.baseBulkUri + statusUri + '/' + jobId, headerDetails)
+            jsonResponse = json.loads(response.text)
+
+            print("batches completed/total: {}/{}".format(jsonResponse['numberBatchesCompleted'], jsonResponse['numberBatchesTotal']))
+
+            if jsonResponse['numberBatchesQueued'] is 0:
+                break
+            else:
+                time.sleep(pollingWait)
+
+        return jsonResponse
+
+    ##
     # This method updates a list of records provided as an object.
     #
     # @param objectApiName  The API Name of the object being updated
     # @param records        The list of records that needs to be updated. This
     #                       Should be provided as an array. For example:
     #                       [{'id':'recordId', 'phone':'(123) 456-7890'}]
+    # @param pollingWait    This is the number of seconds
     # @param accessToken    This is the access_token value received from the 
     #                       login response
     # @param instanceUrl    This is the instance_url value received from the 
     #                       login response
     ##
-    def updateSObjectRows(objectApiName, records, accessToken, instanceUrl):
+    def updateSObjectRows(objectApiName, records, pollingWait, accessToken, instanceUrl):
         bulkUpdateUri = '/job'
         headerDetails = Util.getBulkHeader(accessToken)
         bodyDetails = Util.getBulkJobBody(objectApiName, 'update', None, None)
 
         # create the batch job
-        createJobJsonBody = json.dumps(bodyDetails)
+        createJobJsonBody = json.dumps(bodyDetails, indent=4, separators=(',', ': '))
         jobCreateResponse = WebService.Tools.postHTResponse(instanceUrl + Bulk.baseBulkUri + bulkUpdateUri, createJobJsonBody, headerDetails)
         jsonJobCreateResponse = json.loads(jobCreateResponse.text)
 
         # send the records as a batch
         jobId = jsonJobCreateResponse['id']
-        recordsJson = json.dumps(records)
+        recordsJson = json.dumps(records, indent=4, separators=(',', ': '))
         jobBatchResponse = WebService.Tools.postHTResponse(instanceUrl + Bulk.baseBulkUri + bulkUpdateUri + '/' + jobId + '/batch', recordsJson, headerDetails)
         jsonJobBatchResponse = json.loads(jobBatchResponse.text)
 
         # close the batch
         closeBody = {'state': 'Closed'}
-        jsonCloseBody = json.dumps(closeBody)
+        jsonCloseBody = json.dumps(closeBody, )
         closeResponse = WebService.Tools.postHTResponse(instanceUrl + Bulk.baseBulkUri + bulkUpdateUri + '/' + jobId, jsonCloseBody, headerDetails)
         jsonCloseResponse = json.loads(closeResponse.text)
+
+        if pollingWait != None:
+            Bulk.getJobStatus(jobId, pollingWait, accessToken, instanceUrl)
 
         return jsonCloseResponse
