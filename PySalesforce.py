@@ -1,7 +1,9 @@
 #!/usr/bin/python3
 
 # TODO: 
+# implement bulk operations: query, and upsert
 # implement return of bulk job status record details & update @return docs
+# implement metadata API to grab details from 
 # implement delete in WebService so I can implement SObject Rows REST API for record deletes
 # Figure out what's wrong with Tooling.completions
 # Work on Metadata API
@@ -610,7 +612,7 @@ class Bulk:
     #                       login response
     # @return               
     ##
-    def performBulkOperation(objectApiName, records, batchSize, operationType, pollingWait, accessToken, instanceUrl):
+    def performBulkOperation(objectApiName, records, batchSize, operationType, pollingWait, externalIdFieldName, accessToken, instanceUrl):
         headerDetails = Util.getBulkHeader(accessToken)
         bodyDetails = Util.getBulkJobBody(objectApiName, operationType, None, None)
 
@@ -621,6 +623,7 @@ class Bulk:
         createJobJsonBody = json.dumps(bodyDetails, indent=4, separators=(',', ': '))
         jobCreateResponse = WebService.Tools.postHTResponse(instanceUrl + Bulk.baseBulkUri + Bulk.batchUri, createJobJsonBody, headerDetails)
         jsonJobCreateResponse = json.loads(jobCreateResponse.text)
+        print("jsonJobCreateResponse: {}".format(jsonJobCreateResponse))
         jobId = jsonJobCreateResponse['id']
 
         # loop through the record batches, and add them to the processing queue
@@ -644,29 +647,6 @@ class Bulk:
         return resultsList
 
     ##
-    # This method updates a list of records provided as an object.
-    #
-    # @param objectApiName  The API Name of the object being updated
-    # @param records        The list of records that needs to be updated. This
-    #                       Should be provided as an array. For example:
-    #                       [{'id':'recordId', 'phone':'(123) 456-7890'}]
-    # @param batchSize      This is the batch size of the records to process. 
-    #                       If you were to pass 5000 records into the process 
-    #                       with a batch size of 1000, then there would be 5 
-    #                       batches processed.
-    # @param pollingWait    This is the number of seconds
-    # @param accessToken    This is the access_token value received from the 
-    #                       login response
-    # @param instanceUrl    This is the instance_url value received from the 
-    #                       login response
-    # @return               
-    ##
-    def updateSObjectRows(objectApiName, records, batchSize, pollingWait, accessToken, instanceUrl):
-        result = Bulk.performBulkOperation(objectApiName, records, batchSize, 'update', pollingWait, accessToken, instanceUrl)
-
-        return result
-
-    ##
     # This method inserts a list of records provided as an object.
     #
     # @param objectApiName  The API Name of the object being updated
@@ -685,6 +665,90 @@ class Bulk:
     # @return               
     ##
     def insertSObjectRows(objectApiName, records, batchSize, pollingWait, accessToken, instanceUrl):
-        result = Bulk.performBulkOperation(objectApiName, records, batchSize, 'insert', pollingWait, accessToken, instanceUrl)
+        result = Bulk.performBulkOperation(objectApiName, records, batchSize, 'insert', pollingWait, None, accessToken, instanceUrl)
+
+        return result
+
+    ##
+    # This method updates a list of records provided as an object.
+    #
+    # @param objectApiName  The API Name of the object being updated
+    # @param records        The list of records that needs to be updated. This
+    #                       Should be provided as an array. For example:
+    #                       [{'id':'recordId', 'phone':'(123) 456-7890'}]
+    # @param batchSize      This is the batch size of the records to process. 
+    #                       If you were to pass 5000 records into the process 
+    #                       with a batch size of 1000, then there would be 5 
+    #                       batches processed.
+    # @param pollingWait    This is the number of seconds
+    # @param accessToken    This is the access_token value received from the 
+    #                       login response
+    # @param instanceUrl    This is the instance_url value received from the 
+    #                       login response
+    # @return               
+    ##
+    def updateSObjectRows(objectApiName, records, batchSize, pollingWait, accessToken, instanceUrl):
+        result = Bulk.performBulkOperation(objectApiName, records, batchSize, 'update', pollingWait, None, accessToken, instanceUrl)
+
+        return result
+
+    ##
+    # This method upserts a list of records provided as an object.
+    #
+    # @param objectApiName  The API Name of the object being updated
+    # @param records        The list of records that needs to be updated. This
+    #                       Should be provided as an array. For example:
+    #                       [{'id':'recordId', 'phone':'(123) 456-7890'}]
+    # @param batchSize      This is the batch size of the records to process. 
+    #                       If you were to pass 5000 records into the process 
+    #                       with a batch size of 1000, then there would be 5 
+    #                       batches processed.
+    # @param pollingWait    This is the number of seconds
+    # @param accessToken    This is the access_token value received from the 
+    #                       login response
+    # @param instanceUrl    This is the instance_url value received from the 
+    #                       login response
+    # @param externalIdFieldName  This is the external Id field that is used to 
+    #                             determine whether this record will be inserted
+    #                             or updated. This is required for upserts, but 
+    #                             will default to the record Id field
+    # @return               
+    ##
+    def upsertSObjectRows(objectApiName, records, batchSize, pollingWait, accessToken, instanceUrl, externalIdFieldName='Id'):
+        result = Bulk.performBulkOperation(objectApiName, records, batchSize, 'update', pollingWait, externalIdFieldName, accessToken, instanceUrl)
+
+        return result
+
+    ##
+    # This method upserts a list of records provided as an object.
+    #
+    # @param objectApiName  The API Name of the object being updated
+    # @param records        The list of records that needs to be updated. This
+    #                       Should be provided as an array. For example:
+    #                       [{'id':'recordId', 'phone':'(123) 456-7890'}]
+    # @param hardDelete     This Bool indicates whether or not the record should 
+    #                       be hard deleted. NOTE: There is a profile System 
+    #                       Permission option called "Bulk API Hard Delete"
+    #                       that must be enabled for this option to work.
+    # @param batchSize      This is the batch size of the records to process. 
+    #                       If you were to pass 5000 records into the process 
+    #                       with a batch size of 1000, then there would be 5 
+    #                       batches processed.
+    # @param pollingWait    This is the number of seconds
+    # @param accessToken    This is the access_token value received from the 
+    #                       login response
+    # @param instanceUrl    This is the instance_url value received from the 
+    #                       login response
+    # @return               
+    ##
+    def deleteSObjectRows(objectApiName, records, hardDelete, batchSize, pollingWait, accessToken, instanceUrl):
+        deleteType = 'delete';
+
+        if hardDelete:
+            deleteType = 'hardDelete'
+
+        print("delete type: {}".format(deleteType))
+
+        result = Bulk.performBulkOperation(objectApiName, records, batchSize, deleteType, pollingWait, None, accessToken, instanceUrl)
 
         return result
