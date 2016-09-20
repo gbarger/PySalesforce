@@ -1,10 +1,10 @@
 #!/usr/bin/python3
 
 # TODO: 
-# implement splitting of large batches to avoid breaking 10k limit with bulk jobs
-# implement return of bulk job status record details
+# implement return of bulk job status record details & update @return docs
 # implement delete in WebService so I can implement SObject Rows REST API for record deletes
 # Figure out what's wrong with Tooling.completions
+# Work on Metadata API
 # Possibly pull current version from https://yourInstance.salesforce.com/services/data/ - ? Maybe not because of deprecation breaking methods
 
 import json
@@ -126,6 +126,17 @@ class Util:
             bulkJobBody['state'] = jobState
 
         return bulkJobBody
+
+    ##
+    # This generator breaks up a list into a list of lists that contains n items
+    # in each list.
+    #
+    # @param list   The list provided to be chunked
+    # @param n      The number of items in each chunk
+    ##
+    def chunk(list, n):
+        for i in range(0, len(list), n):
+            yield list[i:i + n]
 
 class Authentication:
     ##
@@ -530,17 +541,24 @@ class Standard:
 ##
 class Bulk:
     baseBulkUri = '/services/async/' + apiVersion
+    batchUri = '/job/'
 
     ##
     # This method is used for printing job status
+    #
+    # @param jobId          The job id returned when creating a batch job
+    # @param pollingWait    This is the number of seconds
+    # @param accessToken    This is the access_token value received from the 
+    #                       login response
+    # @param instanceUrl    This is the instance_url value received from the 
+    #                       login response
     ##
     def getJobStatus(jobId, pollingWait, accessToken, instanceUrl):
-        statusUri = '/job'
         headerDetails = Util.getBulkHeader(accessToken)
 
         print("Status check for job: {}".format(jobId))
         while True:
-            response = WebService.Tools.getHTResponse(instanceUrl + Bulk.baseBulkUri + statusUri + '/' + jobId, headerDetails)
+            response = WebService.Tools.getHTResponse(instanceUrl + Bulk.baseBulkUri + Bulk.batchUri + '/' + jobId, headerDetails)
             jsonResponse = json.loads(response.text)
 
             print("batches completed/total: {}/{}".format(jsonResponse['numberBatchesCompleted'], jsonResponse['numberBatchesTotal']))
@@ -553,41 +571,120 @@ class Bulk:
         return jsonResponse
 
     ##
+    # This method will retrieve the results of a batch operation.
+    #
+    # @param jobId          The job id returned when creating a batch job
+    # @param batchId        This is the batch Id returned when creating a new batch
+    # @param accessToken    This is the access_token value received from the 
+    #                       login response
+    # @param instanceUrl    This is the instance_url value received from the 
+    #                       login response
+    ##
+    def getBatchResult(jobId, batchId, accessToken, instanceUrl):
+        headerDetails = Util.getBulkHeader(accessToken)
+
+        response = WebService.Tools.getHTResponse(instanceUrl + Bulk.baseBulkUri + Bulk.batchUri + '/' + jobId + '/batch/' + batchId + '/result', headerDetails)
+        jsonResponse = json.loads(response.text)
+
+        print("batch results: {}".format(jsonResponse))
+
+        return jsonResponse
+
+    ##
     # This method updates a list of records provided as an object.
     #
     # @param objectApiName  The API Name of the object being updated
     # @param records        The list of records that needs to be updated. This
     #                       Should be provided as an array. For example:
     #                       [{'id':'recordId', 'phone':'(123) 456-7890'}]
+    # @param batchSize      This is the batch size of the records to process. 
+    #                       If you were to pass 5000 records into the process 
+    #                       with a batch size of 1000, then there would be 5 
+    #                       batches processed.
+    # @param operationType  This is the operation being performed: 
+    #                           delete, insert, query, upsert, update, hardDelete
     # @param pollingWait    This is the number of seconds
     # @param accessToken    This is the access_token value received from the 
     #                       login response
     # @param instanceUrl    This is the instance_url value received from the 
     #                       login response
+    # @return               
     ##
-    def updateSObjectRows(objectApiName, records, pollingWait, accessToken, instanceUrl):
-        bulkUpdateUri = '/job'
+    def performBulkOperation(objectApiName, records, batchSize, operationType, pollingWait, accessToken, instanceUrl):
         headerDetails = Util.getBulkHeader(accessToken)
-        bodyDetails = Util.getBulkJobBody(objectApiName, 'update', None, None)
+        bodyDetails = Util.getBulkJobBody(objectApiName, operationType, None, None)
+
+        chunkedRecordsList = Util.chunk(records, batchSize)
+        resultsList = []
 
         # create the batch job
         createJobJsonBody = json.dumps(bodyDetails, indent=4, separators=(',', ': '))
-        jobCreateResponse = WebService.Tools.postHTResponse(instanceUrl + Bulk.baseBulkUri + bulkUpdateUri, createJobJsonBody, headerDetails)
+        jobCreateResponse = WebService.Tools.postHTResponse(instanceUrl + Bulk.baseBulkUri + Bulk.batchUri, createJobJsonBody, headerDetails)
         jsonJobCreateResponse = json.loads(jobCreateResponse.text)
-
-        # send the records as a batch
         jobId = jsonJobCreateResponse['id']
-        recordsJson = json.dumps(records, indent=4, separators=(',', ': '))
-        jobBatchResponse = WebService.Tools.postHTResponse(instanceUrl + Bulk.baseBulkUri + bulkUpdateUri + '/' + jobId + '/batch', recordsJson, headerDetails)
-        jsonJobBatchResponse = json.loads(jobBatchResponse.text)
+
+        # loop through the record batches, and add them to the processing queue
+        for recordChunk in chunkedRecordsList:
+            recordsJson = json.dumps(recordChunk, indent=4, separators=(',', ': '))
+            jobBatchResponse = WebService.Tools.postHTResponse(instanceUrl + Bulk.baseBulkUri + Bulk.batchUri + '/' + jobId + '/batch', recordsJson, headerDetails)
+            jsonJobBatchResponse = json.loads(jobBatchResponse.text)
+            batchId = jsonJobBatchResponse['id']
+            batchResults = Bulk.getBatchResult(jobId, batchId, accessToken, instanceUrl)
+            resultsList.extend(batchResults)
 
         # close the batch
         closeBody = {'state': 'Closed'}
         jsonCloseBody = json.dumps(closeBody, )
-        closeResponse = WebService.Tools.postHTResponse(instanceUrl + Bulk.baseBulkUri + bulkUpdateUri + '/' + jobId, jsonCloseBody, headerDetails)
+        closeResponse = WebService.Tools.postHTResponse(instanceUrl + Bulk.baseBulkUri + Bulk.batchUri + '/' + jobId, jsonCloseBody, headerDetails)
         jsonCloseResponse = json.loads(closeResponse.text)
 
         if pollingWait != None:
             Bulk.getJobStatus(jobId, pollingWait, accessToken, instanceUrl)
 
-        return jsonCloseResponse
+        return resultsList
+
+    ##
+    # This method updates a list of records provided as an object.
+    #
+    # @param objectApiName  The API Name of the object being updated
+    # @param records        The list of records that needs to be updated. This
+    #                       Should be provided as an array. For example:
+    #                       [{'id':'recordId', 'phone':'(123) 456-7890'}]
+    # @param batchSize      This is the batch size of the records to process. 
+    #                       If you were to pass 5000 records into the process 
+    #                       with a batch size of 1000, then there would be 5 
+    #                       batches processed.
+    # @param pollingWait    This is the number of seconds
+    # @param accessToken    This is the access_token value received from the 
+    #                       login response
+    # @param instanceUrl    This is the instance_url value received from the 
+    #                       login response
+    # @return               
+    ##
+    def updateSObjectRows(objectApiName, records, batchSize, pollingWait, accessToken, instanceUrl):
+        result = Bulk.performBulkOperation(objectApiName, records, batchSize, 'update', pollingWait, accessToken, instanceUrl)
+
+        return result
+
+    ##
+    # This method inserts a list of records provided as an object.
+    #
+    # @param objectApiName  The API Name of the object being updated
+    # @param records        The list of records that needs to be updatbatchSize, ed. This
+    #                       Should be provided as an array. For example:
+    #                       [{'id':'recordId', 'phone':'(123) 456-7890'}]
+    # @param batchSize      This is the batch size of the records to process. 
+    #                       If you were to pass 5000 records into the process 
+    #                       with a batch size of 1000, then there would be 5 
+    #                       batches processed.
+    # @param pollingWait    This is the number of seconds
+    # @param accessToken    This is the access_token value received from the 
+    #                       login response
+    # @param instanceUrl    This is the instance_url value received from the 
+    #                       login response
+    # @return               
+    ##
+    def insertSObjectRows(objectApiName, records, batchSize, pollingWait, accessToken, instanceUrl):
+        result = Bulk.performBulkOperation(objectApiName, records, batchSize, 'insert', pollingWait, accessToken, instanceUrl)
+
+        return result
