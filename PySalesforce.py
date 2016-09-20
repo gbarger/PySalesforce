@@ -1,9 +1,9 @@
 #!/usr/bin/python3
 
 # TODO: 
-# implement bulk operations: query, and upsert
+# implement bulk operations: query
 # implement return of bulk job status record details & update @return docs
-# implement metadata API to grab details from 
+# implement metadata API to grab details from
 # implement delete in WebService so I can implement SObject Rows REST API for record deletes
 # Figure out what's wrong with Tooling.completions
 # Work on Metadata API
@@ -616,6 +616,9 @@ class Bulk:
         headerDetails = Util.getBulkHeader(accessToken)
         bodyDetails = Util.getBulkJobBody(objectApiName, operationType, None, None)
 
+        if externalIdFieldName != None:
+            bodyDetails['externalIdFieldName'] = externalIdFieldName
+
         chunkedRecordsList = Util.chunk(records, batchSize)
         resultsList = []
 
@@ -632,6 +635,7 @@ class Bulk:
             jobBatchResponse = WebService.Tools.postHTResponse(instanceUrl + Bulk.baseBulkUri + Bulk.batchUri + '/' + jobId + '/batch', recordsJson, headerDetails)
             jsonJobBatchResponse = json.loads(jobBatchResponse.text)
             batchId = jsonJobBatchResponse['id']
+            print("job id: {}, batch id: {}".format(jobId, batchId))
             batchResults = Bulk.getBatchResult(jobId, batchId, accessToken, instanceUrl)
             resultsList.extend(batchResults)
 
@@ -715,7 +719,7 @@ class Bulk:
     # @return               
     ##
     def upsertSObjectRows(objectApiName, records, batchSize, pollingWait, accessToken, instanceUrl, externalIdFieldName='Id'):
-        result = Bulk.performBulkOperation(objectApiName, records, batchSize, 'update', pollingWait, externalIdFieldName, accessToken, instanceUrl)
+        result = Bulk.performBulkOperation(objectApiName, records, batchSize, 'upsert', pollingWait, externalIdFieldName, accessToken, instanceUrl)
 
         return result
 
