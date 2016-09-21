@@ -2,8 +2,9 @@
 
 # TODO: 
 # implement bulk operations: query
-# implement return of bulk job status record details & update @return docs
-# implement metadata API to grab details from
+# implement metadata API
+# maybe implement kwargs for some of the methods instead of having so many arguments in the signature
+#     after metadata API implementation, update picklist tool to grab object without needing to do that separately
 # implement delete in WebService so I can implement SObject Rows REST API for record deletes
 # Figure out what's wrong with Tooling.completions
 # Work on Metadata API
@@ -554,16 +555,20 @@ class Bulk:
     #                       login response
     # @param instanceUrl    This is the instance_url value received from the 
     #                       login response
+    # @return               Prints the status of the bulk job and polls for an 
+    #                       update ever pollingWait seconds until the 
+    #                       numberBatchesQueued = 0, then it will break out and
+    #                       just returns the final job status response.
     ##
     def getJobStatus(jobId, pollingWait, accessToken, instanceUrl):
         headerDetails = Util.getBulkHeader(accessToken)
 
-        print("Status check for job: {}".format(jobId))
+        print("Status for job: {}".format(jobId))
         while True:
             response = WebService.Tools.getHTResponse(instanceUrl + Bulk.baseBulkUri + Bulk.batchUri + '/' + jobId, headerDetails)
             jsonResponse = json.loads(response.text)
 
-            print("batches completed/total: {}/{}".format(jsonResponse['numberBatchesCompleted'], jsonResponse['numberBatchesTotal']))
+            print("\nbatches completed/total: {}/{}\n".format(jsonResponse['numberBatchesCompleted'], jsonResponse['numberBatchesTotal']))
 
             if jsonResponse['numberBatchesQueued'] is 0:
                 break
@@ -581,14 +586,14 @@ class Bulk:
     #                       login response
     # @param instanceUrl    This is the instance_url value received from the 
     #                       login response
+    # @return               Returns the an array containing the results for each
+    #                       record in the given batch
     ##
     def getBatchResult(jobId, batchId, accessToken, instanceUrl):
         headerDetails = Util.getBulkHeader(accessToken)
 
         response = WebService.Tools.getHTResponse(instanceUrl + Bulk.baseBulkUri + Bulk.batchUri + '/' + jobId + '/batch/' + batchId + '/result', headerDetails)
         jsonResponse = json.loads(response.text)
-
-        print("batch results: {}".format(jsonResponse))
 
         return jsonResponse
 
@@ -605,28 +610,32 @@ class Bulk:
     #                       batches processed.
     # @param operationType  This is the operation being performed: 
     #                           delete, insert, query, upsert, update, hardDelete
-    # @param pollingWait    This is the number of seconds
+    # @param pollingWait    This is the number of seconds to poll for updates on 
+    #                       the job
     # @param accessToken    This is the access_token value received from the 
     #                       login response
     # @param instanceUrl    This is the instance_url value received from the 
     #                       login response
-    # @return               
+    # @return               Returns an object containing the status for each 
+    #                       record that was put into the batch
     ##
     def performBulkOperation(objectApiName, records, batchSize, operationType, pollingWait, externalIdFieldName, accessToken, instanceUrl):
         headerDetails = Util.getBulkHeader(accessToken)
-        bodyDetails = Util.getBulkJobBody(objectApiName, operationType, None, None)
+        bodyDetails = {}
 
         if externalIdFieldName != None:
-            bodyDetails['externalIdFieldName'] = externalIdFieldName
+            bodyDetails = Util.getBulkJobBody(objectApiName, operationType, None, None, externalIdFieldName)
+        else:
+            bodyDetails = Util.getBulkJobBody(objectApiName, operationType, None, None)
 
         chunkedRecordsList = Util.chunk(records, batchSize)
+        batchIds = []
         resultsList = []
 
-        # create the batch job
+        # create the bulk job
         createJobJsonBody = json.dumps(bodyDetails, indent=4, separators=(',', ': '))
         jobCreateResponse = WebService.Tools.postHTResponse(instanceUrl + Bulk.baseBulkUri + Bulk.batchUri, createJobJsonBody, headerDetails)
         jsonJobCreateResponse = json.loads(jobCreateResponse.text)
-        print("jsonJobCreateResponse: {}".format(jsonJobCreateResponse))
         jobId = jsonJobCreateResponse['id']
 
         # loop through the record batches, and add them to the processing queue
@@ -635,18 +644,25 @@ class Bulk:
             jobBatchResponse = WebService.Tools.postHTResponse(instanceUrl + Bulk.baseBulkUri + Bulk.batchUri + '/' + jobId + '/batch', recordsJson, headerDetails)
             jsonJobBatchResponse = json.loads(jobBatchResponse.text)
             batchId = jsonJobBatchResponse['id']
-            print("job id: {}, batch id: {}".format(jobId, batchId))
-            batchResults = Bulk.getBatchResult(jobId, batchId, accessToken, instanceUrl)
-            resultsList.extend(batchResults)
+            batchIds.append(batchId)
 
-        # close the batch
+        # close the bulk job
         closeBody = {'state': 'Closed'}
         jsonCloseBody = json.dumps(closeBody, )
         closeResponse = WebService.Tools.postHTResponse(instanceUrl + Bulk.baseBulkUri + Bulk.batchUri + '/' + jobId, jsonCloseBody, headerDetails)
         jsonCloseResponse = json.loads(closeResponse.text)
 
-        if pollingWait != None:
-            Bulk.getJobStatus(jobId, pollingWait, accessToken, instanceUrl)
+        # set default job check polling to 5 seconds
+        if pollingWait is None:
+            pollingWait = 5
+        
+        # check job status until the job completes
+        Bulk.getJobStatus(jobId, pollingWait, accessToken, instanceUrl)
+
+        # populate the resultsList by appending the results of each batch
+        for thisBatchId in batchIds:
+            batchResults = Bulk.getBatchResult(jobId, thisBatchId, accessToken, instanceUrl)
+            resultsList.extend(batchResults)
 
         return resultsList
 
@@ -666,7 +682,8 @@ class Bulk:
     #                       login response
     # @param instanceUrl    This is the instance_url value received from the 
     #                       login response
-    # @return               
+    # @return               Returns an object containing the status for each 
+    #                       record that was put into the batch
     ##
     def insertSObjectRows(objectApiName, records, batchSize, pollingWait, accessToken, instanceUrl):
         result = Bulk.performBulkOperation(objectApiName, records, batchSize, 'insert', pollingWait, None, accessToken, instanceUrl)
@@ -689,7 +706,8 @@ class Bulk:
     #                       login response
     # @param instanceUrl    This is the instance_url value received from the 
     #                       login response
-    # @return               
+    # @return               Returns an object containing the status for each 
+    #                       record that was put into the batch
     ##
     def updateSObjectRows(objectApiName, records, batchSize, pollingWait, accessToken, instanceUrl):
         result = Bulk.performBulkOperation(objectApiName, records, batchSize, 'update', pollingWait, None, accessToken, instanceUrl)
@@ -716,7 +734,8 @@ class Bulk:
     #                             determine whether this record will be inserted
     #                             or updated. This is required for upserts, but 
     #                             will default to the record Id field
-    # @return               
+    # @return               Returns an object containing the status for each 
+    #                       record that was put into the batch
     ##
     def upsertSObjectRows(objectApiName, records, batchSize, pollingWait, accessToken, instanceUrl, externalIdFieldName='Id'):
         result = Bulk.performBulkOperation(objectApiName, records, batchSize, 'upsert', pollingWait, externalIdFieldName, accessToken, instanceUrl)
@@ -743,15 +762,14 @@ class Bulk:
     #                       login response
     # @param instanceUrl    This is the instance_url value received from the 
     #                       login response
-    # @return               
+    # @return               Returns an object containing the status for each 
+    #                       record that was put into the batch
     ##
     def deleteSObjectRows(objectApiName, records, hardDelete, batchSize, pollingWait, accessToken, instanceUrl):
         deleteType = 'delete';
 
         if hardDelete:
             deleteType = 'hardDelete'
-
-        print("delete type: {}".format(deleteType))
 
         result = Bulk.performBulkOperation(objectApiName, records, batchSize, deleteType, pollingWait, None, accessToken, instanceUrl)
 
