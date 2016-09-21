@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 # TODO: 
-# implement bulk operations: query
+# refactor to clean up and reduce code for bulk query
 # implement metadata API
 # maybe implement kwargs for some of the methods instead of having so many arguments in the signature
 #     after metadata API implementation, update picklist tool to grab object without needing to do that separately
@@ -598,6 +598,28 @@ class Bulk:
         return jsonResponse
 
     ##
+    # This method will retrieve the results of a batch operation.
+    #
+    # @param jobId          The job id returned when creating a batch job
+    # @param batchId        This is the batch Id returned when creating a new batch
+    # @param queryResultId  Ths is the Id returned with a successful batch for 
+    #                       a Salseforce bulk query.
+    # @param accessToken    This is the access_token value received from the 
+    #                       login response
+    # @param instanceUrl    This is the instance_url value received from the 
+    #                       login response
+    # @return               Returns the an array containing the results for the 
+    #                       query request
+    ##
+    def getQueryResult(jobId, batchId, queryResultId, accessToken, instanceUrl):
+        headerDetails = Util.getBulkHeader(accessToken)
+
+        response = WebService.Tools.getHTResponse(instanceUrl + Bulk.baseBulkUri + Bulk.batchUri + '/' + jobId + '/batch/' + batchId + '/result' + '/' + queryResultId, headerDetails)
+        jsonResponse = json.loads(response.text)
+
+        return jsonResponse
+
+    ##
     # This method updates a list of records provided as an object.
     #
     # @param objectApiName  The API Name of the object being updated
@@ -774,3 +796,51 @@ class Bulk:
         result = Bulk.performBulkOperation(objectApiName, records, batchSize, deleteType, pollingWait, None, accessToken, instanceUrl)
 
         return result
+
+    ##
+    # This returns the result for a bulk query operations.
+    #
+    # @param objectApiName  The API Name of the object being updated
+    # @param query          The query you'd like to run to retrieve records
+    # @param accessToken    This is the access_token value received from the 
+    #                       login response
+    # @param instanceUrl    This is the instance_url value received from the 
+    #                       login response
+    # @return               Returns an array of results for the specified query
+    ##
+    def querySObjectRows(objectApiName, query, accessToken, instanceUrl):
+        headerDetails = Util.getBulkHeader(accessToken)
+        batchResultsList = []
+        queryResultList = []
+        
+        # create the bulk job
+        jobBodyDetails = Util.getBulkJobBody(objectApiName, 'query', None, None)
+        createJobJsonBody = json.dumps(jobBodyDetails, indent=4, separators=(',', ': '))
+        jobCreateResponse = WebService.Tools.postHTResponse(instanceUrl + Bulk.baseBulkUri + Bulk.batchUri, createJobJsonBody, headerDetails)
+        jsonJobCreateResponse = json.loads(jobCreateResponse.text)
+        jobId = jsonJobCreateResponse['id']
+
+        # create the query request batch
+        jobBatchResponse = WebService.Tools.postHTResponse(instanceUrl + Bulk.baseBulkUri + Bulk.batchUri + '/' + jobId + '/batch', query, headerDetails)
+        jsonJobBatchResponse = json.loads(jobBatchResponse.text)
+        batchId = jsonJobBatchResponse['id']
+        print("\nbatchId: {}\n".format(batchId))
+
+        # close the bulk job
+        closeBody = {'state': 'Closed'}
+        jsonCloseBody = json.dumps(closeBody, )
+        closeResponse = WebService.Tools.postHTResponse(instanceUrl + Bulk.baseBulkUri + Bulk.batchUri + '/' + jobId, jsonCloseBody, headerDetails)
+        jsonCloseResponse = json.loads(closeResponse.text)
+
+        # check job status until the job completes
+        Bulk.getJobStatus(jobId, 1, accessToken, instanceUrl)
+
+        # get results
+        batchResults = Bulk.getBatchResult(jobId, batchId, accessToken, instanceUrl)
+        batchResultsList.extend(batchResults)
+
+        for queryResultId in batchResultsList:
+            queryResult = Bulk.getQueryResult(jobId, batchId, queryResultId, accessToken, instanceUrl)
+            queryResultList.extend(queryResult)
+
+        return queryResultList
