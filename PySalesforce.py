@@ -1,10 +1,10 @@
 #!/usr/bin/python3
 
-# TODO: 
-# refactor to clean up and reduce code for bulk query
+# TODO:
 # implement metadata API
-# maybe implement kwargs for some of the methods instead of having so many arguments in the signature
 #     after metadata API implementation, update picklist tool to grab object without needing to do that separately
+# refactor to clean up and reduce code for bulk query
+# maybe implement kwargs for some of the methods instead of having so many arguments in the signature
 # implement delete in WebService so I can implement SObject Rows REST API for record deletes
 # Figure out what's wrong with Tooling.completions
 # Work on Metadata API

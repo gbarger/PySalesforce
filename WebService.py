@@ -9,8 +9,9 @@ class Tools:
     #
     # @param requestType     The request type: GET, POST, PATCH, DELETE, etc
     # @param URL             The full URL to call
-    # @param headerDetails   Object containing the headers for the request
-    # @param dataBody        The body to send for the POST
+    # @param headerDetails   Object containing the headers for the request. 
+    #						 Defaults to None
+    # @param dataBody        The body to send for the POST. Defaults to None
     # @return 				 Returns the response for the HTTP Request.
     ##
     def htRequest(**kwargs):

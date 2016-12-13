@@ -89,12 +89,14 @@ def main():
 
     non_used_recordtype_values = allValues.difference(record_type_used_values)
     all_non_used_picklist_values = non_used_dependency_values.union(non_used_recordtype_values)
+    print("non used values: {}".format(all_non_used_picklist_values))
+    
+    if len(all_non_used_picklist_values) > 0:
+        sortedList = sorted(all_non_used_picklist_values, key=lambda item: (int(item.partition(' ')[0])
+                            if item[0].isdigit() else float('inf'), item))
 
-    sortedList = sorted(all_non_used_picklist_values, key=lambda item: (int(item.partition(' ')[0])
-                        if item[0].isdigit() else float('inf'), item))
-
-    for value in sortedList:
-        print(value)
+        for value in sortedList:
+            print(value)
 
     non_used_count = len(all_non_used_picklist_values)
     all_count = len(allValues)
