@@ -471,6 +471,39 @@ class Standard:
         return jsonResponse
 
     ##
+    # Creates the provided record in the recordJson paaram
+    #
+    # @param object         The API name of the object.
+    # @param recordJson     The JSON describing the fields you want to update on
+    #                       the given object. You should pass in a python object
+    #                       and it will be converted to a json string to send the
+    #                       request. This object is just the key value paris
+    #                       for the record update. e.g.:
+    #                           {
+    #                               'BillingCity': 'Bellevue',
+    #                               'BillingState': 'WA'
+    #                           }
+    # @param instanceUrl    This is the instance_url value received from the 
+    #                       login response
+    # @return               Returns .......................................................................
+    ##
+    def createSObjectRow(object, recordJson, accessToken, instanceUrl):
+        patchRowUri = '/sobjects/' + object + '/'
+        headerDetails = Util.getStandardHeader(accessToken)
+
+        dataBodyJson = json.dumps(recordJson, indent=4, separators=(',', ': '))
+
+        response = WebService.Tools.postHTResponse(instanceUrl + Standard.baseStandardUri + 'v' + apiVersion + patchRowUri, dataBodyJson, headerDetails)
+        responseText = ""
+
+        if response.status_code is 204:
+            responseText = "Update Successful"
+        else:
+            responseText = response.text
+
+        return responseText
+
+    ##
     # Updates a specific record with the data in the recordJson param
     #
     # @param object         The API name of the object.

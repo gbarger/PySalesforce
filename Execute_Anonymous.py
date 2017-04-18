@@ -1,6 +1,6 @@
 #!usr/bin/python
 import sys
-import Salesforce
+import PySalesforce
 
 def main():
     filename = ''
@@ -59,18 +59,18 @@ def main():
         sys.exit(1)
 
     # log in to Salesforce to get token and instance url
-    loginResponse = Salesforce.Authentication.getOAuthLogin(loginUsername, loginPassword, loginClientId, loginClientSecret, isProduction)
+    loginResponse = PySalesforce.Authentication.getOAuthLogin(loginUsername, loginPassword, loginClientId, loginClientSecret, isProduction)
 
     accessToken = loginResponse['access_token']
     instanceUrl = loginResponse['instance_url']
 
     # get the code file, and run the anonymous code
     codeFile = open(filename, "r").read()
-    executeResponse = Salesforce.Tooling.executeAnonymous(codeFile, accessToken, instanceUrl)
+    executeResponse = PySalesforce.Tooling.executeAnonymous(codeFile, accessToken, instanceUrl)
     
     print('execute code response: {}'.format(executeResponse))
 
-    logoutResponse = Salesforce.Authentication.getOAuthLogout(accessToken, isProduction)
+    logoutResponse = PySalesforce.Authentication.getOAuthLogout(accessToken, isProduction)
 
     print('logout response: {}'.format(logoutResponse))
 

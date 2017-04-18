@@ -51,26 +51,30 @@ def main():
 
     # get list of orphaned picklist values baed on picklist dependency
     for field in root.findall(fieldsElement):
-        name = field.find(fullNameElement).text
+        try:
+            name = field.find(fullNameElement).text
 
-        if name == fieldToGet:
-            picklist = field.find(picklistElement)
+            if name == fieldToGet:
+                picklist = field.find(picklistElement)
 
-            controllingField = picklist.find(controllingFieldElement)
+                controllingField = picklist.find(controllingFieldElement)
 
-            for picklistValue in picklist.findall(picklistValuesElement):
-                picklistName = picklistValue.find(fullNameElement).text
-                allValues.add(picklistName)
+                for picklistValue in picklist.findall(picklistValuesElement):
+                    picklistName = picklistValue.find(fullNameElement).text
+                    allValues.add(picklistName)
 
-                controllingElements = picklistValue.findall(controllingFieldValuesElement)
+                    controllingElements = picklistValue.findall(controllingFieldValuesElement)
 
-                if controllingField is None:
-                    continue
+                    if controllingField is None:
+                        continue
 
-                if len(controllingElements) == 0:
-                    non_used_dependency_values.add(picklistName);
+                    if len(controllingElements) == 0:
+                        non_used_dependency_values.add(picklistName);
 
-            break
+                break
+        except:
+            # do nothing to catch
+            print("")
 
     # get list of all picklist values referenced across record types
     for recordType in root.findall(recordTypesElement):
@@ -89,7 +93,6 @@ def main():
 
     non_used_recordtype_values = allValues.difference(record_type_used_values)
     all_non_used_picklist_values = non_used_dependency_values.union(non_used_recordtype_values)
-    print("non used values: {}".format(all_non_used_picklist_values))
     
     if len(all_non_used_picklist_values) > 0:
         sortedList = sorted(all_non_used_picklist_values, key=lambda item: (int(item.partition(' ')[0])
