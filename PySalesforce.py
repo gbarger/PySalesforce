@@ -841,13 +841,18 @@ class Bulk:
     #                       login response
     # @return               Returns an array of results for the specified query
     ##
-    def querySObjectRows(objectApiName, query, accessToken, instanceUrl):
+    def querySObjectRows(objectApiName, query, queryAll, accessToken, instanceUrl):
         headerDetails = Util.getBulkHeader(accessToken)
         batchResultsList = []
         queryResultList = []
+
+        queryType = 'query'
+
+        if queryAll:
+            queryType = 'queryAll'
         
         # create the bulk job
-        jobBodyDetails = Util.getBulkJobBody(objectApiName, 'query', None, None)
+        jobBodyDetails = Util.getBulkJobBody(objectApiName, queryType, None, None)
         createJobJsonBody = json.dumps(jobBodyDetails, indent=4, separators=(',', ': '))
         jobCreateResponse = WebService.Tools.postHTResponse(instanceUrl + Bulk.baseBulkUri + Bulk.batchUri, createJobJsonBody, headerDetails)
         jsonJobCreateResponse = json.loads(jobCreateResponse.text)
