@@ -14,6 +14,7 @@ import json
 import WebService
 import urllib
 import time
+import SOAPpy
 
 apiVersion = '37.0'
 
@@ -141,6 +142,9 @@ class Util:
         for i in range(0, len(list), n):
             yield list[i:i + n]
 
+##
+# The Authentication class is used to log in and out of Salesforce
+##
 class Authentication:
     ##
     # this function logs into Salesforce using the oAuth 2.0 password grant type, and 
@@ -882,3 +886,15 @@ class Bulk:
             queryResultList.extend(queryResult)
 
         return queryResultList
+
+##
+# The Metadata API can handle CRUD on Salesforce Metadata like Apex
+# Classes and Visualforce Pages
+##
+class Metadata:
+    METADATA_WSDL_FILE = '/metadata.wsdl'
+    metadata_connection = SOAPpy.WSDL.Proxy(METADATA_WSDL_FILE)
+
+    def retrieve():
+
+        return True

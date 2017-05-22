@@ -11,8 +11,11 @@ The authentication method used in PySalesforce.Authentication.getOAuthLogin uses
 As I continue to update this library, I'll be adding reference links to the Salesforce documentation.
 - [List of Salseforce APIs](https://developer.salesforce.com/page/Salesforce_APIs)
 - [Tooling API](https://developer.salesforce.com/docs/atlas.en-us.api_tooling.meta/api_tooling/intro_rest_resources.htm)
+- [Metadata API](https://developer.salesforce.com/page/An_Introduction_to_Force.com_Metadata)
+- [Streaming API](https://developer.salesforce.com/page/Streaming_API)
 - [REST API](https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/intro_what_is_rest_api.htm)
 - [Bulk API](https://developer.salesforce.com/docs/atlas.en-us.api_asynch.meta/api_asynch/asynch_api_intro.htm)
+- [Chatter REST API](https://developer.salesforce.com/page/Chatter_API)
 - [Bulk API Trailhead Example](https://trailhead-salesforce-com.firelayers.net/en/api_basics/api_basics_bulk)
 
 ## Notes
