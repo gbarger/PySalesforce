@@ -605,9 +605,9 @@ class Bulk:
             response = WebService.Tools.getHTResponse(instanceUrl + Bulk.baseBulkUri + Bulk.batchUri + '/' + jobId, headerDetails)
             jsonResponse = json.loads(response.text)
 
-            print("\nbatches completed/total: {}/{}\n".format(jsonResponse['numberBatchesCompleted'], jsonResponse['numberBatchesTotal']))
+            print("batches completed/total: {}/{}".format(jsonResponse['numberBatchesCompleted'], jsonResponse['numberBatchesTotal']))
 
-            if jsonResponse['numberBatchesQueued'] is 0:
+            if jsonResponse['numberBatchesCompleted'] == jsonResponse['numberBatchesTotal']:
                 break
             else:
                 time.sleep(pollingWait)
@@ -875,7 +875,7 @@ class Bulk:
         jsonCloseResponse = json.loads(closeResponse.text)
 
         # check job status until the job completes
-        Bulk.getJobStatus(jobId, 1, accessToken, instanceUrl)
+        Bulk.getJobStatus(jobId, 5, accessToken, instanceUrl)
 
         # get results
         batchResults = Bulk.getBatchResult(jobId, batchId, accessToken, instanceUrl)
