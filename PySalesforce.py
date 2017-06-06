@@ -14,7 +14,6 @@ import json
 import WebService
 import urllib
 import time
-import SOAPpy
 
 apiVersion = '37.0'
 
@@ -886,15 +885,3 @@ class Bulk:
             queryResultList.extend(queryResult)
 
         return queryResultList
-
-##
-# The Metadata API can handle CRUD on Salesforce Metadata like Apex
-# Classes and Visualforce Pages
-##
-class Metadata:
-    METADATA_WSDL_FILE = '/metadata.wsdl'
-    metadata_connection = SOAPpy.WSDL.Proxy(METADATA_WSDL_FILE)
-
-    def retrieve():
-
-        return True
