@@ -1,0 +1,487 @@
+$ python3 -mzeep ./partner.wsdl -> this is how I got this file
+
+Prefixes:
+     xsd: http://www.w3.org/2001/XMLSchema
+     ns1: urn:partner.soap.sforce.com
+     ns2: urn:fault.partner.soap.sforce.com
+     ns0: urn:sobject.partner.soap.sforce.com
+
+Global elements:
+
+     ns2:InvalidFieldFault(ns2:InvalidFieldFault)
+     ns2:InvalidIdFault(ns2:InvalidIdFault)
+     ns2:InvalidNewPasswordFault(ns2:InvalidNewPasswordFault)
+     ns2:InvalidOldPasswordFault(ns2:InvalidOldPasswordFault)
+     ns2:InvalidQueryLocatorFault(ns2:InvalidQueryLocatorFault)
+     ns2:InvalidSObjectFault(ns2:InvalidSObjectFault)
+     ns2:LoginFault(ns2:LoginFault)
+     ns2:MalformedQueryFault(ns2:MalformedQueryFault)
+     ns2:MalformedSearchFault(ns2:MalformedSearchFault)
+     ns2:UnexpectedErrorFault(ns2:UnexpectedErrorFault)
+     ns2:fault(ns2:ApiFault)
+     ns1:AllOrNoneHeader(allOrNone: xsd:boolean)
+     ns1:AllowFieldTruncationHeader(allowFieldTruncation: xsd:boolean)
+     ns1:AssignmentRuleHeader(assignmentRuleId: ns1:ID, useDefaultRule: xsd:boolean)
+     ns1:CallOptions(client: xsd:string, defaultNamespace: xsd:string)
+     ns1:DebuggingHeader(categories: ns1:LogInfo[], debugLevel: ns1:DebugLevel)
+     ns1:DebuggingInfo(debugLog: xsd:string)
+     ns1:DisableFeedTrackingHeader(disableFeedTracking: xsd:boolean)
+     ns1:DuplicateRuleHeader(allowSave: xsd:boolean, includeRecordDetails: xsd:boolean, runAsCurrentUser: xsd:boolean)
+     ns1:EmailHeader(triggerAutoResponseEmail: xsd:boolean, triggerOtherEmail: xsd:boolean, triggerUserEmail: xsd:boolean)
+     ns1:LimitInfoHeader(limitInfo: ns1:LimitInfo[])
+     ns1:LocaleOptions(language: xsd:string, localizeErrors: xsd:boolean)
+     ns1:LoginScopeHeader(organizationId: ns1:ID, portalId: ns1:ID)
+     ns1:MruHeader(updateMru: xsd:boolean)
+     ns1:OwnerChangeOptions(options: ns1:OwnerChangeOption[])
+     ns1:PackageVersionHeader(packageVersions: ns1:PackageVersion[])
+     ns1:QueryOptions(batchSize: xsd:int)
+     ns1:SessionHeader(sessionId: xsd:string)
+     ns1:StreamingEnabledHeader(streamingEnabled: xsd:boolean)
+     ns1:UserTerritoryDeleteHeader(transferToUserId: ns1:ID)
+     ns1:changeOwnPassword(oldPassword: xsd:string, newPassword: xsd:string)
+     ns1:changeOwnPasswordResponse(result: ns1:ChangeOwnPasswordResult)
+     ns1:convertLead(leadConverts: ns1:LeadConvert[])
+     ns1:convertLeadResponse(result: ns1:LeadConvertResult[])
+     ns1:create(sObjects: ns0:sObject[])
+     ns1:createResponse(result: ns1:SaveResult[])
+     ns1:delete(ids: ns1:ID[])
+     ns1:deleteResponse(result: ns1:DeleteResult[])
+     ns1:describeAllTabs()
+     ns1:describeAllTabsResponse(result: ns1:DescribeTab[])
+     ns1:describeAppMenu(appMenuType: ns1:AppMenuType, networkId: ns1:ID)
+     ns1:describeAppMenuResponse(result: ns1:DescribeAppMenuResult)
+     ns1:describeApprovalLayout(sObjectType: xsd:string, approvalProcessNames: xsd:string[])
+     ns1:describeApprovalLayoutResponse(result: ns1:DescribeApprovalLayoutResult)
+     ns1:describeAvailableQuickActions(contextType: xsd:string)
+     ns1:describeAvailableQuickActionsResponse(result: ns1:DescribeAvailableQuickActionResult[])
+     ns1:describeCompactLayouts(sObjectType: xsd:string, recordTypeIds: ns1:ID[])
+     ns1:describeCompactLayoutsResponse(result: ns1:DescribeCompactLayoutsResult)
+     ns1:describeDataCategoryGroupStructures(pairs: ns1:DataCategoryGroupSobjectTypePair[], topCategoriesOnly: xsd:boolean)
+     ns1:describeDataCategoryGroupStructuresResponse(result: ns1:DescribeDataCategoryGroupStructureResult[])
+     ns1:describeDataCategoryGroups(sObjectType: xsd:string[])
+     ns1:describeDataCategoryGroupsResponse(result: ns1:DescribeDataCategoryGroupResult[])
+     ns1:describeGlobal()
+     ns1:describeGlobalResponse(result: ns1:DescribeGlobalResult)
+     ns1:describeGlobalTheme()
+     ns1:describeGlobalThemeResponse(result: ns1:DescribeGlobalTheme)
+     ns1:describeKnowledgeSettings()
+     ns1:describeKnowledgeSettingsResponse(result: ns1:KnowledgeSettings)
+     ns1:describeLayout(sObjectType: xsd:string, layoutName: xsd:string, recordTypeIds: ns1:ID[])
+     ns1:describeLayoutResponse(result: ns1:DescribeLayoutResult)
+     ns1:describeNouns(nouns: xsd:string[], onlyRenamed: xsd:boolean, includeFields: xsd:boolean)
+     ns1:describeNounsResponse(result: ns1:DescribeNounResult[])
+     ns1:describePathAssistants(sObjectType: xsd:string, picklistValue: xsd:string, recordTypeIds: ns1:ID[])
+     ns1:describePathAssistantsResponse(result: ns1:DescribePathAssistantsResult)
+     ns1:describePrimaryCompactLayouts(sObjectTypes: xsd:string[])
+     ns1:describePrimaryCompactLayoutsResponse(result: ns1:DescribeCompactLayout[])
+     ns1:describeQuickActions(quickActions: xsd:string[])
+     ns1:describeQuickActionsResponse(result: ns1:DescribeQuickActionResult[])
+     ns1:describeSObject(sObjectType: xsd:string)
+     ns1:describeSObjectListViews(sObjectType: xsd:string, recentsOnly: xsd:boolean, isSoqlCompatible: ns1:listViewIsSoqlCompatible, limit: xsd:int, offset: xsd:int)
+     ns1:describeSObjectListViewsResponse(result: ns1:DescribeSoqlListViewResult)
+     ns1:describeSObjectResponse(result: ns1:DescribeSObjectResult)
+     ns1:describeSObjects(sObjectType: xsd:string[])
+     ns1:describeSObjectsResponse(result: ns1:DescribeSObjectResult[])
+     ns1:describeSearchLayouts(sObjectType: xsd:string[])
+     ns1:describeSearchLayoutsResponse(result: ns1:DescribeSearchLayoutResult[])
+     ns1:describeSearchScopeOrder()
+     ns1:describeSearchScopeOrderResponse(result: ns1:DescribeSearchScopeOrderResult[])
+     ns1:describeSearchableEntities(includeOnlyEntitiesWithTabs: xsd:boolean)
+     ns1:describeSearchableEntitiesResponse(result: ns1:DescribeSearchableEntityResult[])
+     ns1:describeSoftphoneLayout()
+     ns1:describeSoftphoneLayoutResponse(result: ns1:DescribeSoftphoneLayoutResult)
+     ns1:describeSoqlListViews(request: ns1:DescribeSoqlListViewsRequest)
+     ns1:describeSoqlListViewsResponse(result: ns1:DescribeSoqlListViewResult)
+     ns1:describeTabs()
+     ns1:describeTabsResponse(result: ns1:DescribeTabSetResult[])
+     ns1:describeTheme(sobjectType: xsd:string[])
+     ns1:describeThemeResponse(result: ns1:DescribeThemeResult)
+     ns1:describeVisualForce(includeAllDetails: xsd:boolean, namespacePrefix: xsd:string)
+     ns1:describeVisualForceResponse(result: ns1:DescribeVisualForceResult)
+     ns1:emptyRecycleBin(ids: ns1:ID[])
+     ns1:emptyRecycleBinResponse(result: ns1:EmptyRecycleBinResult[])
+     ns1:executeListView(request: ns1:ExecuteListViewRequest)
+     ns1:executeListViewResponse(result: ns1:ExecuteListViewResult)
+     ns1:findDuplicates(sObjects: ns0:sObject[])
+     ns1:findDuplicatesByIds(ids: ns1:ID[])
+     ns1:findDuplicatesByIdsResponse(result: ns1:FindDuplicatesResult[])
+     ns1:findDuplicatesResponse(result: ns1:FindDuplicatesResult[])
+     ns1:getDeleted(sObjectType: xsd:string, startDate: xsd:dateTime, endDate: xsd:dateTime)
+     ns1:getDeletedResponse(result: ns1:GetDeletedResult)
+     ns1:getServerTimestamp()
+     ns1:getServerTimestampResponse(result: ns1:GetServerTimestampResult)
+     ns1:getUpdated(sObjectType: xsd:string, startDate: xsd:dateTime, endDate: xsd:dateTime)
+     ns1:getUpdatedResponse(result: ns1:GetUpdatedResult)
+     ns1:getUserInfo()
+     ns1:getUserInfoResponse(result: ns1:GetUserInfoResult)
+     ns1:invalidateSessions(sessionIds: xsd:string[])
+     ns1:invalidateSessionsResponse(result: ns1:InvalidateSessionsResult[])
+     ns1:login(username: xsd:string, password: xsd:string)
+     ns1:loginResponse(result: ns1:LoginResult)
+     ns1:logout()
+     ns1:logoutResponse()
+     ns1:merge(request: ns1:MergeRequest[])
+     ns1:mergeResponse(result: ns1:MergeResult[])
+     ns1:performQuickActions(quickActions: ns1:PerformQuickActionRequest[])
+     ns1:performQuickActionsResponse(result: ns1:PerformQuickActionResult[])
+     ns1:process(actions: ns1:ProcessRequest[])
+     ns1:processResponse(result: ns1:ProcessResult[])
+     ns1:query(queryString: xsd:string)
+     ns1:queryAll(queryString: xsd:string)
+     ns1:queryAllResponse(result: ns1:QueryResult)
+     ns1:queryMore(queryLocator: ns1:QueryLocator)
+     ns1:queryMoreResponse(result: ns1:QueryResult)
+     ns1:queryResponse(result: ns1:QueryResult)
+     ns1:renderEmailTemplate(renderRequests: ns1:RenderEmailTemplateRequest[])
+     ns1:renderEmailTemplateResponse(result: ns1:RenderEmailTemplateResult[])
+     ns1:renderStoredEmailTemplate(request: ns1:RenderStoredEmailTemplateRequest)
+     ns1:renderStoredEmailTemplateResponse(result: ns1:RenderStoredEmailTemplateResult)
+     ns1:resetPassword(userId: ns1:ID)
+     ns1:resetPasswordResponse(result: ns1:ResetPasswordResult)
+     ns1:retrieve(fieldList: xsd:string, sObjectType: xsd:string, ids: ns1:ID[])
+     ns1:retrieveQuickActionTemplates(quickActionNames: xsd:string[], contextId: ns1:ID)
+     ns1:retrieveQuickActionTemplatesResponse(result: ns1:QuickActionTemplateResult[])
+     ns1:retrieveResponse(result: ns0:sObject[])
+     ns1:search(searchString: xsd:string)
+     ns1:searchResponse(result: ns1:SearchResult)
+     ns1:sendEmail(messages: ns1:Email[])
+     ns1:sendEmailMessage(ids: ns1:ID[])
+     ns1:sendEmailMessageResponse(result: ns1:SendEmailResult[])
+     ns1:sendEmailResponse(result: ns1:SendEmailResult[])
+     ns1:setPassword(userId: ns1:ID, password: xsd:string)
+     ns1:setPasswordResponse(result: ns1:SetPasswordResult)
+     ns1:undelete(ids: ns1:ID[])
+     ns1:undeleteResponse(result: ns1:UndeleteResult[])
+     ns1:update(sObjects: ns0:sObject[])
+     ns1:updateResponse(result: ns1:SaveResult[])
+     ns1:upsert(externalIDFieldName: xsd:string, sObjects: ns0:sObject[])
+     ns1:upsertResponse(result: ns1:UpsertResult[])
+
+Global types:
+     xsd:anyType
+     xsd:ENTITIES
+     xsd:ENTITY
+     xsd:ID
+     xsd:IDREF
+     xsd:IDREFS
+     xsd:NCName
+     xsd:NMTOKEN
+     xsd:NMTOKENS
+     xsd:NOTATION
+     xsd:Name
+     xsd:QName
+     xsd:anySimpleType
+     xsd:anyURI
+     xsd:base64Binary
+     xsd:boolean
+     xsd:byte
+     xsd:date
+     xsd:dateTime
+     xsd:decimal
+     xsd:double
+     xsd:duration
+     xsd:float
+     xsd:gDay
+     xsd:gMonth
+     xsd:gMonthDay
+     xsd:gYear
+     xsd:gYearMonth
+     xsd:hexBinary
+     xsd:int
+     xsd:integer
+     xsd:language
+     xsd:long
+     xsd:negativeInteger
+     xsd:nonNegativeInteger
+     xsd:nonPositiveInteger
+     xsd:normalizedString
+     xsd:positiveInteger
+     xsd:short
+     xsd:string
+     xsd:time
+     xsd:token
+     xsd:unsignedByte
+     xsd:unsignedInt
+     xsd:unsignedLong
+     xsd:unsignedShort
+     ns2:ApiFault(exceptionCode: ns2:ExceptionCode, exceptionMessage: xsd:string, extendedErrorDetails: ns1:ExtendedErrorDetails[])
+     ns2:ApiQueryFault(exceptionCode: ns2:ExceptionCode, exceptionMessage: xsd:string, extendedErrorDetails: ns1:ExtendedErrorDetails[], row: xsd:int, column: xsd:int)
+     ns2:ExceptionCode
+     ns2:FaultCode
+     ns2:InvalidFieldFault(exceptionCode: ns2:ExceptionCode, exceptionMessage: xsd:string, extendedErrorDetails: ns1:ExtendedErrorDetails[], row: xsd:int, column: xsd:int)
+     ns2:InvalidIdFault(exceptionCode: ns2:ExceptionCode, exceptionMessage: xsd:string, extendedErrorDetails: ns1:ExtendedErrorDetails[])
+     ns2:InvalidNewPasswordFault(exceptionCode: ns2:ExceptionCode, exceptionMessage: xsd:string, extendedErrorDetails: ns1:ExtendedErrorDetails[])
+     ns2:InvalidOldPasswordFault(exceptionCode: ns2:ExceptionCode, exceptionMessage: xsd:string, extendedErrorDetails: ns1:ExtendedErrorDetails[])
+     ns2:InvalidQueryLocatorFault(exceptionCode: ns2:ExceptionCode, exceptionMessage: xsd:string, extendedErrorDetails: ns1:ExtendedErrorDetails[])
+     ns2:InvalidSObjectFault(exceptionCode: ns2:ExceptionCode, exceptionMessage: xsd:string, extendedErrorDetails: ns1:ExtendedErrorDetails[], row: xsd:int, column: xsd:int)
+     ns2:LoginFault(exceptionCode: ns2:ExceptionCode, exceptionMessage: xsd:string, extendedErrorDetails: ns1:ExtendedErrorDetails[])
+     ns2:MalformedQueryFault(exceptionCode: ns2:ExceptionCode, exceptionMessage: xsd:string, extendedErrorDetails: ns1:ExtendedErrorDetails[], row: xsd:int, column: xsd:int)
+     ns2:MalformedSearchFault(exceptionCode: ns2:ExceptionCode, exceptionMessage: xsd:string, extendedErrorDetails: ns1:ExtendedErrorDetails[], row: xsd:int, column: xsd:int)
+     ns2:UnexpectedErrorFault(exceptionCode: ns2:ExceptionCode, exceptionMessage: xsd:string, extendedErrorDetails: ns1:ExtendedErrorDetails[])
+     ns1:ActionOverride(formFactor: xsd:string, isAvailableInTouch: xsd:boolean, name: xsd:string, pageId: ns1:ID, url: xsd:string)
+     ns1:AdditionalInformationMap(name: xsd:string, value: xsd:string)
+     ns1:AnalyticsCloudComponent(displayLines: xsd:int, tabOrder: xsd:int, type: ns1:layoutComponentType, value: xsd:string, error: xsd:string, filter: xsd:string, height: xsd:string, hideOnError: xsd:boolean, showSharing: xsd:boolean, showTitle: xsd:boolean, width: xsd:string)
+     ns1:AppMenuType
+     ns1:Article
+     ns1:AttachmentRetrievalOption
+     ns1:Canvas(displayLines: xsd:int, tabOrder: xsd:int, type: ns1:layoutComponentType, value: xsd:string, displayLocation: xsd:string, referenceId: xsd:string, showLabel: xsd:boolean, showScrollbars: xsd:boolean, suggestedHeight: xsd:string, suggestedWidth: xsd:string)
+     ns1:CaseType
+     ns1:ChangeOwnPasswordResult()
+     ns1:ChildRelationship(cascadeDelete: xsd:boolean, childSObject: xsd:string, deprecatedAndHidden: xsd:boolean, field: xsd:string, junctionIdListNames: xsd:string[], junctionReferenceTo: xsd:string[], relationshipName: xsd:string, restrictedDelete: xsd:boolean)
+     ns1:CustomLinkComponent(displayLines: xsd:int, tabOrder: xsd:int, type: ns1:layoutComponentType, value: xsd:string, customLink: ns1:DescribeLayoutButton)
+     ns1:DataCategory(childCategories: ns1:DataCategory[], label: xsd:string, name: xsd:string)
+     ns1:DataCategoryGroupSobjectTypePair(dataCategoryGroupName: xsd:string, sobject: xsd:string)
+     ns1:DebugLevel
+     ns1:DeleteResult(errors: ns1:Error[], id: ns1:ID, success: xsd:boolean)
+     ns1:DeletedRecord(deletedDate: xsd:dateTime, id: ns1:ID)
+     ns1:DescribeAppMenuItem(colors: ns1:DescribeColor[], content: xsd:string, icons: ns1:DescribeIcon[], label: xsd:string, name: xsd:string, type: xsd:string, url: xsd:string)
+     ns1:DescribeAppMenuResult(appMenuItems: ns1:DescribeAppMenuItem[])
+     ns1:DescribeApprovalLayout(id: ns1:ID, label: xsd:string, layoutItems: ns1:DescribeLayoutItem[], name: xsd:string)
+     ns1:DescribeApprovalLayoutResult(approvalLayouts: ns1:DescribeApprovalLayout[])
+     ns1:DescribeAvailableQuickActionResult(actionEnumOrId: xsd:string, label: xsd:string, name: xsd:string, type: xsd:string)
+     ns1:DescribeColor(color: xsd:string, context: xsd:string, theme: xsd:string)
+     ns1:DescribeColumn(field: xsd:string, format: xsd:string, label: xsd:string, name: xsd:string)
+     ns1:DescribeCompactLayout(actions: ns1:DescribeLayoutButton[], fieldItems: ns1:DescribeLayoutItem[], id: ns1:ID, imageItems: ns1:DescribeLayoutItem[], label: xsd:string, name: xsd:string, objectType: xsd:string)
+     ns1:DescribeCompactLayoutsResult(compactLayouts: ns1:DescribeCompactLayout[], defaultCompactLayoutId: ns1:ID, recordTypeCompactLayoutMappings: ns1:RecordTypeCompactLayoutMapping[])
+     ns1:DescribeDataCategoryGroupResult(categoryCount: xsd:int, description: xsd:string, label: xsd:string, name: xsd:string, sobject: xsd:string)
+     ns1:DescribeDataCategoryGroupStructureResult(description: xsd:string, label: xsd:string, name: xsd:string, sobject: xsd:string, topCategories: ns1:DataCategory[])
+     ns1:DescribeGlobalResult(encoding: xsd:string, maxBatchSize: xsd:int, sobjects: ns1:DescribeGlobalSObjectResult[])
+     ns1:DescribeGlobalSObjectResult(activateable: xsd:boolean, createable: xsd:boolean, custom: xsd:boolean, customSetting: xsd:boolean, deletable: xsd:boolean, deprecatedAndHidden: xsd:boolean, feedEnabled: xsd:boolean, hasSubtypes: xsd:boolean, idEnabled: xsd:boolean, isSubtype: xsd:boolean, keyPrefix: xsd:string, label: xsd:string, labelPlural: xsd:string, layoutable: xsd:boolean, mergeable: xsd:boolean, mruEnabled: xsd:boolean, name: xsd:string, queryable: xsd:boolean, replicateable: xsd:boolean, retrieveable: xsd:boolean, searchable: xsd:boolean, triggerable: xsd:boolean, undeletable: xsd:boolean, updateable: xsd:boolean)
+     ns1:DescribeGlobalTheme(global: ns1:DescribeGlobalResult, theme: ns1:DescribeThemeResult)
+     ns1:DescribeIcon(contentType: xsd:string, height: xsd:int, theme: xsd:string, url: xsd:string, width: xsd:int)
+     ns1:DescribeLayout(buttonLayoutSection: ns1:DescribeLayoutButtonSection, detailLayoutSections: ns1:DescribeLayoutSection[], editLayoutSections: ns1:DescribeLayoutSection[], feedView: ns1:DescribeLayoutFeedView, highlightsPanelLayoutSection: ns1:DescribeLayoutSection, id: ns1:ID, quickActionList: ns1:DescribeQuickActionListResult, relatedContent: ns1:RelatedContent, relatedLists: ns1:RelatedList[], saveOptions: ns1:DescribeLayoutSaveOption[])
+     ns1:DescribeLayoutButton(behavior: ns1:WebLinkWindowType, colors: ns1:DescribeColor[], content: xsd:string, contentSource: ns1:WebLinkType, custom: xsd:boolean, encoding: xsd:string, height: xsd:int, icons: ns1:DescribeIcon[], label: xsd:string, menubar: xsd:boolean, name: xsd:string, overridden: xsd:boolean, resizeable: xsd:boolean, scrollbars: xsd:boolean, showsLocation: xsd:boolean, showsStatus: xsd:boolean, toolbar: xsd:boolean, url: xsd:string, width: xsd:int, windowPosition: ns1:WebLinkPosition)
+     ns1:DescribeLayoutButtonSection(detailButtons: ns1:DescribeLayoutButton[])
+     ns1:DescribeLayoutComponent(displayLines: xsd:int, tabOrder: xsd:int, type: ns1:layoutComponentType, value: xsd:string)
+     ns1:DescribeLayoutFeedFilter(label: xsd:string, name: xsd:string, type: ns1:FeedLayoutFilterType)
+     ns1:DescribeLayoutFeedView(feedFilters: ns1:DescribeLayoutFeedFilter[])
+     ns1:DescribeLayoutItem(editableForNew: xsd:boolean, editableForUpdate: xsd:boolean, label: xsd:string, layoutComponents: ns1:DescribeLayoutComponent[], placeholder: xsd:boolean, required: xsd:boolean)
+     ns1:DescribeLayoutResult(layouts: ns1:DescribeLayout[], recordTypeMappings: ns1:RecordTypeMapping[], recordTypeSelectorRequired: xsd:boolean)
+     ns1:DescribeLayoutRow(layoutItems: ns1:DescribeLayoutItem[], numItems: xsd:int)
+     ns1:DescribeLayoutSaveOption(defaultValue: xsd:boolean, isDisplayed: xsd:boolean, label: xsd:string, name: xsd:string, restHeaderName: xsd:string, soapHeaderName: xsd:string)
+     ns1:DescribeLayoutSection(collapsed: xsd:boolean, columns: xsd:int, heading: xsd:string, layoutRows: ns1:DescribeLayoutRow[], layoutSectionId: ns1:ID, parentLayoutId: ns1:ID, rows: xsd:int, tabOrder: ns1:TabOrderType, useCollapsibleSection: xsd:boolean, useHeading: xsd:boolean)
+     ns1:DescribeNounResult(caseValues: ns1:NameCaseValue[], developerName: xsd:string, gender: ns1:Gender, name: xsd:string, pluralAlias: xsd:string, startsWith: ns1:StartsWith)
+     ns1:DescribePathAssistant(active: xsd:boolean, apiName: xsd:string, label: xsd:string, pathPicklistField: xsd:string, picklistsForRecordType: ns1:PicklistForRecordType[], recordTypeId: ns1:ID, steps: ns1:DescribePathAssistantStep[])
+     ns1:DescribePathAssistantField(apiName: xsd:string, label: xsd:string, readOnly: xsd:boolean, required: xsd:boolean)
+     ns1:DescribePathAssistantStep(closed: xsd:boolean, converted: xsd:boolean, fields: ns1:DescribePathAssistantField[], info: xsd:string, layoutSection: ns1:DescribeLayoutSection, picklistLabel: xsd:string, picklistValue: xsd:string, won: xsd:boolean)
+     ns1:DescribePathAssistantsResult(pathAssistants: ns1:DescribePathAssistant[])
+     ns1:DescribeQuickActionDefaultValue(defaultValue: xsd:string, field: xsd:string)
+     ns1:DescribeQuickActionListItemResult(accessLevelRequired: ns1:ShareAccessLevel, colors: ns1:DescribeColor[], iconUrl: xsd:string, icons: ns1:DescribeIcon[], label: xsd:string, miniIconUrl: xsd:string, quickActionName: xsd:string, targetSobjectType: xsd:string, type: xsd:string)
+     ns1:DescribeQuickActionListResult(quickActionListItems: ns1:DescribeQuickActionListItemResult[])
+     ns1:DescribeQuickActionResult(accessLevelRequired: ns1:ShareAccessLevel, actionEnumOrId: xsd:string, canvasApplicationId: ns1:ID, canvasApplicationName: xsd:string, colors: ns1:DescribeColor[], contextSobjectType: xsd:string, defaultValues: ns1:DescribeQuickActionDefaultValue[], height: xsd:int, iconName: xsd:string, iconUrl: xsd:string, icons: ns1:DescribeIcon[], label: xsd:string, layout: ns1:DescribeLayoutSection, lightningComponentBundleId: ns1:ID, lightningComponentBundleName: xsd:string, lightningComponentQualifiedName: xsd:string, miniIconUrl: xsd:string, name: xsd:string, showQuickActionLcHeader: xsd:boolean, showQuickActionVfHeader: xsd:boolean, targetParentField: xsd:string, targetRecordTypeId: ns1:ID, targetSobjectType: xsd:string, type: xsd:string, visualforcePageName: xsd:string, visualforcePageUrl: xsd:string, width: xsd:int)
+     ns1:DescribeRelatedContentItem(describeLayoutItem: ns1:DescribeLayoutItem)
+     ns1:DescribeSObjectResult(actionOverrides: ns1:ActionOverride[], activateable: xsd:boolean, childRelationships: ns1:ChildRelationship[], compactLayoutable: xsd:boolean, createable: xsd:boolean, custom: xsd:boolean, customSetting: xsd:boolean, deletable: xsd:boolean, deprecatedAndHidden: xsd:boolean, feedEnabled: xsd:boolean, fields: ns1:Field[], hasSubtypes: xsd:boolean, idEnabled: xsd:boolean, isSubtype: xsd:boolean, keyPrefix: xsd:string, label: xsd:string, labelPlural: xsd:string, layoutable: xsd:boolean, mergeable: xsd:boolean, mruEnabled: xsd:boolean, name: xsd:string, namedLayoutInfos: ns1:NamedLayoutInfo[], networkScopeFieldName: xsd:string, queryable: xsd:boolean, recordTypeInfos: ns1:RecordTypeInfo[], replicateable: xsd:boolean, retrieveable: xsd:boolean, searchLayoutable: xsd:boolean, searchable: xsd:boolean, supportedScopes: ns1:ScopeInfo[], triggerable: xsd:boolean, undeletable: xsd:boolean, updateable: xsd:boolean, urlDetail: xsd:string, urlEdit: xsd:string, urlNew: xsd:string)
+     ns1:DescribeSearchLayoutResult(errorMsg: xsd:string, label: xsd:string, limitRows: xsd:int, objectType: xsd:string, searchColumns: ns1:DescribeColumn[])
+     ns1:DescribeSearchScopeOrderResult(keyPrefix: xsd:string, name: xsd:string)
+     ns1:DescribeSearchableEntityResult(label: xsd:string, name: xsd:string, pluralLabel: xsd:string)
+     ns1:DescribeSoftphoneLayoutCallType(infoFields: ns1:DescribeSoftphoneLayoutInfoField[], name: xsd:string, screenPopOptions: ns1:DescribeSoftphoneScreenPopOption[], screenPopsOpenWithin: xsd:string, sections: ns1:DescribeSoftphoneLayoutSection[])
+     ns1:DescribeSoftphoneLayoutInfoField(name: xsd:string)
+     ns1:DescribeSoftphoneLayoutItem(itemApiName: xsd:string)
+     ns1:DescribeSoftphoneLayoutResult(callTypes: ns1:DescribeSoftphoneLayoutCallType[], id: ns1:ID, name: xsd:string)
+     ns1:DescribeSoftphoneLayoutSection(entityApiName: xsd:string, items: ns1:DescribeSoftphoneLayoutItem[])
+     ns1:DescribeSoftphoneScreenPopOption(matchType: xsd:string, screenPopData: xsd:string, screenPopType: xsd:string)
+     ns1:DescribeSoqlListView(columns: ns1:ListViewColumn[], id: ns1:ID, orderBy: ns1:ListViewOrderBy[], query: xsd:string, scope: xsd:string, sobjectType: xsd:string, whereCondition: ns1:SoqlWhereCondition)
+     ns1:DescribeSoqlListViewParams(developerNameOrId: xsd:string, sobjectType: xsd:string)
+     ns1:DescribeSoqlListViewResult(describeSoqlListViews: ns1:DescribeSoqlListView[])
+     ns1:DescribeSoqlListViewsRequest(listViewParams: ns1:DescribeSoqlListViewParams[])
+     ns1:DescribeTab(colors: ns1:DescribeColor[], custom: xsd:boolean, iconUrl: xsd:string, icons: ns1:DescribeIcon[], label: xsd:string, miniIconUrl: xsd:string, name: xsd:string, sobjectName: xsd:string, url: xsd:string)
+     ns1:DescribeTabSetResult(description: xsd:string, label: xsd:string, logoUrl: xsd:string, namespace: xsd:string, selected: xsd:boolean, tabSetId: xsd:string, tabs: ns1:DescribeTab[])
+     ns1:DescribeThemeItem(colors: ns1:DescribeColor[], icons: ns1:DescribeIcon[], name: xsd:string)
+     ns1:DescribeThemeResult(themeItems: ns1:DescribeThemeItem[])
+     ns1:DescribeVisualForceResult(domain: xsd:string)
+     ns1:DuplicateError(extendedErrorDetails: ns1:ExtendedErrorDetails[], fields: xsd:string[], message: xsd:string, statusCode: ns1:StatusCode, duplicateResult: ns1:DuplicateResult)
+     ns1:DuplicateResult(allowSave: xsd:boolean, duplicateRule: xsd:string, duplicateRuleEntityType: xsd:string, errorMessage: xsd:string, matchResults: ns1:MatchResult[])
+     ns1:Email(bccSender: xsd:boolean, emailPriority: ns1:EmailPriority, replyTo: xsd:string, saveAsActivity: xsd:boolean, senderDisplayName: xsd:string, subject: xsd:string, useSignature: xsd:boolean)
+     ns1:EmailFileAttachment(body: xsd:base64Binary, contentType: xsd:string, fileName: xsd:string, id: ns1:ID, inline: xsd:boolean)
+     ns1:EmailPriority
+     ns1:EmptyRecycleBinResult(errors: ns1:Error[], id: ns1:ID, success: xsd:boolean)
+     ns1:EntitySearchMetadata(entityName: xsd:string, fieldMetadata: ns1:FieldLevelSearchMetadata[], spellCorrectionMetadata: ns1:EntitySpellCorrectionMetadata)
+     ns1:EntitySpellCorrectionMetadata(correctedQuery: xsd:string, hasNonCorrectedResults: xsd:boolean)
+     ns1:Error(extendedErrorDetails: ns1:ExtendedErrorDetails[], fields: xsd:string[], message: xsd:string, statusCode: ns1:StatusCode)
+     ns1:ExecuteListViewRequest(developerNameOrId: xsd:string, limit: xsd:int, offset: xsd:int, orderBy: ns1:ListViewOrderBy[], sobjectType: xsd:string)
+     ns1:ExecuteListViewResult(columns: ns1:ListViewColumn[], developerName: xsd:string, done: xsd:boolean, id: ns1:ID, label: xsd:string, records: ns1:ListViewRecord[], size: xsd:int)
+     ns1:ExtendedErrorCode
+     ns1:ExtendedErrorDetails(extendedErrorCode: ns1:ExtendedErrorCode, _value_1: ANY[])
+     ns1:FeedLayoutFilterType
+     ns1:Field(aggregatable: xsd:boolean, autoNumber: xsd:boolean, byteLength: xsd:int, calculated: xsd:boolean, calculatedFormula: xsd:string, cascadeDelete: xsd:boolean, caseSensitive: xsd:boolean, compoundFieldName: xsd:string, controllerName: xsd:string, createable: xsd:boolean, custom: xsd:boolean, defaultValue: None, defaultValueFormula: xsd:string, defaultedOnCreate: xsd:boolean, dependentPicklist: xsd:boolean, deprecatedAndHidden: xsd:boolean, digits: xsd:int, displayLocationInDecimal: xsd:boolean, encrypted: xsd:boolean, externalId: xsd:boolean, extraTypeInfo: xsd:string, filterable: xsd:boolean, filteredLookupInfo: ns1:FilteredLookupInfo, groupable: xsd:boolean, highScaleNumber: xsd:boolean, htmlFormatted: xsd:boolean, idLookup: xsd:boolean, inlineHelpText: xsd:string, label: xsd:string, length: xsd:int, mask: xsd:string, maskType: xsd:string, name: xsd:string, nameField: xsd:boolean, namePointing: xsd:boolean, nillable: xsd:boolean, permissionable: xsd:boolean, picklistValues: ns1:PicklistEntry[], polymorphicForeignKey: xsd:boolean, precision: xsd:int, queryByDistance: xsd:boolean, referenceTargetField: xsd:string, referenceTo: xsd:string[], relationshipName: xsd:string, relationshipOrder: xsd:int, restrictedDelete: xsd:boolean, restrictedPicklist: xsd:boolean, scale: xsd:int, searchPrefilterable: xsd:boolean, soapType: ns1:soapType, sortable: xsd:boolean, type: ns1:fieldType, unique: xsd:boolean, updateable: xsd:boolean, writeRequiresMasterRead: xsd:boolean)
+     ns1:FieldComponent(displayLines: xsd:int, tabOrder: xsd:int, type: ns1:layoutComponentType, value: xsd:string, field: ns1:Field)
+     ns1:FieldDiff(difference: ns1:differenceType, name: xsd:string)
+     ns1:FieldLayoutComponent(displayLines: xsd:int, tabOrder: xsd:int, type: ns1:layoutComponentType, value: xsd:string, components: ns1:DescribeLayoutComponent[], fieldType: ns1:fieldType)
+     ns1:FieldLevelSearchMetadata(label: xsd:string, name: xsd:string, type: xsd:string)
+     ns1:FilteredLookupInfo(controllingFields: xsd:string[], dependent: xsd:boolean, optionalFilter: xsd:boolean)
+     ns1:FindDuplicatesResult(duplicateResults: ns1:DuplicateResult[], errors: ns1:Error[], success: xsd:boolean)
+     ns1:Gender
+     ns1:GetDeletedResult(deletedRecords: ns1:DeletedRecord[], earliestDateAvailable: xsd:dateTime, latestDateCovered: xsd:dateTime)
+     ns1:GetServerTimestampResult(timestamp: xsd:dateTime)
+     ns1:GetUpdatedResult(ids: ns1:ID[], latestDateCovered: xsd:dateTime)
+     ns1:GetUserInfoResult(accessibilityMode: xsd:boolean, chatterExternal: xsd:boolean, currencySymbol: xsd:string, orgAttachmentFileSizeLimit: xsd:int, orgDefaultCurrencyIsoCode: xsd:string, orgDefaultCurrencyLocale: xsd:string, orgDisallowHtmlAttachments: xsd:boolean, orgHasPersonAccounts: xsd:boolean, organizationId: ns1:ID, organizationMultiCurrency: xsd:boolean, organizationName: xsd:string, profileId: ns1:ID, roleId: ns1:ID, sessionSecondsValid: xsd:int, userDefaultCurrencyIsoCode: xsd:string, userEmail: xsd:string, userFullName: xsd:string, userId: ns1:ID, userLanguage: xsd:string, userLocale: xsd:string, userName: xsd:string, userTimeZone: xsd:string, userType: xsd:string, userUiSkin: xsd:string)
+     ns1:GrammaticalNumber
+     ns1:ID
+     ns1:InvalidateSessionsResult(errors: ns1:Error[], success: xsd:boolean)
+     ns1:JunctionIdListNames(names: xsd:string[])
+     ns1:KnowledgeLanguageItem(active: xsd:boolean, name: xsd:string)
+     ns1:KnowledgeSettings(defaultLanguage: xsd:string, knowledgeEnabled: xsd:boolean, languages: ns1:KnowledgeLanguageItem[])
+     ns1:LabelsSearchMetadata(entityFieldLabels: ns1:NameValuePair[], entityName: xsd:string)
+     ns1:LeadConvert(accountId: ns1:ID, contactId: ns1:ID, convertedStatus: xsd:string, doNotCreateOpportunity: xsd:boolean, leadId: ns1:ID, opportunityId: ns1:ID, opportunityName: xsd:string, overwriteLeadSource: xsd:boolean, ownerId: ns1:ID, sendNotificationEmail: xsd:boolean)
+     ns1:LeadConvertResult(accountId: ns1:ID, contactId: ns1:ID, errors: ns1:Error[], leadId: ns1:ID, opportunityId: ns1:ID, success: xsd:boolean)
+     ns1:LimitInfo(current: xsd:int, limit: xsd:int, type: xsd:string)
+     ns1:ListViewColumn(ascendingLabel: xsd:string, descendingLabel: xsd:string, fieldNameOrPath: xsd:string, hidden: xsd:boolean, label: xsd:string, selectListItem: xsd:string, sortDirection: ns1:orderByDirection, sortIndex: xsd:int, sortable: xsd:boolean, type: ns1:fieldType)
+     ns1:ListViewOrderBy(fieldNameOrPath: xsd:string, nullsPosition: ns1:orderByNullsPosition, sortDirection: ns1:orderByDirection)
+     ns1:ListViewRecord(columns: ns1:ListViewRecordColumn[])
+     ns1:ListViewRecordColumn(fieldNameOrPath: xsd:string, value: xsd:string)
+     ns1:LogCategory
+     ns1:LogCategoryLevel
+     ns1:LogInfo(category: ns1:LogCategory, level: ns1:LogCategoryLevel)
+     ns1:LoginResult(metadataServerUrl: xsd:string, passwordExpired: xsd:boolean, sandbox: xsd:boolean, serverUrl: xsd:string, sessionId: xsd:string, userId: ns1:ID, userInfo: ns1:GetUserInfoResult)
+     ns1:MassEmailMessage(bccSender: xsd:boolean, emailPriority: ns1:EmailPriority, replyTo: xsd:string, saveAsActivity: xsd:boolean, senderDisplayName: xsd:string, subject: xsd:string, useSignature: xsd:boolean, description: xsd:string, targetObjectIds: ns1:ID[], templateId: ns1:ID, whatIds: ns1:ID[])
+     ns1:MatchRecord(additionalInformation: ns1:AdditionalInformationMap[], fieldDiffs: ns1:FieldDiff[], matchConfidence: xsd:double, record: ns0:sObject)
+     ns1:MatchResult(entityType: xsd:string, errors: ns1:Error[], matchEngine: xsd:string, matchRecords: ns1:MatchRecord[], rule: xsd:string, size: xsd:int, success: xsd:boolean)
+     ns1:MergeRequest(additionalInformationMap: ns1:AdditionalInformationMap[], masterRecord: ns0:sObject, recordToMergeIds: ns1:ID[])
+     ns1:MergeResult(errors: ns1:Error[], id: ns1:ID, mergedRecordIds: ns1:ID[], success: xsd:boolean, updatedRelatedIds: ns1:ID[])
+     ns1:NameCaseValue(article: ns1:Article, caseType: ns1:CaseType, number: ns1:GrammaticalNumber, possessive: ns1:Possessive, value: xsd:string)
+     ns1:NameObjectValuePair(name: xsd:string, value: None[])
+     ns1:NameValuePair(name: xsd:string, value: xsd:string)
+     ns1:NamedLayoutInfo(name: xsd:string)
+     ns1:OwnerChangeOption(type: ns1:OwnerChangeOptionType, execute: xsd:boolean)
+     ns1:OwnerChangeOptionType
+     ns1:PackageVersion(majorNumber: xsd:int, minorNumber: xsd:int, namespace: xsd:string)
+     ns1:PerformQuickActionRequest(contextId: ns1:ID, quickActionName: xsd:string, records: ns0:sObject[])
+     ns1:PerformQuickActionResult(contextId: ns1:ID, created: xsd:boolean, errors: ns1:Error[], feedItemIds: ns1:ID[], ids: ns1:ID[], success: xsd:boolean, successMessage: xsd:string)
+     ns1:PicklistEntry(active: xsd:boolean, defaultValue: xsd:boolean, label: xsd:string, validFor: xsd:base64Binary, value: xsd:string)
+     ns1:PicklistForRecordType(picklistName: xsd:string, picklistValues: ns1:PicklistEntry[])
+     ns1:Possessive
+     ns1:ProcessRequest(comments: xsd:string, nextApproverIds: ns1:ID[])
+     ns1:ProcessResult(actorIds: ns1:ID[], entityId: ns1:ID, errors: ns1:Error[], instanceId: ns1:ID, instanceStatus: xsd:string, newWorkitemIds: ns1:ID[], success: xsd:boolean)
+     ns1:ProcessSubmitRequest(comments: xsd:string, nextApproverIds: ns1:ID[], objectId: ns1:ID, submitterId: ns1:ID, processDefinitionNameOrId: xsd:string, skipEntryCriteria: xsd:boolean)
+     ns1:ProcessWorkitemRequest(comments: xsd:string, nextApproverIds: ns1:ID[], action: xsd:string, workitemId: ns1:ID)
+     ns1:QueryLocator
+     ns1:QueryResult(done: xsd:boolean, queryLocator: ns1:QueryLocator, records: ns0:sObject[], size: xsd:int)
+     ns1:QuickActionTemplateResult(defaultValueFormulas: ns0:sObject, defaultValues: ns0:sObject, errors: ns1:Error[], success: xsd:boolean)
+     ns1:RecordTypeCompactLayoutMapping(available: xsd:boolean, compactLayoutId: ns1:ID, compactLayoutName: xsd:string, recordTypeId: ns1:ID, recordTypeName: xsd:string)
+     ns1:RecordTypeInfo(available: xsd:boolean, defaultRecordTypeMapping: xsd:boolean, master: xsd:boolean, name: xsd:string, recordTypeId: ns1:ID)
+     ns1:RecordTypeMapping(available: xsd:boolean, defaultRecordTypeMapping: xsd:boolean, layoutId: ns1:ID, master: xsd:boolean, name: xsd:string, picklistsForRecordType: ns1:PicklistForRecordType[], recordTypeId: ns1:ID)
+     ns1:RecordTypesSupported(recordTypeInfos: ns1:RecordTypeInfo[])
+     ns1:RelatedContent(relatedContentItems: ns1:DescribeRelatedContentItem[])
+     ns1:RelatedList(accessLevelRequiredForCreate: ns1:ShareAccessLevel, buttons: ns1:DescribeLayoutButton[], columns: ns1:RelatedListColumn[], custom: xsd:boolean, field: xsd:string, label: xsd:string, limitRows: xsd:int, name: xsd:string, sobject: xsd:string, sort: ns1:RelatedListSort[])
+     ns1:RelatedListColumn(field: xsd:string, fieldApiName: xsd:string, format: xsd:string, label: xsd:string, lookupId: xsd:string, name: xsd:string)
+     ns1:RelatedListSort(ascending: xsd:boolean, column: xsd:string)
+     ns1:RelationshipReferenceTo(referenceTo: xsd:string[])
+     ns1:RenderEmailTemplateBodyResult(errors: ns1:RenderEmailTemplateError[], mergedBody: xsd:string, success: xsd:boolean)
+     ns1:RenderEmailTemplateError(fieldName: xsd:string, message: xsd:string, offset: xsd:int, statusCode: ns1:StatusCode)
+     ns1:RenderEmailTemplateRequest(templateBodies: xsd:string[], whatId: ns1:ID, whoId: ns1:ID)
+     ns1:RenderEmailTemplateResult(bodyResults: ns1:RenderEmailTemplateBodyResult[], errors: ns1:Error[], success: xsd:boolean)
+     ns1:RenderStoredEmailTemplateRequest(attachmentRetrievalOption: ns1:AttachmentRetrievalOption, templateId: ns1:ID, whatId: ns1:ID, whoId: ns1:ID)
+     ns1:RenderStoredEmailTemplateResult(errors: ns1:Error[], renderedEmail: ns1:SingleEmailMessage, success: xsd:boolean)
+     ns1:ReportChartComponent(displayLines: xsd:int, tabOrder: xsd:int, type: ns1:layoutComponentType, value: xsd:string, cacheData: xsd:boolean, contextFilterableField: xsd:string, error: xsd:string, hideOnError: xsd:boolean, includeContext: xsd:boolean, showTitle: xsd:boolean, size: ns1:ReportChartSize)
+     ns1:ReportChartSize
+     ns1:ResetPasswordResult(password: xsd:string)
+     ns1:SaveResult(errors: ns1:Error[], id: ns1:ID, success: xsd:boolean)
+     ns1:ScopeInfo(label: xsd:string, name: xsd:string)
+     ns1:SearchLayoutButton(apiName: xsd:string, label: xsd:string)
+     ns1:SearchLayoutButtonsDisplayed(applicable: xsd:boolean, buttons: ns1:SearchLayoutButton[])
+     ns1:SearchLayoutField(apiName: xsd:string, label: xsd:string, sortable: xsd:boolean)
+     ns1:SearchLayoutFieldsDisplayed(applicable: xsd:boolean, fields: ns1:SearchLayoutField[])
+     ns1:SearchRecord(record: ns0:sObject, searchRecordMetadata: ns1:SearchRecordMetadata, snippet: ns1:SearchSnippet)
+     ns1:SearchRecordMetadata(spellCorrected: xsd:boolean)
+     ns1:SearchResult(queryId: xsd:string, searchRecords: ns1:SearchRecord[], searchResultsMetadata: ns1:SearchResultsMetadata)
+     ns1:SearchResultsMetadata(entityLabelMetadata: ns1:LabelsSearchMetadata[], entityMetadata: ns1:EntitySearchMetadata[])
+     ns1:SearchSnippet(text: xsd:string, wholeFields: ns1:NameValuePair[])
+     ns1:SendEmailError(fields: xsd:string[], message: xsd:string, statusCode: ns1:StatusCode, targetObjectId: ns1:ID)
+     ns1:SendEmailOptOutPolicy
+     ns1:SendEmailResult(errors: ns1:SendEmailError[], success: xsd:boolean)
+     ns1:SetPasswordResult()
+     ns1:ShareAccessLevel
+     ns1:SingleEmailMessage(bccSender: xsd:boolean, emailPriority: ns1:EmailPriority, replyTo: xsd:string, saveAsActivity: xsd:boolean, senderDisplayName: xsd:string, subject: xsd:string, useSignature: xsd:boolean, bccAddresses: xsd:string[], ccAddresses: xsd:string[], charset: xsd:string, documentAttachments: ns1:ID[], entityAttachments: ns1:ID[], fileAttachments: ns1:EmailFileAttachment[], htmlBody: xsd:string, inReplyTo: xsd:string, optOutPolicy: ns1:SendEmailOptOutPolicy, orgWideEmailAddressId: ns1:ID, plainTextBody: xsd:string, references: xsd:string, targetObjectId: ns1:ID, templateId: ns1:ID, toAddresses: xsd:string[], treatBodiesAsTemplate: xsd:boolean, treatTargetObjectAsRecipient: xsd:boolean, whatId: ns1:ID)
+     ns1:SoqlCondition(field: xsd:string, operator: ns1:soqlOperator, values: xsd:string[])
+     ns1:SoqlConditionGroup(conditions: ns1:SoqlWhereCondition[], conjunction: ns1:soqlConjunction)
+     ns1:SoqlNotCondition(condition: ns1:SoqlWhereCondition)
+     ns1:SoqlSubQueryCondition(field: xsd:string, operator: ns1:soqlOperator, subQuery: xsd:string)
+     ns1:SoqlWhereCondition()
+     ns1:StartsWith
+     ns1:StatusCode
+     ns1:TabOrderType
+     ns1:UndeleteResult(errors: ns1:Error[], id: ns1:ID, success: xsd:boolean)
+     ns1:UpsertResult(created: xsd:boolean, errors: ns1:Error[], id: ns1:ID, success: xsd:boolean)
+     ns1:VisualforcePage(displayLines: xsd:int, tabOrder: xsd:int, type: ns1:layoutComponentType, value: xsd:string, showLabel: xsd:boolean, showScrollbars: xsd:boolean, suggestedHeight: xsd:string, suggestedWidth: xsd:string, url: xsd:string)
+     ns1:WebLinkPosition
+     ns1:WebLinkType
+     ns1:WebLinkWindowType
+     ns1:address(latitude: xsd:double, longitude: xsd:double, city: xsd:string, country: xsd:string, countryCode: xsd:string, geocodeAccuracy: xsd:string, postalCode: xsd:string, state: xsd:string, stateCode: xsd:string, street: xsd:string)
+     ns1:differenceType
+     ns1:fieldType
+     ns1:layoutComponentType
+     ns1:listViewIsSoqlCompatible
+     ns1:location(latitude: xsd:double, longitude: xsd:double)
+     ns1:orderByDirection
+     ns1:orderByNullsPosition
+     ns1:soapType
+     ns1:soqlConjunction
+     ns1:soqlOperator
+     ns0:sObject(type: xsd:string, fieldsToNull: xsd:string[], Id: ns1:ID, _value_1: ANY[])
+
+Bindings:
+     Soap11Binding: {urn:partner.soap.sforce.com}SoapBinding
+
+Service: SforceService
+     Port: Soap (Soap11Binding: {urn:partner.soap.sforce.com}SoapBinding)
+         Operations:
+            changeOwnPassword(oldPassword: xsd:string, newPassword: xsd:string, _soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:ChangeOwnPasswordResult}
+            convertLead(leadConverts: ns1:LeadConvert[], _soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions, AllowFieldTruncationHeader: ns1:AllowFieldTruncationHeader, DisableFeedTrackingHeader: ns1:DisableFeedTrackingHeader, StreamingEnabledHeader: ns1:StreamingEnabledHeader, DuplicateRuleHeader: ns1:DuplicateRuleHeader, LocaleOptions: ns1:LocaleOptions, DebuggingHeader: ns1:DebuggingHeader, PackageVersionHeader: ns1:PackageVersionHeader}) -> header: {DebuggingInfo: ns1:DebuggingInfo, LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:LeadConvertResult[]}
+            create(sObjects: ns0:sObject[], _soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions, AssignmentRuleHeader: ns1:AssignmentRuleHeader, MruHeader: ns1:MruHeader, AllowFieldTruncationHeader: ns1:AllowFieldTruncationHeader, DisableFeedTrackingHeader: ns1:DisableFeedTrackingHeader, StreamingEnabledHeader: ns1:StreamingEnabledHeader, AllOrNoneHeader: ns1:AllOrNoneHeader, DuplicateRuleHeader: ns1:DuplicateRuleHeader, LocaleOptions: ns1:LocaleOptions, DebuggingHeader: ns1:DebuggingHeader, PackageVersionHeader: ns1:PackageVersionHeader, EmailHeader: ns1:EmailHeader}) -> header: {DebuggingInfo: ns1:DebuggingInfo, LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:SaveResult[]}
+            delete(ids: ns1:ID[], _soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions, PackageVersionHeader: ns1:PackageVersionHeader, UserTerritoryDeleteHeader: ns1:UserTerritoryDeleteHeader, EmailHeader: ns1:EmailHeader, AllowFieldTruncationHeader: ns1:AllowFieldTruncationHeader, DisableFeedTrackingHeader: ns1:DisableFeedTrackingHeader, StreamingEnabledHeader: ns1:StreamingEnabledHeader, AllOrNoneHeader: ns1:AllOrNoneHeader, DuplicateRuleHeader: ns1:DuplicateRuleHeader, LocaleOptions: ns1:LocaleOptions, DebuggingHeader: ns1:DebuggingHeader}) -> header: {DebuggingInfo: ns1:DebuggingInfo, LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:DeleteResult[]}
+            describeAllTabs(_soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions, PackageVersionHeader: ns1:PackageVersionHeader}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:DescribeTab[]}
+            describeAppMenu(appMenuType: ns1:AppMenuType, networkId: ns1:ID, _soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions, PackageVersionHeader: ns1:PackageVersionHeader}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:DescribeAppMenuResult}
+            describeApprovalLayout(sObjectType: xsd:string, approvalProcessNames: xsd:string[], _soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions, PackageVersionHeader: ns1:PackageVersionHeader}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:DescribeApprovalLayoutResult}
+            describeAvailableQuickActions(contextType: xsd:string, _soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions, PackageVersionHeader: ns1:PackageVersionHeader, LocaleOptions: ns1:LocaleOptions}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:DescribeAvailableQuickActionResult[]}
+            describeCompactLayouts(sObjectType: xsd:string, recordTypeIds: ns1:ID[], _soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions, PackageVersionHeader: ns1:PackageVersionHeader}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:DescribeCompactLayoutsResult}
+            describeDataCategoryGroupStructures(pairs: ns1:DataCategoryGroupSobjectTypePair[], topCategoriesOnly: xsd:boolean, _soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions, PackageVersionHeader: ns1:PackageVersionHeader, LocaleOptions: ns1:LocaleOptions}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:DescribeDataCategoryGroupStructureResult[]}
+            describeDataCategoryGroups(sObjectType: xsd:string[], _soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions, PackageVersionHeader: ns1:PackageVersionHeader, LocaleOptions: ns1:LocaleOptions}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:DescribeDataCategoryGroupResult[]}
+            describeGlobal(_soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions, PackageVersionHeader: ns1:PackageVersionHeader}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:DescribeGlobalResult}
+            describeGlobalTheme(_soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions, PackageVersionHeader: ns1:PackageVersionHeader}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:DescribeGlobalTheme}
+            describeKnowledgeSettings(_soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions, PackageVersionHeader: ns1:PackageVersionHeader, LocaleOptions: ns1:LocaleOptions}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:KnowledgeSettings}
+            describeLayout(sObjectType: xsd:string, layoutName: xsd:string, recordTypeIds: ns1:ID[], _soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions, PackageVersionHeader: ns1:PackageVersionHeader}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:DescribeLayoutResult}
+            describeNouns(nouns: xsd:string[], onlyRenamed: xsd:boolean, includeFields: xsd:boolean, _soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions, PackageVersionHeader: ns1:PackageVersionHeader, LocaleOptions: ns1:LocaleOptions}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:DescribeNounResult[]}
+            describePathAssistants(sObjectType: xsd:string, picklistValue: xsd:string, recordTypeIds: ns1:ID[], _soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions, PackageVersionHeader: ns1:PackageVersionHeader}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:DescribePathAssistantsResult}
+            describePrimaryCompactLayouts(sObjectTypes: xsd:string[], _soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions, PackageVersionHeader: ns1:PackageVersionHeader}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:DescribeCompactLayout[]}
+            describeQuickActions(quickActions: xsd:string[], _soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions, PackageVersionHeader: ns1:PackageVersionHeader, LocaleOptions: ns1:LocaleOptions}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:DescribeQuickActionResult[]}
+            describeSObject(sObjectType: xsd:string, _soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions, PackageVersionHeader: ns1:PackageVersionHeader, LocaleOptions: ns1:LocaleOptions}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:DescribeSObjectResult}
+            describeSObjectListViews(sObjectType: xsd:string, recentsOnly: xsd:boolean, isSoqlCompatible: ns1:listViewIsSoqlCompatible, limit: xsd:int, offset: xsd:int, _soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions, PackageVersionHeader: ns1:PackageVersionHeader}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:DescribeSoqlListViewResult}
+            describeSObjects(sObjectType: xsd:string[], _soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions, PackageVersionHeader: ns1:PackageVersionHeader, LocaleOptions: ns1:LocaleOptions}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:DescribeSObjectResult[]}
+            describeSearchLayouts(sObjectType: xsd:string[], _soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions, PackageVersionHeader: ns1:PackageVersionHeader}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:DescribeSearchLayoutResult[]}
+            describeSearchScopeOrder(_soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions, PackageVersionHeader: ns1:PackageVersionHeader}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:DescribeSearchScopeOrderResult[]}
+            describeSearchableEntities(includeOnlyEntitiesWithTabs: xsd:boolean, _soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions, PackageVersionHeader: ns1:PackageVersionHeader}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:DescribeSearchableEntityResult[]}
+            describeSoftphoneLayout(_soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions, PackageVersionHeader: ns1:PackageVersionHeader}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:DescribeSoftphoneLayoutResult}
+            describeSoqlListViews(request: ns1:DescribeSoqlListViewsRequest, _soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions, PackageVersionHeader: ns1:PackageVersionHeader}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:DescribeSoqlListViewResult}
+            describeTabs(_soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions, PackageVersionHeader: ns1:PackageVersionHeader}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:DescribeTabSetResult[]}
+            describeTheme(sobjectType: xsd:string[], _soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions, PackageVersionHeader: ns1:PackageVersionHeader}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:DescribeThemeResult}
+            describeVisualForce(includeAllDetails: xsd:boolean, namespacePrefix: xsd:string, _soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions, PackageVersionHeader: ns1:PackageVersionHeader}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:DescribeVisualForceResult}
+            emptyRecycleBin(ids: ns1:ID[], _soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:EmptyRecycleBinResult[]}
+            executeListView(request: ns1:ExecuteListViewRequest, _soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions, MruHeader: ns1:MruHeader}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:ExecuteListViewResult}
+            findDuplicates(sObjects: ns0:sObject[], _soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions, PackageVersionHeader: ns1:PackageVersionHeader, DuplicateRuleHeader: ns1:DuplicateRuleHeader}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:FindDuplicatesResult[]}
+            findDuplicatesByIds(ids: ns1:ID[], _soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions, PackageVersionHeader: ns1:PackageVersionHeader, DuplicateRuleHeader: ns1:DuplicateRuleHeader}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:FindDuplicatesResult[]}
+            getDeleted(sObjectType: xsd:string, startDate: xsd:dateTime, endDate: xsd:dateTime, _soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:GetDeletedResult}
+            getServerTimestamp(_soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:GetServerTimestampResult}
+            getUpdated(sObjectType: xsd:string, startDate: xsd:dateTime, endDate: xsd:dateTime, _soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:GetUpdatedResult}
+            getUserInfo(_soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:GetUserInfoResult}
+            invalidateSessions(sessionIds: xsd:string[], _soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:InvalidateSessionsResult[]}
+            login(username: xsd:string, password: xsd:string, _soapheaders={LoginScopeHeader: ns1:LoginScopeHeader, CallOptions: ns1:CallOptions}) -> result: ns1:LoginResult
+            logout(_soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {}
+            merge(request: ns1:MergeRequest[], _soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions, AssignmentRuleHeader: ns1:AssignmentRuleHeader, MruHeader: ns1:MruHeader, AllowFieldTruncationHeader: ns1:AllowFieldTruncationHeader, DisableFeedTrackingHeader: ns1:DisableFeedTrackingHeader, StreamingEnabledHeader: ns1:StreamingEnabledHeader, DuplicateRuleHeader: ns1:DuplicateRuleHeader, LocaleOptions: ns1:LocaleOptions, DebuggingHeader: ns1:DebuggingHeader, PackageVersionHeader: ns1:PackageVersionHeader, EmailHeader: ns1:EmailHeader}) -> header: {DebuggingInfo: ns1:DebuggingInfo, LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:MergeResult[]}
+            performQuickActions(quickActions: ns1:PerformQuickActionRequest[], _soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions, AssignmentRuleHeader: ns1:AssignmentRuleHeader, MruHeader: ns1:MruHeader, AllowFieldTruncationHeader: ns1:AllowFieldTruncationHeader, DisableFeedTrackingHeader: ns1:DisableFeedTrackingHeader, StreamingEnabledHeader: ns1:StreamingEnabledHeader, AllOrNoneHeader: ns1:AllOrNoneHeader, DuplicateRuleHeader: ns1:DuplicateRuleHeader, LocaleOptions: ns1:LocaleOptions, DebuggingHeader: ns1:DebuggingHeader, PackageVersionHeader: ns1:PackageVersionHeader, EmailHeader: ns1:EmailHeader, OwnerChangeOptions: ns1:OwnerChangeOptions}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:PerformQuickActionResult[]}
+            process(actions: ns1:ProcessRequest[], _soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions, AllowFieldTruncationHeader: ns1:AllowFieldTruncationHeader, DisableFeedTrackingHeader: ns1:DisableFeedTrackingHeader, StreamingEnabledHeader: ns1:StreamingEnabledHeader, DuplicateRuleHeader: ns1:DuplicateRuleHeader, LocaleOptions: ns1:LocaleOptions, DebuggingHeader: ns1:DebuggingHeader, PackageVersionHeader: ns1:PackageVersionHeader}) -> header: {DebuggingInfo: ns1:DebuggingInfo, LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:ProcessResult[]}
+            query(queryString: xsd:string, _soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions, QueryOptions: ns1:QueryOptions, MruHeader: ns1:MruHeader, PackageVersionHeader: ns1:PackageVersionHeader}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:QueryResult}
+            queryAll(queryString: xsd:string, _soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions, QueryOptions: ns1:QueryOptions}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:QueryResult}
+            queryMore(queryLocator: ns1:QueryLocator, _soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions, QueryOptions: ns1:QueryOptions}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:QueryResult}
+            renderEmailTemplate(renderRequests: ns1:RenderEmailTemplateRequest[], _soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:RenderEmailTemplateResult[]}
+            renderStoredEmailTemplate(request: ns1:RenderStoredEmailTemplateRequest, _soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:RenderStoredEmailTemplateResult}
+            resetPassword(userId: ns1:ID, _soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions, EmailHeader: ns1:EmailHeader}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:ResetPasswordResult}
+            retrieve(fieldList: xsd:string, sObjectType: xsd:string, ids: ns1:ID[], _soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions, QueryOptions: ns1:QueryOptions, MruHeader: ns1:MruHeader, PackageVersionHeader: ns1:PackageVersionHeader}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns0:sObject[]}
+            retrieveQuickActionTemplates(quickActionNames: xsd:string[], contextId: ns1:ID, _soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions, PackageVersionHeader: ns1:PackageVersionHeader, LocaleOptions: ns1:LocaleOptions}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:QuickActionTemplateResult[]}
+            search(searchString: xsd:string, _soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions, PackageVersionHeader: ns1:PackageVersionHeader}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:SearchResult}
+            sendEmail(messages: ns1:Email[], _soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:SendEmailResult[]}
+            sendEmailMessage(ids: ns1:ID[], _soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:SendEmailResult[]}
+            setPassword(userId: ns1:ID, password: xsd:string, _soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions}) -> header: {LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:SetPasswordResult}
+            undelete(ids: ns1:ID[], _soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions, AllowFieldTruncationHeader: ns1:AllowFieldTruncationHeader, DisableFeedTrackingHeader: ns1:DisableFeedTrackingHeader, StreamingEnabledHeader: ns1:StreamingEnabledHeader, AllOrNoneHeader: ns1:AllOrNoneHeader, DuplicateRuleHeader: ns1:DuplicateRuleHeader, LocaleOptions: ns1:LocaleOptions, DebuggingHeader: ns1:DebuggingHeader, PackageVersionHeader: ns1:PackageVersionHeader}) -> header: {DebuggingInfo: ns1:DebuggingInfo, LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:UndeleteResult[]}
+            update(sObjects: ns0:sObject[], _soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions, AssignmentRuleHeader: ns1:AssignmentRuleHeader, MruHeader: ns1:MruHeader, AllowFieldTruncationHeader: ns1:AllowFieldTruncationHeader, DisableFeedTrackingHeader: ns1:DisableFeedTrackingHeader, StreamingEnabledHeader: ns1:StreamingEnabledHeader, AllOrNoneHeader: ns1:AllOrNoneHeader, DuplicateRuleHeader: ns1:DuplicateRuleHeader, LocaleOptions: ns1:LocaleOptions, DebuggingHeader: ns1:DebuggingHeader, PackageVersionHeader: ns1:PackageVersionHeader, EmailHeader: ns1:EmailHeader, OwnerChangeOptions: ns1:OwnerChangeOptions}) -> header: {DebuggingInfo: ns1:DebuggingInfo, LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:SaveResult[]}
+            upsert(externalIDFieldName: xsd:string, sObjects: ns0:sObject[], _soapheaders={SessionHeader: ns1:SessionHeader, CallOptions: ns1:CallOptions, AssignmentRuleHeader: ns1:AssignmentRuleHeader, MruHeader: ns1:MruHeader, AllowFieldTruncationHeader: ns1:AllowFieldTruncationHeader, DisableFeedTrackingHeader: ns1:DisableFeedTrackingHeader, StreamingEnabledHeader: ns1:StreamingEnabledHeader, AllOrNoneHeader: ns1:AllOrNoneHeader, DuplicateRuleHeader: ns1:DuplicateRuleHeader, LocaleOptions: ns1:LocaleOptions, DebuggingHeader: ns1:DebuggingHeader, PackageVersionHeader: ns1:PackageVersionHeader, EmailHeader: ns1:EmailHeader, OwnerChangeOptions: ns1:OwnerChangeOptions}) -> header: {DebuggingInfo: ns1:DebuggingInfo, LimitInfoHeader: ns1:LimitInfoHeader}, body: {result: ns1:UpsertResult[]}
+

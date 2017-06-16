@@ -1,0 +1,902 @@
+$ python3 -mzeep ./metadata.wsdl -> this is how I got this file
+
+Prefixes:
+     xsd: http://www.w3.org/2001/XMLSchema
+     ns0: http://soap.sforce.com/2006/04/metadata
+
+Global elements:
+     ns0:AllOrNoneHeader(allOrNone: xsd:boolean)
+     ns0:CallOptions(client: xsd:string)
+     ns0:DebuggingHeader(categories: ns0:LogInfo[], debugLevel: ns0:LogType)
+     ns0:DebuggingInfo(debugLog: xsd:string)
+     ns0:SessionHeader(sessionId: xsd:string)
+     ns0:cancelDeploy(String: ns0:ID)
+     ns0:cancelDeployResponse(result: ns0:CancelDeployResult)
+     ns0:checkDeployStatus(asyncProcessId: ns0:ID, includeDetails: xsd:boolean)
+     ns0:checkDeployStatusResponse(result: ns0:DeployResult)
+     ns0:checkRetrieveStatus(asyncProcessId: ns0:ID, includeZip: xsd:boolean)
+     ns0:checkRetrieveStatusResponse(result: ns0:RetrieveResult)
+     ns0:createMetadata(metadata: ns0:Metadata[])
+     ns0:createMetadataResponse(result: ns0:SaveResult[])
+     ns0:deleteMetadata(type: xsd:string, fullNames: xsd:string[])
+     ns0:deleteMetadataResponse(result: ns0:DeleteResult[])
+     ns0:deploy(ZipFile: xsd:base64Binary, DeployOptions: ns0:DeployOptions)
+     ns0:deployRecentValidation(validationId: ns0:ID)
+     ns0:deployRecentValidationResponse(result: xsd:string)
+     ns0:deployResponse(result: ns0:AsyncResult)
+     ns0:describeMetadata(asOfVersion: xsd:double)
+     ns0:describeMetadataResponse(result: ns0:DescribeMetadataResult)
+     ns0:describeValueType(type: xsd:string)
+     ns0:describeValueTypeResponse(result: ns0:DescribeValueTypeResult)
+     ns0:listMetadata(queries: ns0:ListMetadataQuery[], asOfVersion: xsd:double)
+     ns0:listMetadataResponse(result: ns0:FileProperties[])
+     ns0:readMetadata(type: xsd:string, fullNames: xsd:string[])
+     ns0:readMetadataResponse(result: ns0:ReadResult)
+     ns0:renameMetadata(type: xsd:string, oldFullName: xsd:string, newFullName: xsd:string)
+     ns0:renameMetadataResponse(result: ns0:SaveResult)
+     ns0:retrieve(retrieveRequest: ns0:RetrieveRequest)
+     ns0:retrieveResponse(result: ns0:AsyncResult)
+     ns0:updateMetadata(metadata: ns0:Metadata[])
+     ns0:updateMetadataResponse(result: ns0:SaveResult[])
+     ns0:upsertMetadata(metadata: ns0:Metadata[])
+     ns0:upsertMetadataResponse(result: ns0:UpsertResult[])
+
+
+Global types:
+     xsd:anyType
+     ns0:APIAccessLevel
+     ns0:AccessMapping(accessLevel: xsd:string, object: xsd:string, objectField: xsd:string, userField: xsd:string)
+     ns0:AccessMethod
+     ns0:AccountSettings(fullName: xsd:string, enableAccountOwnerReport: xsd:boolean, enableAccountTeams: xsd:boolean, showViewHierarchyLink: xsd:boolean)
+     ns0:AccountSharingRuleSettings(caseAccessLevel: xsd:string, contactAccessLevel: xsd:string, opportunityAccessLevel: xsd:string)
+     ns0:ActionEmailRecipientTypes
+     ns0:ActionEmailSenderType
+     ns0:ActionLinkExecutionsAllowed
+     ns0:ActionLinkGroupTemplate(fullName: xsd:string, actionLinkTemplates: ns0:ActionLinkTemplate[], category: ns0:PlatformActionGroupCategory, executionsAllowed: ns0:ActionLinkExecutionsAllowed, hoursUntilExpiration: xsd:int, isPublished: xsd:boolean, name: xsd:string)
+     ns0:ActionLinkHttpMethod
+     ns0:ActionLinkTemplate(actionUrl: xsd:string, headers: xsd:string, isConfirmationRequired: xsd:boolean, isGroupDefault: xsd:boolean, label: xsd:string, labelKey: xsd:string, linkType: ns0:ActionLinkType, method: ns0:ActionLinkHttpMethod, position: xsd:int, requestBody: xsd:string, userAlias: xsd:string, userVisibility: ns0:ActionLinkUserVisibility)
+     ns0:ActionLinkType
+     ns0:ActionLinkUserVisibility
+     ns0:ActionOverride(actionName: xsd:string, comment: xsd:string, content: xsd:string, formFactor: ns0:FormFactor, skipRecordTypeSelect: xsd:boolean, type: ns0:ActionOverrideType)
+     ns0:ActionOverrideType
+     ns0:ActionTaskAssignedToTypes
+     ns0:ActivitiesSettings(fullName: xsd:string, allowUsersToRelateMultipleContactsToTasksAndEvents: xsd:boolean, enableActivityReminders: xsd:boolean, enableClickCreateEvents: xsd:boolean, enableDragAndDropScheduling: xsd:boolean, enableEmailTracking: xsd:boolean, enableGroupTasks: xsd:boolean, enableListViewScheduling: xsd:boolean, enableLogNote: xsd:boolean, enableMultidayEvents: xsd:boolean, enableRecurringEvents: xsd:boolean, enableRecurringTasks: xsd:boolean, enableSidebarCalendarShortcut: xsd:boolean, enableSimpleTaskCreateUI: xsd:boolean, enableUNSTaskDelegatedToNotifications: xsd:boolean, meetingRequestsLogo: xsd:string, showCustomLogoMeetingRequests: xsd:boolean, showEventDetailsMultiUserCalendar: xsd:boolean, showHomePageHoverLinksForEvents: xsd:boolean, showMyTasksHoverLinks: xsd:boolean, showRequestedMeetingsOnHomePage: xsd:boolean)
+     ns0:AddressSettings(fullName: xsd:string, countriesAndStates: ns0:CountriesAndStates)
+     ns0:AdjustmentsSettings(enableAdjustments: xsd:boolean, enableOwnerAdjustments: xsd:boolean)
+     ns0:AgentConfigAssignments(profiles: ns0:AgentConfigProfileAssignments, users: ns0:AgentConfigUserAssignments)
+     ns0:AgentConfigButtons(button: xsd:string[])
+     ns0:AgentConfigProfileAssignments(profile: xsd:string[])
+     ns0:AgentConfigSkills(skill: xsd:string[])
+     ns0:AgentConfigUserAssignments(user: xsd:string[])
+     ns0:AnalyticSnapshot(fullName: xsd:string, description: xsd:string, groupColumn: xsd:string, mappings: ns0:AnalyticSnapshotMapping[], name: xsd:string, runningUser: xsd:string, sourceReport: xsd:string, targetObject: xsd:string)
+     ns0:AnalyticSnapshotMapping(aggregateType: ns0:ReportSummaryType, sourceField: xsd:string, sourceType: ns0:ReportJobSourceTypes, targetField: xsd:string)
+     ns0:AnalyticsCloudComponentLayoutItem(assetType: xsd:string, devName: xsd:string, error: xsd:string, filter: xsd:string, height: xsd:int, hideOnError: xsd:boolean, showSharing: xsd:boolean, showTitle: xsd:boolean, width: xsd:string)
+     ns0:ApexClass(fullName: xsd:string, content: xsd:base64Binary, apiVersion: xsd:double, packageVersions: ns0:PackageVersion[], status: ns0:ApexCodeUnitStatus)
+     ns0:ApexCodeUnitStatus
+     ns0:ApexComponent(fullName: xsd:string, content: xsd:base64Binary, apiVersion: xsd:double, description: xsd:string, label: xsd:string, packageVersions: ns0:PackageVersion[])
+     ns0:ApexPage(fullName: xsd:string, content: xsd:base64Binary, apiVersion: xsd:double, availableInTouch: xsd:boolean, confirmationTokenRequired: xsd:boolean, description: xsd:string, label: xsd:string, packageVersions: ns0:PackageVersion[])
+     ns0:ApexTestSuite(fullName: xsd:string, testClassName: xsd:string[])
+     ns0:ApexTrigger(fullName: xsd:string, content: xsd:base64Binary, apiVersion: xsd:double, packageVersions: ns0:PackageVersion[], status: ns0:ApexCodeUnitStatus)
+     ns0:AppActionOverride(actionName: xsd:string, comment: xsd:string, content: xsd:string, formFactor: ns0:FormFactor, skipRecordTypeSelect: xsd:boolean, type: ns0:ActionOverrideType, pageOrSobjectType: xsd:string)
+     ns0:AppBrand(footerColor: xsd:string, headerColor: xsd:string, logo: xsd:string, logoVersion: xsd:int)
+     ns0:AppMenu(fullName: xsd:string, appMenuItems: ns0:AppMenuItem[])
+     ns0:AppMenuItem(name: xsd:string, type: xsd:string)
+     ns0:AppProfileActionOverride(actionName: xsd:string, content: xsd:string, formFactor: ns0:FormFactor, pageOrSobjectType: xsd:string, recordType: xsd:string, type: ns0:ActionOverrideType, profile: xsd:string)
+     ns0:ApprovalAction(action: ns0:WorkflowActionReference[])
+     ns0:ApprovalEntryCriteria(booleanFilter: xsd:string, criteriaItems: ns0:FilterItem[], formula: xsd:string)
+     ns0:ApprovalPageField(field: xsd:string[])
+     ns0:ApprovalProcess(fullName: xsd:string, active: xsd:boolean, allowRecall: xsd:boolean, allowedSubmitters: ns0:ApprovalSubmitter[], approvalPageFields: ns0:ApprovalPageField, approvalStep: ns0:ApprovalStep[], description: xsd:string, emailTemplate: xsd:string, enableMobileDeviceAccess: xsd:boolean, entryCriteria: ns0:ApprovalEntryCriteria, finalApprovalActions: ns0:ApprovalAction, finalApprovalRecordLock: xsd:boolean, finalRejectionActions: ns0:ApprovalAction, finalRejectionRecordLock: xsd:boolean, initialSubmissionActions: ns0:ApprovalAction, label: xsd:string, nextAutomatedApprover: ns0:NextAutomatedApprover, postTemplate: xsd:string, recallActions: ns0:ApprovalAction, recordEditability: ns0:RecordEditabilityType, showApprovalHistory: xsd:boolean)
+     ns0:ApprovalStep(allowDelegate: xsd:boolean, approvalActions: ns0:ApprovalAction, assignedApprover: ns0:ApprovalStepApprover, description: xsd:string, entryCriteria: ns0:ApprovalEntryCriteria, ifCriteriaNotMet: ns0:StepCriteriaNotMetType, label: xsd:string, name: xsd:string, rejectBehavior: ns0:ApprovalStepRejectBehavior, rejectionActions: ns0:ApprovalAction)
+     ns0:ApprovalStepApprover(approver: ns0:Approver[], whenMultipleApprovers: ns0:RoutingType)
+     ns0:ApprovalStepRejectBehavior(type: ns0:StepRejectBehaviorType)
+     ns0:ApprovalSubmitter(submitter: xsd:string, type: ns0:ProcessSubmitterType)
+     ns0:Approver(name: xsd:string, type: ns0:NextOwnerType)
+     ns0:Article
+     ns0:ArticleTypeChannelDisplay(articleTypeTemplates: ns0:ArticleTypeTemplate[])
+     ns0:ArticleTypeTemplate(channel: ns0:Channel, page: xsd:string, template: ns0:Template)
+     ns0:AssignToLookupValueType
+     ns0:AssignmentRule(fullName: xsd:string, active: xsd:boolean, ruleEntry: ns0:RuleEntry[])
+     ns0:AssignmentRules(fullName: xsd:string, assignmentRule: ns0:AssignmentRule[])
+     ns0:AssistantRecommendationType(fullName: xsd:string, description: xsd:string, masterLabel: xsd:string, platformActionlist: ns0:PlatformActionList, sobjectType: xsd:string, title: xsd:string)
+     ns0:AsyncRequestState
+     ns0:AsyncResult(done: xsd:boolean, id: ns0:ID, message: xsd:string, state: ns0:AsyncRequestState, statusCode: ns0:StatusCode)
+     ns0:Attachment(content: xsd:base64Binary, name: xsd:string)
+     ns0:AuraBundleType
+     ns0:AuraDefinitionBundle(fullName: xsd:string, SVGContent: xsd:base64Binary, apiVersion: xsd:double, controllerContent: xsd:base64Binary, description: xsd:string, designContent: xsd:base64Binary, documentationContent: xsd:base64Binary, helperContent: xsd:base64Binary, markup: xsd:base64Binary, modelContent: xsd:base64Binary, packageVersions: ns0:PackageVersion[], rendererContent: xsd:base64Binary, styleContent: xsd:base64Binary, testsuiteContent: xsd:base64Binary, type: ns0:AuraBundleType)
+     ns0:AuthProvider(fullName: xsd:string, authorizeUrl: xsd:string, consumerKey: xsd:string, consumerSecret: xsd:string, customMetadataTypeRecord: xsd:string, defaultScopes: xsd:string, errorUrl: xsd:string, executionUser: xsd:string, friendlyName: xsd:string, iconUrl: xsd:string, idTokenIssuer: xsd:string, includeOrgIdInIdentifier: xsd:boolean, logoutUrl: xsd:string, plugin: xsd:string, portal: xsd:string, providerType: ns0:AuthProviderType, registrationHandler: xsd:string, sendAccessTokenInHeader: xsd:boolean, sendClientCredentialsInHeader: xsd:boolean, tokenUrl: xsd:string, userInfoUrl: xsd:string)
+     ns0:AuthProviderType
+     ns0:AuthenticationProtocol
+     ns0:AutoResponseRule(fullName: xsd:string, active: xsd:boolean, ruleEntry: ns0:RuleEntry[])
+     ns0:AutoResponseRules(fullName: xsd:string, autoResponseRule: ns0:AutoResponseRule[])
+     ns0:BlankValueBehavior
+     ns0:Branding(loginFooterText: xsd:string, loginLogo: xsd:string, pageFooter: xsd:string, pageHeader: xsd:string, primaryColor: xsd:string, primaryComplementColor: xsd:string, quaternaryColor: xsd:string, quaternaryComplementColor: xsd:string, secondaryColor: xsd:string, tertiaryColor: xsd:string, tertiaryComplementColor: xsd:string, zeronaryColor: xsd:string, zeronaryComplementColor: xsd:string)
+     ns0:BusinessHoursEntry(fullName: xsd:string, active: xsd:boolean, default: xsd:boolean, fridayEndTime: xsd:time, fridayStartTime: xsd:time, mondayEndTime: xsd:time, mondayStartTime: xsd:time, name: xsd:string, saturdayEndTime: xsd:time, saturdayStartTime: xsd:time, sundayEndTime: xsd:time, sundayStartTime: xsd:time, thursdayEndTime: xsd:time, thursdayStartTime: xsd:time, timeZoneId: xsd:string, tuesdayEndTime: xsd:time, tuesdayStartTime: xsd:time, wednesdayEndTime: xsd:time, wednesdayStartTime: xsd:time)
+     ns0:BusinessHoursSettings(fullName: xsd:string, businessHours: ns0:BusinessHoursEntry[], holidays: ns0:Holiday[])
+     ns0:BusinessHoursSourceType
+     ns0:BusinessProcess(fullName: xsd:string, description: xsd:string, isActive: xsd:boolean, values: ns0:PicklistValue[])
+     ns0:CallCenter(fullName: xsd:string, adapterUrl: xsd:string, customSettings: xsd:string, displayName: xsd:string, displayNameLabel: xsd:string, internalNameLabel: xsd:string, sections: ns0:CallCenterSection[], version: xsd:string)
+     ns0:CallCenterItem(label: xsd:string, name: xsd:string, value: xsd:string)
+     ns0:CallCenterSection(items: ns0:CallCenterItem[], label: xsd:string, name: xsd:string)
+     ns0:CampaignInfluenceModel(fullName: xsd:string, isDefaultModel: xsd:boolean, isModelLocked: xsd:boolean, modelDescription: xsd:string, name: xsd:string)
+     ns0:CancelDeployResult(done: xsd:boolean, id: ns0:ID)
+     ns0:CanvasLocationOptions
+     ns0:CanvasOptions
+     ns0:CaseSettings(fullName: xsd:string, caseAssignNotificationTemplate: xsd:string, caseCloseNotificationTemplate: xsd:string, caseCommentNotificationTemplate: xsd:string, caseCreateNotificationTemplate: xsd:string, caseFeedItemSettings: ns0:FeedItemSettings[], closeCaseThroughStatusChange: xsd:boolean, defaultCaseOwner: xsd:string, defaultCaseOwnerType: xsd:string, defaultCaseUser: xsd:string, emailActionDefaultsHandlerClass: xsd:string, emailToCase: ns0:EmailToCaseSettings, enableCaseFeed: xsd:boolean, enableDraftEmails: xsd:boolean, enableEarlyEscalationRuleTriggers: xsd:boolean, enableEmailActionDefaultsHandler: xsd:boolean, enableSuggestedArticlesApplication: xsd:boolean, enableSuggestedArticlesCustomerPortal: xsd:boolean, enableSuggestedArticlesPartnerPortal: xsd:boolean, enableSuggestedSolutions: xsd:boolean, keepRecordTypeOnAssignmentRule: xsd:boolean, notifyContactOnCaseComment: xsd:boolean, notifyDefaultCaseOwner: xsd:boolean, notifyOwnerOnCaseComment: xsd:boolean, notifyOwnerOnCaseOwnerChange: xsd:boolean, showFewerCloseActions: xsd:boolean, systemUserEmail: xsd:string, useSystemEmailAddress: xsd:boolean, useSystemUserAsDefaultCaseUser: xsd:boolean, webToCase: ns0:WebToCaseSettings)
+     ns0:CaseType
+     ns0:Certificate(fullName: xsd:string, content: xsd:base64Binary, caSigned: xsd:boolean, encryptedWithPlatformEncryption: xsd:boolean, expirationDate: xsd:dateTime, keySize: xsd:int, masterLabel: xsd:string, privateKeyExportable: xsd:boolean)
+     ns0:Channel
+     ns0:ChannelLayout(fullName: xsd:string, enabledChannels: xsd:string[], label: xsd:string, layoutItems: ns0:ChannelLayoutItem[])
+     ns0:ChannelLayoutItem(field: xsd:string)
+     ns0:ChartAxis
+     ns0:ChartBackgroundDirection
+     ns0:ChartLegendPosition
+     ns0:ChartPosition
+     ns0:ChartRangeType
+     ns0:ChartSummary(aggregate: ns0:ReportSummaryType, axisBinding: ns0:ChartAxis, column: xsd:string)
+     ns0:ChartType
+     ns0:ChartUnits
+     ns0:ChatterAnswersReputationLevel(name: xsd:string, value: xsd:int)
+     ns0:ChatterAnswersSettings(fullName: xsd:string, emailFollowersOnBestAnswer: xsd:boolean, emailFollowersOnReply: xsd:boolean, emailOwnerOnPrivateReply: xsd:boolean, emailOwnerOnReply: xsd:boolean, enableAnswerViaEmail: xsd:boolean, enableChatterAnswers: xsd:boolean, enableFacebookSSO: xsd:boolean, enableInlinePublisher: xsd:boolean, enableReputation: xsd:boolean, enableRichTextEditor: xsd:boolean, facebookAuthProvider: xsd:string, showInPortals: xsd:boolean)
+     ns0:ChatterMobileSettings(enablePushNotifications: xsd:boolean)
+     ns0:CleanDataService(fullName: xsd:string, cleanRules: ns0:CleanRule[], description: xsd:string, masterLabel: xsd:string, matchEngine: xsd:string)
+     ns0:CleanRule(bulkEnabled: xsd:boolean, bypassTriggers: xsd:boolean, bypassWorkflow: xsd:boolean, description: xsd:string, developerName: xsd:string, fieldMappings: ns0:FieldMapping[], masterLabel: xsd:string, matchRule: xsd:string, sourceSobjectType: xsd:string, status: ns0:CleanRuleStatus, targetSobjectType: xsd:string)
+     ns0:CleanRuleStatus
+     ns0:CodeCoverageResult(dmlInfo: ns0:CodeLocation[], id: ns0:ID, locationsNotCovered: ns0:CodeLocation[], methodInfo: ns0:CodeLocation[], name: xsd:string, namespace: xsd:string, numLocations: xsd:int, numLocationsNotCovered: xsd:int, soqlInfo: ns0:CodeLocation[], soslInfo: ns0:CodeLocation[], type: xsd:string)
+     ns0:CodeCoverageWarning(id: ns0:ID, message: xsd:string, name: xsd:string, namespace: xsd:string)
+     ns0:CodeLocation(column: xsd:int, line: xsd:int, numExecutions: xsd:int, time: xsd:double)
+     ns0:Community(fullName: xsd:string, active: xsd:boolean, chatterAnswersFacebookSsoUrl: xsd:string, communityFeedPage: xsd:string, dataCategoryName: xsd:string, description: xsd:string, emailFooterDocument: xsd:string, emailHeaderDocument: xsd:string, emailNotificationUrl: xsd:string, enableChatterAnswers: xsd:boolean, enablePrivateQuestions: xsd:boolean, expertsGroup: xsd:string, portal: xsd:string, reputationLevels: ns0:ReputationLevels, showInPortal: xsd:boolean, site: xsd:string)
+     ns0:CommunityCustomThemeLayoutType(description: xsd:string, label: xsd:string)
+     ns0:CommunityTemplateBundleInfo(description: xsd:string, image: xsd:string, order: xsd:int, title: xsd:string, type: ns0:CommunityTemplateBundleInfoType)
+     ns0:CommunityTemplateBundleInfoType
+     ns0:CommunityTemplateCategory
+     ns0:CommunityTemplateDefinition(fullName: xsd:string, bundlesInfo: ns0:CommunityTemplateBundleInfo[], category: ns0:CommunityTemplateCategory, defaultThemeDefinition: xsd:string, description: xsd:string, enableExtendedCleanUpOnDelete: xsd:boolean, masterLabel: xsd:string, pageSetting: ns0:CommunityTemplatePageSetting[])
+     ns0:CommunityTemplatePageSetting(page: xsd:string, themeLayout: xsd:string)
+     ns0:CommunityThemeDefinition(fullName: xsd:string, customThemeLayoutType: ns0:CommunityCustomThemeLayoutType[], description: xsd:string, enableExtendedCleanUpOnDelete: xsd:boolean, masterLabel: xsd:string, themeSetting: ns0:CommunityThemeSetting[])
+     ns0:CommunityThemeLayoutType
+     ns0:CommunityThemeSetting(customThemeLayoutType: xsd:string, themeLayout: xsd:string, themeLayoutType: ns0:CommunityThemeLayoutType)
+     ns0:CompactLayout(fullName: xsd:string, fields: xsd:string[], label: xsd:string)
+     ns0:CompanySettings(fullName: xsd:string, fiscalYear: ns0:FiscalYearSettings)
+     ns0:Complexity
+     ns0:ComponentInstance(componentInstanceProperties: ns0:ComponentInstanceProperty[], componentName: xsd:string)
+     ns0:ComponentInstanceProperty(name: xsd:string, type: ns0:ComponentInstancePropertyTypeEnum, value: xsd:string)
+     ns0:ComponentInstancePropertyTypeEnum
+     ns0:ConnectedApp(fullName: xsd:string, attributes: ns0:ConnectedAppAttribute[], canvasConfig: ns0:ConnectedAppCanvasConfig, contactEmail: xsd:string, contactPhone: xsd:string, description: xsd:string, iconUrl: xsd:string, infoUrl: xsd:string, ipRanges: ns0:ConnectedAppIpRange[], label: xsd:string, logoUrl: xsd:string, mobileAppConfig: ns0:ConnectedAppMobileDetailConfig, mobileStartUrl: xsd:string, oauthConfig: ns0:ConnectedAppOauthConfig, plugin: xsd:string, samlConfig: ns0:ConnectedAppSamlConfig, startUrl: xsd:string)
+     ns0:ConnectedAppAttribute(formula: xsd:string, key: xsd:string)
+     ns0:ConnectedAppCanvasConfig(accessMethod: ns0:AccessMethod, canvasUrl: xsd:string, lifecycleClass: xsd:string, locations: ns0:CanvasLocationOptions[], options: ns0:CanvasOptions[], samlInitiationMethod: ns0:SamlInitiationMethod)
+     ns0:ConnectedAppIpRange(description: xsd:string, end: xsd:string, start: xsd:string)
+     ns0:ConnectedAppMobileDetailConfig(applicationBinaryFile: xsd:base64Binary, applicationBinaryFileName: xsd:string, applicationBundleIdentifier: xsd:string, applicationFileLength: xsd:int, applicationIconFile: xsd:string, applicationIconFileName: xsd:string, applicationInstallUrl: xsd:string, devicePlatform: ns0:DevicePlatformType, deviceType: ns0:DeviceType, minimumOsVersion: xsd:string, privateApp: xsd:boolean, version: xsd:string)
+     ns0:ConnectedAppOauthAccessScope
+     ns0:ConnectedAppOauthConfig(callbackUrl: xsd:string, certificate: xsd:string, consumerKey: xsd:string, consumerSecret: xsd:string, scopes: ns0:ConnectedAppOauthAccessScope[])
+     ns0:ConnectedAppSamlConfig(acsUrl: xsd:string, certificate: xsd:string, encryptionCertificate: xsd:string, encryptionType: ns0:SamlEncryptionType, entityUrl: xsd:string, issuer: xsd:string, samlNameIdFormat: ns0:SamlNameIdFormatType, samlSubjectCustomAttr: xsd:string, samlSubjectType: ns0:SamlSubjectType)
+     ns0:Container(height: xsd:int, isContainerAutoSizeEnabled: xsd:boolean, region: xsd:string, sidebarComponents: ns0:SidebarComponent[], style: xsd:string, unit: xsd:string, width: xsd:int)
+     ns0:ContentAsset(fullName: xsd:string, content: xsd:base64Binary, format: ns0:ContentAssetFormat, language: xsd:string, masterLabel: xsd:string, originNetwork: xsd:string, relationships: ns0:ContentAssetRelationships, versions: ns0:ContentAssetVersions)
+     ns0:ContentAssetAccess
+     ns0:ContentAssetFormat
+     ns0:ContentAssetLink(access: ns0:ContentAssetAccess, isManagingWorkspace: xsd:boolean, name: xsd:string)
+     ns0:ContentAssetRelationships(insightsApplication: ns0:ContentAssetLink[], network: ns0:ContentAssetLink[], organization: ns0:ContentAssetLink, workspace: ns0:ContentAssetLink[])
+     ns0:ContentAssetVersion(number: xsd:string, pathOnClient: xsd:string, zipEntry: xsd:string)
+     ns0:ContentAssetVersions(version: ns0:ContentAssetVersion[])
+     ns0:ContractSettings(fullName: xsd:string, autoCalculateEndDate: xsd:boolean, autoExpirationDelay: xsd:string, autoExpirationRecipient: xsd:string, autoExpireContracts: xsd:boolean, enableContractHistoryTracking: xsd:boolean, notifyOwnersOnContractExpiration: xsd:boolean)
+     ns0:CorsWhitelistOrigin(fullName: xsd:string, urlPattern: xsd:string)
+     ns0:CountriesAndStates(countries: ns0:Country[])
+     ns0:Country(active: xsd:boolean, integrationValue: xsd:string, isoCode: xsd:string, label: xsd:string, orgDefault: xsd:boolean, standard: xsd:boolean, states: ns0:State[], visible: xsd:boolean)
+     ns0:CspTrustedSite(fullName: xsd:string, description: xsd:string, endpointUrl: xsd:string, isActive: xsd:boolean)
+     ns0:CurrencyIsoCode
+     ns0:CustomApplication(fullName: xsd:string, actionOverrides: ns0:AppActionOverride[], brand: ns0:AppBrand, customApplicationComponents: ns0:CustomApplicationComponents, defaultLandingTab: xsd:string, description: xsd:string, detailPageRefreshMethod: xsd:string, domainWhitelist: ns0:DomainWhitelist, enableCustomizeMyTabs: xsd:boolean, enableKeyboardShortcuts: xsd:boolean, enableListViewHover: xsd:boolean, enableListViewReskin: xsd:boolean, enableMultiMonitorComponents: xsd:boolean, enablePinTabs: xsd:boolean, enableTabHover: xsd:boolean, enableTabLimits: xsd:boolean, footerColor: xsd:string, formFactors: ns0:FormFactor[], headerColor: xsd:string, isServiceCloudConsole: xsd:boolean, keyboardShortcuts: ns0:KeyboardShortcuts, label: xsd:string, listPlacement: ns0:ListPlacement, listRefreshMethod: xsd:string, liveAgentConfig: ns0:LiveAgentConfig, logo: xsd:string, navType: ns0:NavType, primaryTabColor: xsd:string, profileActionOverrides: ns0:AppProfileActionOverride[], pushNotifications: ns0:PushNotifications, saveUserSessions: xsd:boolean, setupExperience: xsd:string, tab: xsd:string[], tabLimitConfig: ns0:TabLimitConfig, uiType: ns0:UiType, utilityBar: xsd:string, workspaceMappings: ns0:WorkspaceMappings)
+     ns0:CustomApplicationComponent(fullName: xsd:string, buttonIconUrl: xsd:string, buttonStyle: xsd:string, buttonText: xsd:string, buttonWidth: xsd:int, height: xsd:int, isHeightFixed: xsd:boolean, isHidden: xsd:boolean, isWidthFixed: xsd:boolean, visualforcePage: xsd:string, width: xsd:int)
+     ns0:CustomApplicationComponents(alignment: xsd:string, customApplicationComponent: xsd:string[])
+     ns0:CustomApplicationTranslation(label: xsd:string, name: xsd:string)
+     ns0:CustomConsoleComponents(primaryTabComponents: ns0:PrimaryTabComponents, subtabComponents: ns0:SubtabComponents)
+     ns0:CustomDataType(fullName: xsd:string, customDataTypeComponents: ns0:CustomDataTypeComponent[], description: xsd:string, displayFormula: xsd:string, editComponentsOnSeparateLines: xsd:boolean, label: xsd:string, rightAligned: xsd:boolean, supportComponentsInReports: xsd:boolean)
+     ns0:CustomDataTypeComponent(developerSuffix: xsd:string, enforceFieldRequiredness: xsd:boolean, label: xsd:string, length: xsd:int, precision: xsd:int, scale: xsd:int, sortOrder: ns0:SortOrder, sortPriority: xsd:int, type: ns0:FieldType)
+     ns0:CustomDataTypeComponentTranslation(developerSuffix: xsd:string, label: xsd:string)
+     ns0:CustomDataTypeTranslation(components: ns0:CustomDataTypeComponentTranslation[], customDataTypeName: xsd:string, description: xsd:string, label: xsd:string)
+     ns0:CustomExperience(fullName: xsd:string, allowInternalUserLogin: xsd:boolean, branding: ns0:CustomExperienceBranding, changePasswordEmailTemplate: xsd:string, emailFooterLogo: xsd:string, emailFooterText: xsd:string, emailSenderAddress: xsd:string, emailSenderName: xsd:string, enableErrorPageOverridesForVisualforce: xsd:boolean, forgotPasswordEmailTemplate: xsd:string, picassoSite: xsd:string, sObjectType: xsd:string, sendWelcomeEmail: xsd:boolean, site: xsd:string, siteAsContainerEnabled: xsd:boolean, tabs: ns0:CustomExperienceTabSet, urlPathPrefix: xsd:string, welcomeEmailTemplate: xsd:string)
+     ns0:CustomExperienceBranding(loginFooterText: xsd:string, loginLogo: xsd:string, pageFooter: xsd:string, pageHeader: xsd:string, primaryColor: xsd:string, primaryComplementColor: xsd:string, quaternaryColor: xsd:string, quaternaryComplementColor: xsd:string, secondaryColor: xsd:string, tertiaryColor: xsd:string, tertiaryComplementColor: xsd:string, zeronaryColor: xsd:string, zeronaryComplementColor: xsd:string)
+     ns0:CustomExperienceTabSet(customTab: xsd:string[], defaultTab: xsd:string, standardTab: xsd:string[])
+     ns0:CustomFeedFilter(fullName: xsd:string, criteria: ns0:FeedFilterCriterion[], description: xsd:string, isProtected: xsd:boolean, label: xsd:string)
+     ns0:CustomField(fullName: xsd:string, caseSensitive: xsd:boolean, customDataType: xsd:string, defaultValue: xsd:string, deleteConstraint: ns0:DeleteConstraint, deprecated: xsd:boolean, description: xsd:string, displayFormat: xsd:string, encrypted: xsd:boolean, escapeMarkup: xsd:boolean, externalDeveloperName: xsd:string, externalId: xsd:boolean, fieldManageability: ns0:FieldManageability, formula: xsd:string, formulaTreatBlanksAs: ns0:TreatBlanksAs, inlineHelpText: xsd:string, isConvertLeadDisabled: xsd:boolean, isFilteringDisabled: xsd:boolean, isNameField: xsd:boolean, isSortingDisabled: xsd:boolean, label: xsd:string, length: xsd:int, lookupFilter: ns0:LookupFilter, maskChar: ns0:EncryptedFieldMaskChar, maskType: ns0:EncryptedFieldMaskType, metadataRelationshipControllingField: xsd:string, populateExistingRows: xsd:boolean, precision: xsd:int, referenceTargetField: xsd:string, referenceTo: xsd:string, relationshipLabel: xsd:string, relationshipName: xsd:string, relationshipOrder: xsd:int, reparentableMasterDetail: xsd:boolean, required: xsd:boolean, restrictedAdminField: xsd:boolean, scale: xsd:int, startingNumber: xsd:int, stripMarkup: xsd:boolean, summarizedField: xsd:string, summaryFilterItems: ns0:FilterItem[], summaryForeignKey: xsd:string, summaryOperation: ns0:SummaryOperations, trackFeedHistory: xsd:boolean, trackHistory: xsd:boolean, trackTrending: xsd:boolean, type: ns0:FieldType, unique: xsd:boolean, valueSet: ns0:ValueSet, visibleLines: xsd:int, writeRequiresMasterRead: xsd:boolean)
+     ns0:CustomFieldTranslation(caseValues: ns0:ObjectNameCaseValue[], gender: ns0:Gender, help: xsd:string, label: xsd:string, lookupFilter: ns0:LookupFilterTranslation, name: xsd:string, picklistValues: ns0:PicklistValueTranslation[], relationshipLabel: xsd:string, startsWith: ns0:StartsWith)
+     ns0:CustomLabel(fullName: xsd:string, categories: xsd:string, language: xsd:string, protected: xsd:boolean, shortDescription: xsd:string, value: xsd:string)
+     ns0:CustomLabelTranslation(label: xsd:string, name: xsd:string)
+     ns0:CustomLabels(fullName: xsd:string, labels: ns0:CustomLabel[])
+     ns0:CustomMetadata(fullName: xsd:string, description: xsd:string, label: xsd:string, protected: xsd:boolean, values: ns0:CustomMetadataValue[])
+     ns0:CustomMetadataValue(field: xsd:string, value: None)
+     ns0:CustomObject(fullName: xsd:string, actionOverrides: ns0:ActionOverride[], allowInChatterGroups: xsd:boolean, articleTypeChannelDisplay: ns0:ArticleTypeChannelDisplay, businessProcesses: ns0:BusinessProcess[], compactLayoutAssignment: xsd:string, compactLayouts: ns0:CompactLayout[], customHelp: xsd:string, customHelpPage: xsd:string, customSettingsType: ns0:CustomSettingsType, deploymentStatus: ns0:DeploymentStatus, deprecated: xsd:boolean, description: xsd:string, enableActivities: xsd:boolean, enableBulkApi: xsd:boolean, enableDivisions: xsd:boolean, enableEnhancedLookup: xsd:boolean, enableFeeds: xsd:boolean, enableHistory: xsd:boolean, enableReports: xsd:boolean, enableSearch: xsd:boolean, enableSharing: xsd:boolean, enableStreamingApi: xsd:boolean, externalDataSource: xsd:string, externalName: xsd:string, externalRepository: xsd:string, externalSharingModel: ns0:SharingModel, fieldSets: ns0:FieldSet[], fields: ns0:CustomField[], gender: ns0:Gender, historyRetentionPolicy: ns0:HistoryRetentionPolicy, household: xsd:boolean, indexes: ns0:Index[], label: xsd:string, listViews: ns0:ListView[], nameField: ns0:CustomField, pluralLabel: xsd:string, recordTypeTrackFeedHistory: xsd:boolean, recordTypeTrackHistory: xsd:boolean, recordTypes: ns0:RecordType[], searchLayouts: ns0:SearchLayouts, sharingModel: ns0:SharingModel, sharingReasons: ns0:SharingReason[], sharingRecalculations: ns0:SharingRecalculation[], startsWith: ns0:StartsWith, validationRules: ns0:ValidationRule[], visibility: ns0:SetupObjectVisibility, webLinks: ns0:WebLink[])
+     ns0:CustomObjectTranslation(fullName: xsd:string, caseValues: ns0:ObjectNameCaseValue[], fields: ns0:CustomFieldTranslation[], gender: ns0:Gender, layouts: ns0:LayoutTranslation[], nameFieldLabel: xsd:string, quickActions: ns0:QuickActionTranslation[], recordTypes: ns0:RecordTypeTranslation[], sharingReasons: ns0:SharingReasonTranslation[], standardFields: ns0:StandardFieldTranslation[], startsWith: ns0:StartsWith, validationRules: ns0:ValidationRuleTranslation[], webLinks: ns0:WebLinkTranslation[], workflowTasks: ns0:WorkflowTaskTranslation[])
+     ns0:CustomPageWebLink(fullName: xsd:string, availability: ns0:WebLinkAvailability, description: xsd:string, displayType: ns0:WebLinkDisplayType, encodingKey: ns0:Encoding, hasMenubar: xsd:boolean, hasScrollbars: xsd:boolean, hasToolbar: xsd:boolean, height: xsd:int, isResizable: xsd:boolean, linkType: ns0:WebLinkType, masterLabel: xsd:string, openType: ns0:WebLinkWindowType, page: xsd:string, position: ns0:WebLinkPosition, protected: xsd:boolean, requireRowSelection: xsd:boolean, scontrol: xsd:string, showsLocation: xsd:boolean, showsStatus: xsd:boolean, url: xsd:string, width: xsd:int)
+     ns0:CustomPageWebLinkTranslation(label: xsd:string, name: xsd:string)
+     ns0:CustomPermission(fullName: xsd:string, connectedApp: xsd:string, description: xsd:string, label: xsd:string, requiredPermission: ns0:CustomPermissionDependencyRequired[])
+     ns0:CustomPermissionDependencyRequired(customPermission: xsd:string, dependency: xsd:boolean)
+     ns0:CustomSettingsType
+     ns0:CustomShortcut(action: xsd:string, active: xsd:boolean, keyCommand: xsd:string, description: xsd:string, eventName: xsd:string)
+     ns0:CustomSite(fullName: xsd:string, active: xsd:boolean, allowHomePage: xsd:boolean, allowStandardAnswersPages: xsd:boolean, allowStandardIdeasPages: xsd:boolean, allowStandardLookups: xsd:boolean, allowStandardPortalPages: xsd:boolean, allowStandardSearch: xsd:boolean, analyticsTrackingCode: xsd:string, authorizationRequiredPage: xsd:string, bandwidthExceededPage: xsd:string, changePasswordPage: xsd:string, chatterAnswersForgotPasswordConfirmPage: xsd:string, chatterAnswersForgotPasswordPage: xsd:string, chatterAnswersHelpPage: xsd:string, chatterAnswersLoginPage: xsd:string, chatterAnswersRegistrationPage: xsd:string, clickjackProtectionLevel: ns0:SiteClickjackProtectionLevel, customWebAddresses: ns0:SiteWebAddress[], description: xsd:string, favoriteIcon: xsd:string, fileNotFoundPage: xsd:string, forgotPasswordPage: xsd:string, genericErrorPage: xsd:string, guestProfile: xsd:string, inMaintenancePage: xsd:string, inactiveIndexPage: xsd:string, indexPage: xsd:string, masterLabel: xsd:string, myProfilePage: xsd:string, portal: xsd:string, requireHttps: xsd:boolean, requireInsecurePortalAccess: xsd:boolean, robotsTxtPage: xsd:string, rootComponent: xsd:string, selfRegPage: xsd:string, serverIsDown: xsd:string, siteAdmin: xsd:string, siteRedirectMappings: ns0:SiteRedirectMapping[], siteTemplate: xsd:string, siteType: ns0:SiteType, subdomain: xsd:string, urlPathPrefix: xsd:string)
+     ns0:CustomTab(fullName: xsd:string, actionOverrides: ns0:ActionOverride[], auraComponent: xsd:string, customObject: xsd:boolean, description: xsd:string, flexiPage: xsd:string, frameHeight: xsd:int, hasSidebar: xsd:boolean, icon: xsd:string, label: xsd:string, mobileReady: xsd:boolean, motif: xsd:string, page: xsd:string, scontrol: xsd:string, splashPageLink: xsd:string, url: xsd:string, urlEncodingKey: ns0:Encoding)
+     ns0:CustomTabTranslation(label: xsd:string, name: xsd:string)
+     ns0:CustomValue(fullName: xsd:string, color: xsd:string, default: xsd:boolean, description: xsd:string, isActive: xsd:boolean, label: xsd:string)
+     ns0:Dashboard(fullName: xsd:string, backgroundEndColor: xsd:string, backgroundFadeDirection: ns0:ChartBackgroundDirection, backgroundStartColor: xsd:string, dashboardFilters: ns0:DashboardFilter[], dashboardGridLayout: ns0:DashboardGridLayout, dashboardResultRefreshedDate: xsd:string, dashboardResultRunningUser: xsd:string, dashboardType: ns0:DashboardType, description: xsd:string, folderName: xsd:string, isGridLayout: xsd:boolean, leftSection: ns0:DashboardComponentSection, middleSection: ns0:DashboardComponentSection, rightSection: ns0:DashboardComponentSection, runningUser: xsd:string, textColor: xsd:string, title: xsd:string, titleColor: xsd:string, titleSize: xsd:int)
+     ns0:DashboardComponent(autoselectColumnsFromReport: xsd:boolean, chartAxisRange: ns0:ChartRangeType, chartAxisRangeMax: xsd:double, chartAxisRangeMin: xsd:double, chartSummary: ns0:ChartSummary[], componentType: ns0:DashboardComponentType, dashboardFilterColumns: ns0:DashboardFilterColumn[], dashboardTableColumn: ns0:DashboardTableColumn[], displayUnits: ns0:ChartUnits, drillDownUrl: xsd:string, drillEnabled: xsd:boolean, drillToDetailEnabled: xsd:boolean, enableHover: xsd:boolean, expandOthers: xsd:boolean, footer: xsd:string, gaugeMax: xsd:double, gaugeMin: xsd:double, groupingColumn: xsd:string[], header: xsd:string, indicatorBreakpoint1: xsd:double, indicatorBreakpoint2: xsd:double, indicatorHighColor: xsd:string, indicatorLowColor: xsd:string, indicatorMiddleColor: xsd:string, legendPosition: ns0:ChartLegendPosition, maxValuesDisplayed: xsd:int, metricLabel: xsd:string, page: xsd:string, pageHeightInPixels: xsd:int, report: xsd:string, scontrol: xsd:string, scontrolHeightInPixels: xsd:int, showPercentage: xsd:boolean, showPicturesOnCharts: xsd:boolean, showPicturesOnTables: xsd:boolean, showTotal: xsd:boolean, showValues: xsd:boolean, sortBy: ns0:DashboardComponentFilter, title: xsd:string, useReportChart: xsd:boolean)
+     ns0:DashboardComponentFilter
+     ns0:DashboardComponentSection(columnSize: ns0:DashboardComponentSize, components: ns0:DashboardComponent[])
+     ns0:DashboardComponentSize
+     ns0:DashboardComponentType
+     ns0:DashboardFilter(dashboardFilterOptions: ns0:DashboardFilterOption[], name: xsd:string)
+     ns0:DashboardFilterColumn(column: xsd:string)
+     ns0:DashboardFilterOperation
+     ns0:DashboardFilterOption(operator: ns0:DashboardFilterOperation, values: xsd:string[])
+     ns0:DashboardFolder(fullName: xsd:string, accessType: ns0:FolderAccessTypes, folderShares: ns0:FolderShare[], name: xsd:string, publicFolderAccess: ns0:PublicFolderAccess, sharedTo: ns0:SharedTo)
+     ns0:DashboardGridComponent(colSpan: xsd:int, columnIndex: xsd:int, dashboardComponent: ns0:DashboardComponent, rowIndex: xsd:int, rowSpan: xsd:int)
+     ns0:DashboardGridLayout(dashboardGridComponents: ns0:DashboardGridComponent[], numberOfColumns: xsd:int, rowHeight: xsd:int)
+     ns0:DashboardMobileSettings(enableDashboardIPadApp: xsd:boolean)
+     ns0:DashboardTableColumn(aggregateType: ns0:ReportSummaryType, calculatePercent: xsd:boolean, column: xsd:string, decimalPlaces: xsd:int, showTotal: xsd:boolean, sortBy: ns0:DashboardComponentFilter)
+     ns0:DashboardType
+     ns0:DataCategory(dataCategory: ns0:DataCategory[], label: xsd:string, name: xsd:string)
+     ns0:DataCategoryFilterOperation
+     ns0:DataCategoryGroup(fullName: xsd:string, active: xsd:boolean, dataCategory: ns0:DataCategory, description: xsd:string, label: xsd:string, objectUsage: ns0:ObjectUsage)
+     ns0:DataPipeline(fullName: xsd:string, content: xsd:base64Binary, apiVersion: xsd:double, label: xsd:string, scriptType: ns0:DataPipelineType)
+     ns0:DataPipelineType
+     ns0:DefaultShortcut(action: xsd:string, active: xsd:boolean, keyCommand: xsd:string)
+     ns0:DelegateGroup(fullName: xsd:string, customObjects: xsd:string[], groups: xsd:string[], label: xsd:string, loginAccess: xsd:boolean, permissionSets: xsd:string[], profiles: xsd:string[], roles: xsd:string[])
+     ns0:DeleteConstraint
+     ns0:DeleteResult(errors: ns0:Error[], fullName: xsd:string, success: xsd:boolean)
+     ns0:DeployDetails(componentFailures: ns0:DeployMessage[], componentSuccesses: ns0:DeployMessage[], retrieveResult: ns0:RetrieveResult, runTestResult: ns0:RunTestsResult)
+     ns0:DeployMessage(changed: xsd:boolean, columnNumber: xsd:int, componentType: xsd:string, created: xsd:boolean, createdDate: xsd:dateTime, deleted: xsd:boolean, fileName: xsd:string, fullName: xsd:string, id: xsd:string, lineNumber: xsd:int, problem: xsd:string, problemType: ns0:DeployProblemType, success: xsd:boolean)
+     ns0:DeployOptions(allowMissingFiles: xsd:boolean, autoUpdatePackage: xsd:boolean, checkOnly: xsd:boolean, ignoreWarnings: xsd:boolean, performRetrieve: xsd:boolean, purgeOnDelete: xsd:boolean, rollbackOnError: xsd:boolean, runTests: xsd:string[], singlePackage: xsd:boolean, testLevel: ns0:TestLevel)
+     ns0:DeployProblemType
+     ns0:DeployResult(canceledBy: xsd:string, canceledByName: xsd:string, checkOnly: xsd:boolean, completedDate: xsd:dateTime, createdBy: xsd:string, createdByName: xsd:string, createdDate: xsd:dateTime, details: ns0:DeployDetails, done: xsd:boolean, errorMessage: xsd:string, errorStatusCode: ns0:StatusCode, id: ns0:ID, ignoreWarnings: xsd:boolean, lastModifiedDate: xsd:dateTime, numberComponentErrors: xsd:int, numberComponentsDeployed: xsd:int, numberComponentsTotal: xsd:int, numberTestErrors: xsd:int, numberTestsCompleted: xsd:int, numberTestsTotal: xsd:int, rollbackOnError: xsd:boolean, runTestsEnabled: xsd:boolean, startDate: xsd:dateTime, stateDetail: xsd:string, status: ns0:DeployStatus, success: xsd:boolean)
+     ns0:DeployStatus
+     ns0:DeploymentStatus
+     ns0:DescribeMetadataObject(childXmlNames: xsd:string[], directoryName: xsd:string, inFolder: xsd:boolean, metaFile: xsd:boolean, suffix: xsd:string, xmlName: xsd:string)
+     ns0:DescribeMetadataResult(metadataObjects: ns0:DescribeMetadataObject[], organizationNamespace: xsd:string, partialSaveAllowed: xsd:boolean, testRequired: xsd:boolean)
+     ns0:DescribeValueTypeResult(apiCreatable: xsd:boolean, apiDeletable: xsd:boolean, apiReadable: xsd:boolean, apiUpdatable: xsd:boolean, parentField: ns0:ValueTypeField, valueTypeFields: ns0:ValueTypeField[])
+     ns0:DevicePlatformType
+     ns0:DeviceType
+     ns0:DisplayCurrency
+     ns0:Document(fullName: xsd:string, content: xsd:base64Binary, description: xsd:string, internalUseOnly: xsd:boolean, keywords: xsd:string, name: xsd:string, public: xsd:boolean)
+     ns0:DocumentFolder(fullName: xsd:string, accessType: ns0:FolderAccessTypes, folderShares: ns0:FolderShare[], name: xsd:string, publicFolderAccess: ns0:PublicFolderAccess, sharedTo: ns0:SharedTo)
+     ns0:DomainWhitelist(domain: xsd:string[])
+     ns0:DupeActionType
+     ns0:DupeSecurityOptionType
+     ns0:DuplicateRule(fullName: xsd:string, actionOnInsert: ns0:DupeActionType, actionOnUpdate: ns0:DupeActionType, alertText: xsd:string, description: xsd:string, duplicateRuleFilter: ns0:DuplicateRuleFilter, duplicateRuleMatchRules: ns0:DuplicateRuleMatchRule[], isActive: xsd:boolean, masterLabel: xsd:string, operationsOnInsert: xsd:string[], operationsOnUpdate: xsd:string[], securityOption: ns0:DupeSecurityOptionType, sortOrder: xsd:int)
+     ns0:DuplicateRuleFilter(booleanFilter: xsd:string, duplicateRuleFilterItems: ns0:DuplicateRuleFilterItem[])
+     ns0:DuplicateRuleFilterItem(field: xsd:string, operation: ns0:FilterOperation, value: xsd:string, valueField: xsd:string, sortOrder: xsd:int, table: xsd:string)
+     ns0:DuplicateRuleMatchRule(matchRuleSObjectType: xsd:string, matchingRule: xsd:string, objectMapping: ns0:ObjectMapping)
+     ns0:EclairGeoData(fullName: xsd:string, content: xsd:base64Binary, maps: ns0:EclairMap[], masterLabel: xsd:string)
+     ns0:EclairMap(boundingBoxBottom: xsd:double, boundingBoxLeft: xsd:double, boundingBoxRight: xsd:double, boundingBoxTop: xsd:double, mapLabel: xsd:string, mapName: xsd:string, projection: xsd:string)
+     ns0:EmailFolder(fullName: xsd:string, accessType: ns0:FolderAccessTypes, folderShares: ns0:FolderShare[], name: xsd:string, publicFolderAccess: ns0:PublicFolderAccess, sharedTo: ns0:SharedTo)
+     ns0:EmailTemplate(fullName: xsd:string, content: xsd:base64Binary, apiVersion: xsd:double, attachedDocuments: xsd:string[], attachments: ns0:Attachment[], available: xsd:boolean, description: xsd:string, encodingKey: ns0:Encoding, letterhead: xsd:string, name: xsd:string, packageVersions: ns0:PackageVersion[], style: ns0:EmailTemplateStyle, subject: xsd:string, textOnly: xsd:string, type: ns0:EmailTemplateType)
+     ns0:EmailTemplateStyle
+     ns0:EmailTemplateType
+     ns0:EmailToCaseOnFailureActionType
+     ns0:EmailToCaseRoutingAddress(addressType: ns0:EmailToCaseRoutingAddressType, authorizedSenders: xsd:string, caseOrigin: xsd:string, caseOwner: xsd:string, caseOwnerType: xsd:string, casePriority: xsd:string, createTask: xsd:boolean, emailAddress: xsd:string, emailServicesAddress: xsd:string, isVerified: xsd:boolean, routingName: xsd:string, saveEmailHeaders: xsd:boolean, taskStatus: xsd:string)
+     ns0:EmailToCaseRoutingAddressType
+     ns0:EmailToCaseSettings(enableEmailToCase: xsd:boolean, enableHtmlEmail: xsd:boolean, enableOnDemandEmailToCase: xsd:boolean, enableThreadIDInBody: xsd:boolean, enableThreadIDInSubject: xsd:boolean, notifyOwnerOnNewCaseEmail: xsd:boolean, overEmailLimitAction: ns0:EmailToCaseOnFailureActionType, preQuoteSignature: xsd:boolean, routingAddresses: ns0:EmailToCaseRoutingAddress[], unauthorizedSenderAction: ns0:EmailToCaseOnFailureActionType)
+     ns0:EmbeddedServiceBranding(fullName: xsd:string, contrastPrimaryColor: xsd:string, embeddedServiceConfig: xsd:string, font: xsd:string, masterLabel: xsd:string, navBarColor: xsd:string, primaryColor: xsd:string, secondaryColor: xsd:string)
+     ns0:EmbeddedServiceConfig(fullName: xsd:string, masterLabel: xsd:string, site: xsd:string)
+     ns0:EmbeddedServiceLiveAgent(fullName: xsd:string, embeddedServiceConfig: xsd:string, embeddedServiceQuickActions: ns0:EmbeddedServiceQuickAction[], liveAgentChatUrl: xsd:string, liveAgentContentUrl: xsd:string, liveChatButton: xsd:string, liveChatDeployment: xsd:string, masterLabel: xsd:string, prechatEnabled: xsd:boolean, prechatJson: xsd:string, scenario: ns0:EmbeddedServiceScenario)
+     ns0:EmbeddedServiceQuickAction(embeddedServiceLiveAgent: xsd:string, order: xsd:int, quickActionDefinition: xsd:string)
+     ns0:EmbeddedServiceScenario
+     ns0:Encoding
+     ns0:EncryptedFieldMaskChar
+     ns0:EncryptedFieldMaskType
+     ns0:EntitlementProcess(fullName: xsd:string, SObjectType: xsd:string, active: xsd:boolean, businessHours: xsd:string, description: xsd:string, entryStartDateField: xsd:string, exitCriteriaBooleanFilter: xsd:string, exitCriteriaFilterItems: ns0:FilterItem[], exitCriteriaFormula: xsd:string, isVersionDefault: xsd:boolean, milestones: ns0:EntitlementProcessMilestoneItem[], name: xsd:string, versionMaster: xsd:string, versionNotes: xsd:string, versionNumber: xsd:int)
+     ns0:EntitlementProcessMilestoneItem(businessHours: xsd:string, criteriaBooleanFilter: xsd:string, milestoneCriteriaFilterItems: ns0:FilterItem[], milestoneCriteriaFormula: xsd:string, milestoneName: xsd:string, minutesCustomClass: xsd:string, minutesToComplete: xsd:int, successActions: ns0:WorkflowActionReference[], timeTriggers: ns0:EntitlementProcessMilestoneTimeTrigger[], useCriteriaStartTime: xsd:boolean)
+     ns0:EntitlementProcessMilestoneTimeTrigger(actions: ns0:WorkflowActionReference[], timeLength: xsd:int, workflowTimeTriggerUnit: ns0:MilestoneTimeUnits)
+     ns0:EntitlementSettings(fullName: xsd:string, assetLookupLimitedToActiveEntitlementsOnAccount: xsd:boolean, assetLookupLimitedToActiveEntitlementsOnContact: xsd:boolean, assetLookupLimitedToSameAccount: xsd:boolean, assetLookupLimitedToSameContact: xsd:boolean, enableEntitlementVersioning: xsd:boolean, enableEntitlements: xsd:boolean, entitlementLookupLimitedToActiveStatus: xsd:boolean, entitlementLookupLimitedToSameAccount: xsd:boolean, entitlementLookupLimitedToSameAsset: xsd:boolean, entitlementLookupLimitedToSameContact: xsd:boolean)
+     ns0:EntitlementTemplate(fullName: xsd:string, businessHours: xsd:string, casesPerEntitlement: xsd:int, entitlementProcess: xsd:string, isPerIncident: xsd:boolean, term: xsd:int, type: xsd:string)
+     ns0:Error(extendedErrorDetails: ns0:ExtendedErrorDetails[], fields: xsd:string[], message: xsd:string, statusCode: ns0:StatusCode)
+     ns0:EscalationAction(assignedTo: xsd:string, assignedToTemplate: xsd:string, assignedToType: ns0:AssignToLookupValueType, minutesToEscalation: xsd:int, notifyCaseOwner: xsd:boolean, notifyEmail: xsd:string[], notifyTo: xsd:string, notifyToTemplate: xsd:string)
+     ns0:EscalationRule(fullName: xsd:string, active: xsd:boolean, ruleEntry: ns0:RuleEntry[])
+     ns0:EscalationRules(fullName: xsd:string, escalationRule: ns0:EscalationRule[])
+     ns0:EscalationStartTimeType
+     ns0:EventDelivery(fullName: xsd:string, eventParameters: ns0:EventParameterMap[], eventSubscription: xsd:string, referenceData: xsd:string, type: ns0:EventDeliveryType)
+     ns0:EventDeliveryType
+     ns0:EventParameterMap(parameterName: xsd:string, parameterValue: xsd:string)
+     ns0:EventSubscription(fullName: xsd:string, active: xsd:boolean, eventParameters: ns0:EventParameterMap[], eventType: xsd:string, referenceData: xsd:string)
+     ns0:EventType(fullName: xsd:string, description: xsd:string, fields: ns0:EventTypeParameter[], label: xsd:string)
+     ns0:EventTypeParameter(defaultValue: xsd:string, description: xsd:string, label: xsd:string, maxOccurs: xsd:int, minOccurs: xsd:int, name: xsd:string, sObjectType: xsd:string, type: ns0:FieldType)
+     ns0:Expiration
+     ns0:ExtendedErrorCode
+     ns0:ExtendedErrorDetails(extendedErrorCode: ns0:ExtendedErrorCode, _value_1: ANY[])
+     ns0:ExternalDataSource(fullName: xsd:string, authProvider: xsd:string, certificate: xsd:string, customConfiguration: xsd:string, endpoint: xsd:string, isWritable: xsd:boolean, label: xsd:string, oauthRefreshToken: xsd:string, oauthScope: xsd:string, oauthToken: xsd:string, password: xsd:string, principalType: ns0:ExternalPrincipalType, protocol: ns0:AuthenticationProtocol, repository: xsd:string, type: ns0:ExternalDataSourceType, username: xsd:string, version: xsd:string)
+     ns0:ExternalDataSourceType
+     ns0:ExternalPrincipalType
+     ns0:ExternalServiceRegistration(fullName: xsd:string, description: xsd:string, label: xsd:string, namedCredential: xsd:string, schema: xsd:string, schemaType: xsd:string, schemaUrl: xsd:string, status: xsd:string)
+     ns0:FeedFilterCriterion(feedItemType: ns0:FeedItemType, feedItemVisibility: ns0:FeedItemVisibility, relatedSObjectType: xsd:string)
+     ns0:FeedItemDisplayFormat
+     ns0:FeedItemSettings(characterLimit: xsd:int, collapseThread: xsd:boolean, displayFormat: ns0:FeedItemDisplayFormat, feedItemType: ns0:FeedItemType)
+     ns0:FeedItemType
+     ns0:FeedItemVisibility
+     ns0:FeedLayout(autocollapsePublisher: xsd:boolean, compactFeed: xsd:boolean, feedFilterPosition: ns0:FeedLayoutFilterPosition, feedFilters: ns0:FeedLayoutFilter[], fullWidthFeed: xsd:boolean, hideSidebar: xsd:boolean, highlightExternalFeedItems: xsd:boolean, leftComponents: ns0:FeedLayoutComponent[], rightComponents: ns0:FeedLayoutComponent[], useInlineFiltersInConsole: xsd:boolean)
+     ns0:FeedLayoutComponent(componentType: ns0:FeedLayoutComponentType, height: xsd:int, page: xsd:string)
+     ns0:FeedLayoutComponentType
+     ns0:FeedLayoutFilter(feedFilterName: xsd:string, feedFilterType: ns0:FeedLayoutFilterType, feedItemType: ns0:FeedItemType)
+     ns0:FeedLayoutFilterPosition
+     ns0:FeedLayoutFilterType
+     ns0:FieldManageability
+     ns0:FieldMapping(SObjectType: xsd:string, developerName: xsd:string, fieldMappingRows: ns0:FieldMappingRow[], masterLabel: xsd:string)
+     ns0:FieldMappingField(dataServiceField: xsd:string, dataServiceObjectName: xsd:string, priority: xsd:int)
+     ns0:FieldMappingRow(SObjectType: xsd:string, fieldMappingFields: ns0:FieldMappingField[], fieldName: xsd:string, mappingOperation: ns0:MappingOperation)
+     ns0:FieldOverride(field: xsd:string, formula: xsd:string, literalValue: xsd:string)
+     ns0:FieldSet(fullName: xsd:string, availableFields: ns0:FieldSetItem[], description: xsd:string, displayedFields: ns0:FieldSetItem[], label: xsd:string)
+     ns0:FieldSetItem(field: xsd:string, isFieldManaged: xsd:boolean, isRequired: xsd:boolean)
+     ns0:FieldType
+     ns0:FieldUpdateOperation
+     ns0:FieldValue(name: xsd:string, value: None)
+     ns0:FileDownloadBehavior
+     ns0:FileProperties(createdById: xsd:string, createdByName: xsd:string, createdDate: xsd:dateTime, fileName: xsd:string, fullName: xsd:string, id: xsd:string, lastModifiedById: xsd:string, lastModifiedByName: xsd:string, lastModifiedDate: xsd:dateTime, manageableState: ns0:ManageableState, namespacePrefix: xsd:string, type: xsd:string)
+     ns0:FileType
+     ns0:FileTypeDispositionAssignmentBean(behavior: ns0:FileDownloadBehavior, fileType: ns0:FileType, securityRiskFileType: xsd:boolean)
+     ns0:FileUploadAndDownloadSecuritySettings(fullName: xsd:string, dispositions: ns0:FileTypeDispositionAssignmentBean[], noHtmlUploadAsAttachment: xsd:boolean)
+     ns0:FilterItem(field: xsd:string, operation: ns0:FilterOperation, value: xsd:string, valueField: xsd:string)
+     ns0:FilterOperation
+     ns0:FilterScope
+     ns0:FindSimilarOppFilter(similarOpportunitiesDisplayColumns: xsd:string[], similarOpportunitiesMatchFields: xsd:string[])
+     ns0:FiscalYearSettings(fiscalYearNameBasedOn: xsd:string, startMonth: xsd:string)
+     ns0:FlexiPage(fullName: xsd:string, description: xsd:string, flexiPageRegions: ns0:FlexiPageRegion[], masterLabel: xsd:string, parentFlexiPage: xsd:string, platformActionlist: ns0:PlatformActionList, quickActionList: ns0:QuickActionList, sobjectType: xsd:string, template: ns0:FlexiPageTemplateInstance, type: ns0:FlexiPageType)
+     ns0:FlexiPageRegion(appendable: ns0:RegionFlagStatus, componentInstances: ns0:ComponentInstance[], mode: ns0:FlexiPageRegionMode, name: xsd:string, prependable: ns0:RegionFlagStatus, replaceable: ns0:RegionFlagStatus, type: ns0:FlexiPageRegionType)
+     ns0:FlexiPageRegionMode
+     ns0:FlexiPageRegionType
+     ns0:FlexiPageTemplateInstance(name: xsd:string, properties: ns0:ComponentInstanceProperty[])
+     ns0:FlexiPageType
+     ns0:Flow(fullName: xsd:string, actionCalls: ns0:FlowActionCall[], apexPluginCalls: ns0:FlowApexPluginCall[], assignments: ns0:FlowAssignment[], choices: ns0:FlowChoice[], constants: ns0:FlowConstant[], decisions: ns0:FlowDecision[], description: xsd:string, dynamicChoiceSets: ns0:FlowDynamicChoiceSet[], formulas: ns0:FlowFormula[], interviewLabel: xsd:string, label: xsd:string, loops: ns0:FlowLoop[], processMetadataValues: ns0:FlowMetadataValue[], processType: ns0:FlowProcessType, recordCreates: ns0:FlowRecordCreate[], recordDeletes: ns0:FlowRecordDelete[], recordLookups: ns0:FlowRecordLookup[], recordUpdates: ns0:FlowRecordUpdate[], screens: ns0:FlowScreen[], startElementReference: xsd:string, steps: ns0:FlowStep[], subflows: ns0:FlowSubflow[], textTemplates: ns0:FlowTextTemplate[], variables: ns0:FlowVariable[], waits: ns0:FlowWait[])
+     ns0:FlowActionCall(processMetadataValues: ns0:FlowMetadataValue[], description: xsd:string, name: xsd:string, label: xsd:string, locationX: xsd:int, locationY: xsd:int, actionName: xsd:string, actionType: ns0:InvocableActionType, connector: ns0:FlowConnector, faultConnector: ns0:FlowConnector, inputParameters: ns0:FlowActionCallInputParameter[], outputParameters: ns0:FlowActionCallOutputParameter[])
+     ns0:FlowActionCallInputParameter(processMetadataValues: ns0:FlowMetadataValue[], name: xsd:string, value: ns0:FlowElementReferenceOrValue)
+     ns0:FlowActionCallOutputParameter(processMetadataValues: ns0:FlowMetadataValue[], assignToReference: xsd:string, name: xsd:string)
+     ns0:FlowApexPluginCall(processMetadataValues: ns0:FlowMetadataValue[], description: xsd:string, name: xsd:string, label: xsd:string, locationX: xsd:int, locationY: xsd:int, apexClass: xsd:string, connector: ns0:FlowConnector, faultConnector: ns0:FlowConnector, inputParameters: ns0:FlowApexPluginCallInputParameter[], outputParameters: ns0:FlowApexPluginCallOutputParameter[])
+     ns0:FlowApexPluginCallInputParameter(processMetadataValues: ns0:FlowMetadataValue[], name: xsd:string, value: ns0:FlowElementReferenceOrValue)
+     ns0:FlowApexPluginCallOutputParameter(processMetadataValues: ns0:FlowMetadataValue[], assignToReference: xsd:string, name: xsd:string)
+     ns0:FlowAssignment(processMetadataValues: ns0:FlowMetadataValue[], description: xsd:string, name: xsd:string, label: xsd:string, locationX: xsd:int, locationY: xsd:int, assignmentItems: ns0:FlowAssignmentItem[], connector: ns0:FlowConnector)
+     ns0:FlowAssignmentItem(processMetadataValues: ns0:FlowMetadataValue[], assignToReference: xsd:string, operator: ns0:FlowAssignmentOperator, value: ns0:FlowElementReferenceOrValue)
+     ns0:FlowAssignmentOperator
+     ns0:FlowBaseElement(processMetadataValues: ns0:FlowMetadataValue[])
+     ns0:FlowChoice(processMetadataValues: ns0:FlowMetadataValue[], description: xsd:string, name: xsd:string, choiceText: xsd:string, dataType: ns0:FlowDataType, userInput: ns0:FlowChoiceUserInput, value: ns0:FlowElementReferenceOrValue)
+     ns0:FlowChoiceUserInput(processMetadataValues: ns0:FlowMetadataValue[], isRequired: xsd:boolean, promptText: xsd:string, validationRule: ns0:FlowInputValidationRule)
+     ns0:FlowComparisonOperator
+     ns0:FlowCondition(processMetadataValues: ns0:FlowMetadataValue[], leftValueReference: xsd:string, operator: ns0:FlowComparisonOperator, rightValue: ns0:FlowElementReferenceOrValue)
+     ns0:FlowConnector(processMetadataValues: ns0:FlowMetadataValue[], targetReference: xsd:string)
+     ns0:FlowConstant(processMetadataValues: ns0:FlowMetadataValue[], description: xsd:string, name: xsd:string, dataType: ns0:FlowDataType, value: ns0:FlowElementReferenceOrValue)
+     ns0:FlowDataType
+     ns0:FlowDecision(processMetadataValues: ns0:FlowMetadataValue[], description: xsd:string, name: xsd:string, label: xsd:string, locationX: xsd:int, locationY: xsd:int, defaultConnector: ns0:FlowConnector, defaultConnectorLabel: xsd:string, rules: ns0:FlowRule[])
+     ns0:FlowDefinition(fullName: xsd:string, activeVersionNumber: xsd:int, description: xsd:string, masterLabel: xsd:string)
+     ns0:FlowDynamicChoiceSet(processMetadataValues: ns0:FlowMetadataValue[], description: xsd:string, name: xsd:string, dataType: ns0:FlowDataType, displayField: xsd:string, filters: ns0:FlowRecordFilter[], limit: xsd:int, object: xsd:string, outputAssignments: ns0:FlowOutputFieldAssignment[], picklistField: xsd:string, picklistObject: xsd:string, sortField: xsd:string, sortOrder: ns0:SortOrder, valueField: xsd:string)
+     ns0:FlowElement(processMetadataValues: ns0:FlowMetadataValue[], description: xsd:string, name: xsd:string)
+     ns0:FlowElementReferenceOrValue(booleanValue: xsd:boolean, dateTimeValue: xsd:dateTime, dateValue: xsd:date, elementReference: xsd:string, numberValue: xsd:double, stringValue: xsd:string)
+     ns0:FlowFormula(processMetadataValues: ns0:FlowMetadataValue[], description: xsd:string, name: xsd:string, dataType: ns0:FlowDataType, expression: xsd:string, scale: xsd:int)
+     ns0:FlowInputFieldAssignment(processMetadataValues: ns0:FlowMetadataValue[], field: xsd:string, value: ns0:FlowElementReferenceOrValue)
+     ns0:FlowInputValidationRule(errorMessage: xsd:string, formulaExpression: xsd:string)
+     ns0:FlowLoop(processMetadataValues: ns0:FlowMetadataValue[], description: xsd:string, name: xsd:string, label: xsd:string, locationX: xsd:int, locationY: xsd:int, assignNextValueToReference: xsd:string, collectionReference: xsd:string, iterationOrder: ns0:IterationOrder, nextValueConnector: ns0:FlowConnector, noMoreValuesConnector: ns0:FlowConnector)
+     ns0:FlowMetadataValue(name: xsd:string, value: ns0:FlowElementReferenceOrValue)
+     ns0:FlowNode(processMetadataValues: ns0:FlowMetadataValue[], description: xsd:string, name: xsd:string, label: xsd:string, locationX: xsd:int, locationY: xsd:int)
+     ns0:FlowOutputFieldAssignment(processMetadataValues: ns0:FlowMetadataValue[], assignToReference: xsd:string, field: xsd:string)
+     ns0:FlowProcessType
+     ns0:FlowRecordCreate(processMetadataValues: ns0:FlowMetadataValue[], description: xsd:string, name: xsd:string, label: xsd:string, locationX: xsd:int, locationY: xsd:int, assignRecordIdToReference: xsd:string, connector: ns0:FlowConnector, faultConnector: ns0:FlowConnector, inputAssignments: ns0:FlowInputFieldAssignment[], inputReference: xsd:string, object: xsd:string)
+     ns0:FlowRecordDelete(processMetadataValues: ns0:FlowMetadataValue[], description: xsd:string, name: xsd:string, label: xsd:string, locationX: xsd:int, locationY: xsd:int, connector: ns0:FlowConnector, faultConnector: ns0:FlowConnector, filters: ns0:FlowRecordFilter[], inputReference: xsd:string, object: xsd:string)
+     ns0:FlowRecordFilter(processMetadataValues: ns0:FlowMetadataValue[], field: xsd:string, operator: ns0:FlowRecordFilterOperator, value: ns0:FlowElementReferenceOrValue)
+     ns0:FlowRecordFilterOperator
+     ns0:FlowRecordLookup(processMetadataValues: ns0:FlowMetadataValue[], description: xsd:string, name: xsd:string, label: xsd:string, locationX: xsd:int, locationY: xsd:int, assignNullValuesIfNoRecordsFound: xsd:boolean, connector: ns0:FlowConnector, faultConnector: ns0:FlowConnector, filters: ns0:FlowRecordFilter[], object: xsd:string, outputAssignments: ns0:FlowOutputFieldAssignment[], outputReference: xsd:string, queriedFields: xsd:string[], sortField: xsd:string, sortOrder: ns0:SortOrder)
+     ns0:FlowRecordUpdate(processMetadataValues: ns0:FlowMetadataValue[], description: xsd:string, name: xsd:string, label: xsd:string, locationX: xsd:int, locationY: xsd:int, connector: ns0:FlowConnector, faultConnector: ns0:FlowConnector, filters: ns0:FlowRecordFilter[], inputAssignments: ns0:FlowInputFieldAssignment[], inputReference: xsd:string, object: xsd:string)
+     ns0:FlowRule(processMetadataValues: ns0:FlowMetadataValue[], description: xsd:string, name: xsd:string, conditionLogic: xsd:string, conditions: ns0:FlowCondition[], connector: ns0:FlowConnector, label: xsd:string)
+     ns0:FlowScreen(processMetadataValues: ns0:FlowMetadataValue[], description: xsd:string, name: xsd:string, label: xsd:string, locationX: xsd:int, locationY: xsd:int, allowBack: xsd:boolean, allowFinish: xsd:boolean, allowPause: xsd:boolean, connector: ns0:FlowConnector, fields: ns0:FlowScreenField[], helpText: xsd:string, pausedText: xsd:string, rules: ns0:FlowScreenRule[])
+     ns0:FlowScreenField(processMetadataValues: ns0:FlowMetadataValue[], description: xsd:string, name: xsd:string, choiceReferences: xsd:string[], dataType: ns0:FlowDataType, defaultSelectedChoiceReference: xsd:string, defaultValue: ns0:FlowElementReferenceOrValue, fieldText: xsd:string, fieldType: ns0:FlowScreenFieldType, helpText: xsd:string, isRequired: xsd:boolean, isVisible: xsd:boolean, scale: xsd:int, validationRule: ns0:FlowInputValidationRule)
+     ns0:FlowScreenFieldType
+     ns0:FlowScreenRule(processMetadataValues: ns0:FlowMetadataValue[], conditionLogic: xsd:string, conditions: ns0:FlowCondition[], label: xsd:string, ruleActions: ns0:FlowScreenRuleAction[])
+     ns0:FlowScreenRuleAction(processMetadataValues: ns0:FlowMetadataValue[], attribute: xsd:string, fieldReference: xsd:string, value: ns0:FlowElementReferenceOrValue)
+     ns0:FlowStep(processMetadataValues: ns0:FlowMetadataValue[], description: xsd:string, name: xsd:string, label: xsd:string, locationX: xsd:int, locationY: xsd:int, connectors: ns0:FlowConnector[])
+     ns0:FlowSubflow(processMetadataValues: ns0:FlowMetadataValue[], description: xsd:string, name: xsd:string, label: xsd:string, locationX: xsd:int, locationY: xsd:int, connector: ns0:FlowConnector, flowName: xsd:string, inputAssignments: ns0:FlowSubflowInputAssignment[], outputAssignments: ns0:FlowSubflowOutputAssignment[])
+     ns0:FlowSubflowInputAssignment(processMetadataValues: ns0:FlowMetadataValue[], name: xsd:string, value: ns0:FlowElementReferenceOrValue)
+     ns0:FlowSubflowOutputAssignment(processMetadataValues: ns0:FlowMetadataValue[], assignToReference: xsd:string, name: xsd:string)
+     ns0:FlowTextTemplate(processMetadataValues: ns0:FlowMetadataValue[], description: xsd:string, name: xsd:string, text: xsd:string)
+     ns0:FlowVariable(processMetadataValues: ns0:FlowMetadataValue[], description: xsd:string, name: xsd:string, dataType: ns0:FlowDataType, isCollection: xsd:boolean, isInput: xsd:boolean, isOutput: xsd:boolean, objectType: xsd:string, scale: xsd:int, value: ns0:FlowElementReferenceOrValue)
+     ns0:FlowWait(processMetadataValues: ns0:FlowMetadataValue[], description: xsd:string, name: xsd:string, label: xsd:string, locationX: xsd:int, locationY: xsd:int, defaultConnector: ns0:FlowConnector, defaultConnectorLabel: xsd:string, faultConnector: ns0:FlowConnector, waitEvents: ns0:FlowWaitEvent[])
+     ns0:FlowWaitEvent(processMetadataValues: ns0:FlowMetadataValue[], description: xsd:string, name: xsd:string, conditionLogic: xsd:string, conditions: ns0:FlowCondition[], connector: ns0:FlowConnector, eventType: xsd:string, inputParameters: ns0:FlowWaitEventInputParameter[], label: xsd:string, outputParameters: ns0:FlowWaitEventOutputParameter[])
+     ns0:FlowWaitEventInputParameter(processMetadataValues: ns0:FlowMetadataValue[], name: xsd:string, value: ns0:FlowElementReferenceOrValue)
+     ns0:FlowWaitEventOutputParameter(processMetadataValues: ns0:FlowMetadataValue[], assignToReference: xsd:string, name: xsd:string)
+     ns0:Folder(fullName: xsd:string, accessType: ns0:FolderAccessTypes, folderShares: ns0:FolderShare[], name: xsd:string, publicFolderAccess: ns0:PublicFolderAccess, sharedTo: ns0:SharedTo)
+     ns0:FolderAccessTypes
+     ns0:FolderShare(accessLevel: ns0:FolderShareAccessLevel, sharedTo: xsd:string, sharedToType: ns0:FolderSharedToType)
+     ns0:FolderShareAccessLevel
+     ns0:FolderSharedToType
+     ns0:ForecastCategories
+     ns0:ForecastRangeSettings(beginning: xsd:int, displaying: xsd:int, periodType: ns0:PeriodTypes)
+     ns0:ForecastingCategoryMapping(forecastingItemCategoryApiName: xsd:string, weightedSourceCategories: ns0:WeightedSourceCategory[])
+     ns0:ForecastingSettings(fullName: xsd:string, displayCurrency: ns0:DisplayCurrency, enableForecasts: xsd:boolean, forecastingCategoryMappings: ns0:ForecastingCategoryMapping[], forecastingTypeSettings: ns0:ForecastingTypeSettings[])
+     ns0:ForecastingTypeSettings(active: xsd:boolean, adjustmentsSettings: ns0:AdjustmentsSettings, displayedCategoryApiNames: xsd:string[], forecastRangeSettings: ns0:ForecastRangeSettings, forecastedCategoryApiNames: xsd:string[], isAmount: xsd:boolean, isAvailable: xsd:boolean, isQuantity: xsd:boolean, managerAdjustableCategoryApiNames: xsd:string[], masterLabel: xsd:string, name: xsd:string, opportunityListFieldsLabelMappings: ns0:OpportunityListFieldsLabelMapping[], opportunityListFieldsSelectedSettings: ns0:OpportunityListFieldsSelectedSettings, opportunityListFieldsUnselectedSettings: ns0:OpportunityListFieldsUnselectedSettings, ownerAdjustableCategoryApiNames: xsd:string[], quotasSettings: ns0:QuotasSettings)
+     ns0:FormFactor
+     ns0:Gender
+     ns0:GlobalPicklistValue(fullName: xsd:string, color: xsd:string, default: xsd:boolean, description: xsd:string, isActive: xsd:boolean)
+     ns0:GlobalQuickActionTranslation(label: xsd:string, name: xsd:string)
+     ns0:GlobalValueSet(fullName: xsd:string, customValue: ns0:CustomValue[], description: xsd:string, masterLabel: xsd:string, sorted: xsd:boolean)
+     ns0:GlobalValueSetTranslation(fullName: xsd:string, valueTranslation: ns0:ValueTranslation[])
+     ns0:Group(fullName: xsd:string, doesIncludeBosses: xsd:boolean, name: xsd:string)
+     ns0:HistoryRetentionPolicy(archiveAfterMonths: xsd:int, archiveRetentionYears: xsd:int, description: xsd:string)
+     ns0:Holiday(activityDate: xsd:date, businessHours: xsd:string[], description: xsd:string, endTime: xsd:time, isRecurring: xsd:boolean, name: xsd:string, recurrenceDayOfMonth: xsd:int, recurrenceDayOfWeek: xsd:string[], recurrenceDayOfWeekMask: xsd:int, recurrenceEndDate: xsd:date, recurrenceInstance: xsd:string, recurrenceInterval: xsd:int, recurrenceMonthOfYear: xsd:string, recurrenceStartDate: xsd:date, recurrenceType: xsd:string, startTime: xsd:time)
+     ns0:HomePageComponent(fullName: xsd:string, body: xsd:string, height: xsd:int, links: xsd:string[], page: xsd:string, pageComponentType: ns0:PageComponentType, showLabel: xsd:boolean, showScrollbars: xsd:boolean, width: ns0:PageComponentWidth)
+     ns0:HomePageLayout(fullName: xsd:string, narrowComponents: xsd:string[], wideComponents: xsd:string[])
+     ns0:ID
+     ns0:IdeaReputationLevel(name: xsd:string, value: xsd:int)
+     ns0:IdeasSettings(fullName: xsd:string, enableChatterProfile: xsd:boolean, enableIdeaThemes: xsd:boolean, enableIdeas: xsd:boolean, enableIdeasReputation: xsd:boolean, halfLife: xsd:double, ideasProfilePage: xsd:string)
+     ns0:Index(fullName: xsd:string, fields: ns0:IndexField[])
+     ns0:IndexField(name: xsd:string, sortDirection: xsd:string)
+     ns0:InsightParentType
+     ns0:InsightTrendType
+     ns0:InsightType(fullName: xsd:string, defaultTrendType: ns0:InsightTrendType, description: xsd:string, isProtected: xsd:boolean, masterLabel: xsd:string, parentType: ns0:InsightParentType, title: xsd:string)
+     ns0:InstalledPackage(fullName: xsd:string, password: xsd:string, versionNumber: xsd:string)
+     ns0:InvocableActionType
+     ns0:IpRange(description: xsd:string, end: xsd:string, start: xsd:string)
+     ns0:IterationOrder
+     ns0:KeyboardShortcuts(customShortcut: ns0:CustomShortcut[], defaultShortcut: ns0:DefaultShortcut[])
+     ns0:Keyword(keyword: xsd:string)
+     ns0:KeywordList(fullName: xsd:string, description: xsd:string, keywords: ns0:Keyword[], masterLabel: xsd:string)
+     ns0:KnowledgeAnswerSettings(assignTo: xsd:string, defaultArticleType: xsd:string, enableArticleCreation: xsd:boolean)
+     ns0:KnowledgeCaseEditor
+     ns0:KnowledgeCaseField(name: xsd:string)
+     ns0:KnowledgeCaseFieldsSettings(field: ns0:KnowledgeCaseField[])
+     ns0:KnowledgeCaseSettings(articlePDFCreationProfile: xsd:string, articlePublicSharingCommunities: ns0:KnowledgeCommunitiesSettings, articlePublicSharingSites: ns0:KnowledgeSitesSettings, articlePublicSharingSitesChatterAnswers: ns0:KnowledgeSitesSettings, assignTo: xsd:string, customizationClass: xsd:string, defaultContributionArticleType: xsd:string, editor: ns0:KnowledgeCaseEditor, enableArticleCreation: xsd:boolean, enableArticlePublicSharingSites: xsd:boolean, useProfileForPDFCreation: xsd:boolean)
+     ns0:KnowledgeCommunitiesSettings(community: xsd:string[])
+     ns0:KnowledgeLanguage(active: xsd:boolean, defaultAssignee: xsd:string, defaultAssigneeType: ns0:KnowledgeLanguageLookupValueType, defaultReviewer: xsd:string, defaultReviewerType: ns0:KnowledgeLanguageLookupValueType, name: xsd:string)
+     ns0:KnowledgeLanguageLookupValueType
+     ns0:KnowledgeLanguageSettings(language: ns0:KnowledgeLanguage[])
+     ns0:KnowledgeSettings(fullName: xsd:string, answers: ns0:KnowledgeAnswerSettings, cases: ns0:KnowledgeCaseSettings, defaultLanguage: xsd:string, enableChatterQuestionKBDeflection: xsd:boolean, enableCreateEditOnArticlesTab: xsd:boolean, enableExternalMediaContent: xsd:boolean, enableKnowledge: xsd:boolean, languages: ns0:KnowledgeLanguageSettings, showArticleSummariesCustomerPortal: xsd:boolean, showArticleSummariesInternalApp: xsd:boolean, showArticleSummariesPartnerPortal: xsd:boolean, showValidationStatusField: xsd:boolean, suggestedArticles: ns0:KnowledgeSuggestedArticlesSettings)
+     ns0:KnowledgeSitesSettings(site: xsd:string[])
+     ns0:KnowledgeSuggestedArticlesSettings(caseFields: ns0:KnowledgeCaseFieldsSettings, useSuggestedArticlesForCase: xsd:boolean, workOrderFields: ns0:KnowledgeWorkOrderFieldsSettings, workOrderLineItemFields: ns0:KnowledgeWorkOrderLineItemFieldsSettings)
+     ns0:KnowledgeWorkOrderField(name: xsd:string)
+     ns0:KnowledgeWorkOrderFieldsSettings(field: ns0:KnowledgeWorkOrderField[])
+     ns0:KnowledgeWorkOrderLineItemField(name: xsd:string)
+     ns0:KnowledgeWorkOrderLineItemFieldsSettings(field: ns0:KnowledgeWorkOrderLineItemField[])
+     ns0:KnowledgeWorkflowAction
+     ns0:Language
+     ns0:Layout(fullName: xsd:string, customButtons: xsd:string[], customConsoleComponents: ns0:CustomConsoleComponents, emailDefault: xsd:boolean, excludeButtons: xsd:string[], feedLayout: ns0:FeedLayout, headers: ns0:LayoutHeader[], layoutSections: ns0:LayoutSection[], miniLayout: ns0:MiniLayout, multilineLayoutFields: xsd:string[], platformActionList: ns0:PlatformActionList, quickActionList: ns0:QuickActionList, relatedContent: ns0:RelatedContent, relatedLists: ns0:RelatedListItem[], relatedObjects: xsd:string[], runAssignmentRulesDefault: xsd:boolean, showEmailCheckbox: xsd:boolean, showHighlightsPanel: xsd:boolean, showInteractionLogPanel: xsd:boolean, showKnowledgeComponent: xsd:boolean, showRunAssignmentRulesCheckbox: xsd:boolean, showSolutionSection: xsd:boolean, showSubmitAndAttachButton: xsd:boolean, summaryLayout: ns0:SummaryLayout)
+     ns0:LayoutColumn(layoutItems: ns0:LayoutItem[], reserved: xsd:string)
+     ns0:LayoutHeader
+     ns0:LayoutItem(analyticsCloudComponent: ns0:AnalyticsCloudComponentLayoutItem, behavior: ns0:UiBehavior, canvas: xsd:string, component: xsd:string, customLink: xsd:string, emptySpace: xsd:boolean, field: xsd:string, height: xsd:int, page: xsd:string, reportChartComponent: ns0:ReportChartComponentLayoutItem, scontrol: xsd:string, showLabel: xsd:boolean, showScrollbars: xsd:boolean, width: xsd:string)
+     ns0:LayoutSection(customLabel: xsd:boolean, detailHeading: xsd:boolean, editHeading: xsd:boolean, label: xsd:string, layoutColumns: ns0:LayoutColumn[], style: ns0:LayoutSectionStyle)
+     ns0:LayoutSectionStyle
+     ns0:LayoutSectionTranslation(label: xsd:string, section: xsd:string)
+     ns0:LayoutTranslation(layout: xsd:string, layoutType: xsd:string, sections: ns0:LayoutSectionTranslation[])
+     ns0:LeadConvertSettings(fullName: xsd:string, allowOwnerChange: xsd:boolean, objectMapping: ns0:ObjectMapping[], opportunityCreationOptions: ns0:VisibleOrRequired)
+     ns0:Letterhead(fullName: xsd:string, available: xsd:boolean, backgroundColor: xsd:string, bodyColor: xsd:string, bottomLine: ns0:LetterheadLine, description: xsd:string, footer: ns0:LetterheadHeaderFooter, header: ns0:LetterheadHeaderFooter, middleLine: ns0:LetterheadLine, name: xsd:string, topLine: ns0:LetterheadLine)
+     ns0:LetterheadHeaderFooter(backgroundColor: xsd:string, height: xsd:int, horizontalAlignment: ns0:LetterheadHorizontalAlignment, logo: xsd:string, verticalAlignment: ns0:LetterheadVerticalAlignment)
+     ns0:LetterheadHorizontalAlignment
+     ns0:LetterheadLine(color: xsd:string, height: xsd:int)
+     ns0:LetterheadVerticalAlignment
+     ns0:LicenseDefinition(fullName: xsd:string, aggregationGroup: xsd:string, description: xsd:string, isPublished: xsd:boolean, label: xsd:string, licensedCustomPermissions: ns0:LicensedCustomPermissions[], licensingAuthority: xsd:string, licensingAuthorityProvider: xsd:string, minPlatformVersion: xsd:int, origin: xsd:string, revision: xsd:int, trialLicenseDuration: xsd:int, trialLicenseQuantity: xsd:int)
+     ns0:LicensedCustomPermissions(customPermission: xsd:string, licenseDefinition: xsd:string)
+     ns0:ListMetadataQuery(folder: xsd:string, type: xsd:string)
+     ns0:ListPlacement(height: xsd:int, location: xsd:string, units: xsd:string, width: xsd:int)
+     ns0:ListView(fullName: xsd:string, booleanFilter: xsd:string, columns: xsd:string[], division: xsd:string, filterScope: ns0:FilterScope, filters: ns0:ListViewFilter[], label: xsd:string, language: ns0:Language, queue: xsd:string, sharedTo: ns0:SharedTo)
+     ns0:ListViewFilter(field: xsd:string, operation: ns0:FilterOperation, value: xsd:string)
+     ns0:LiveAgentConfig(enableLiveChat: xsd:boolean, openNewAccountSubtab: xsd:boolean, openNewCaseSubtab: xsd:boolean, openNewContactSubtab: xsd:boolean, openNewLeadSubtab: xsd:boolean, openNewVFPageSubtab: xsd:boolean, pagesToOpen: ns0:PagesToOpen, showKnowledgeArticles: xsd:boolean)
+     ns0:LiveAgentSettings(fullName: xsd:string, enableLiveAgent: xsd:boolean)
+     ns0:LiveChatAgentConfig(fullName: xsd:string, assignments: ns0:AgentConfigAssignments, autoGreeting: xsd:string, capacity: xsd:int, criticalWaitTime: xsd:int, customAgentName: xsd:string, enableAgentFileTransfer: xsd:boolean, enableAgentSneakPeek: xsd:boolean, enableAssistanceFlag: xsd:boolean, enableAutoAwayOnDecline: xsd:boolean, enableAutoAwayOnPushTimeout: xsd:boolean, enableChatConferencing: xsd:boolean, enableChatMonitoring: xsd:boolean, enableChatTransferToAgent: xsd:boolean, enableChatTransferToButton: xsd:boolean, enableChatTransferToSkill: xsd:boolean, enableLogoutSound: xsd:boolean, enableNotifications: xsd:boolean, enableRequestSound: xsd:boolean, enableSneakPeek: xsd:boolean, enableVisitorBlocking: xsd:boolean, enableWhisperMessage: xsd:boolean, label: xsd:string, supervisorDefaultAgentStatusFilter: ns0:SupervisorAgentStatusFilter, supervisorDefaultButtonFilter: xsd:string, supervisorDefaultSkillFilter: xsd:string, supervisorSkills: ns0:SupervisorAgentConfigSkills, transferableButtons: ns0:AgentConfigButtons, transferableSkills: ns0:AgentConfigSkills)
+     ns0:LiveChatButton(fullName: xsd:string, animation: ns0:LiveChatButtonPresentation, autoGreeting: xsd:string, chasitorIdleTimeout: xsd:int, chasitorIdleTimeoutWarning: xsd:int, chatPage: xsd:string, customAgentName: xsd:string, deployments: ns0:LiveChatButtonDeployments, enableQueue: xsd:boolean, inviteEndPosition: ns0:LiveChatButtonInviteEndPosition, inviteImage: xsd:string, inviteStartPosition: ns0:LiveChatButtonInviteStartPosition, isActive: xsd:boolean, label: xsd:string, numberOfReroutingAttempts: xsd:int, offlineImage: xsd:string, onlineImage: xsd:string, optionsCustomRoutingIsEnabled: xsd:boolean, optionsHasChasitorIdleTimeout: xsd:boolean, optionsHasInviteAfterAccept: xsd:boolean, optionsHasInviteAfterReject: xsd:boolean, optionsHasRerouteDeclinedRequest: xsd:boolean, optionsIsAutoAccept: xsd:boolean, optionsIsInviteAutoRemove: xsd:boolean, overallQueueLength: xsd:int, perAgentQueueLength: xsd:int, postChatPage: xsd:string, postChatUrl: xsd:string, preChatFormPage: xsd:string, preChatFormUrl: xsd:string, pushTimeOut: xsd:int, routingType: ns0:LiveChatButtonRoutingType, site: xsd:string, skills: ns0:LiveChatButtonSkills, timeToRemoveInvite: xsd:int, type: ns0:LiveChatButtonType, windowLanguage: ns0:Language)
+     ns0:LiveChatButtonDeployments(deployment: xsd:string[])
+     ns0:LiveChatButtonInviteEndPosition
+     ns0:LiveChatButtonInviteStartPosition
+     ns0:LiveChatButtonPresentation
+     ns0:LiveChatButtonRoutingType
+     ns0:LiveChatButtonSkills(skill: xsd:string[])
+     ns0:LiveChatButtonType
+     ns0:LiveChatDeployment(fullName: xsd:string, brandingImage: xsd:string, connectionTimeoutDuration: xsd:int, connectionWarningDuration: xsd:int, displayQueuePosition: xsd:boolean, domainWhiteList: ns0:LiveChatDeploymentDomainWhitelist, enablePrechatApi: xsd:boolean, enableTranscriptSave: xsd:boolean, label: xsd:string, mobileBrandingImage: xsd:string, site: xsd:string, windowTitle: xsd:string)
+     ns0:LiveChatDeploymentDomainWhitelist(domain: xsd:string[])
+     ns0:LiveChatSensitiveDataRule(fullName: xsd:string, actionType: ns0:SensitiveDataActionType, description: xsd:string, enforceOn: xsd:int, isEnabled: xsd:boolean, pattern: xsd:string, replacement: xsd:string)
+     ns0:LockoutInterval
+     ns0:LogCategory
+     ns0:LogCategoryLevel
+     ns0:LogInfo(category: ns0:LogCategory, level: ns0:LogCategoryLevel)
+     ns0:LogType
+     ns0:LookupFilter(active: xsd:boolean, booleanFilter: xsd:string, description: xsd:string, errorMessage: xsd:string, filterItems: ns0:FilterItem[], infoMessage: xsd:string, isOptional: xsd:boolean)
+     ns0:LookupFilterTranslation(errorMessage: xsd:string, informationalMessage: xsd:string)
+     ns0:LookupValueType
+     ns0:MacroSettings(fullName: xsd:string, enableAdvancedSearch: xsd:boolean)
+     ns0:ManageableState
+     ns0:ManagedTopic(fullName: xsd:string, managedTopicType: xsd:string, name: xsd:string, parentName: xsd:string, position: xsd:int, topicDescription: xsd:string)
+     ns0:ManagedTopics(fullName: xsd:string, managedTopic: ns0:ManagedTopic[])
+     ns0:MappingOperation
+     ns0:MarketingActionSettings(fullName: xsd:string, enableMarketingAction: xsd:boolean)
+     ns0:MarketingResourceType(fullName: xsd:string, description: xsd:string, masterLabel: xsd:string, object: xsd:string, provider: xsd:string)
+     ns0:MatchingMethod
+     ns0:MatchingRule(fullName: xsd:string, booleanFilter: xsd:string, description: xsd:string, label: xsd:string, matchingRuleItems: ns0:MatchingRuleItem[], ruleStatus: ns0:MatchingRuleStatus)
+     ns0:MatchingRuleItem(blankValueBehavior: ns0:BlankValueBehavior, fieldName: xsd:string, matchingMethod: ns0:MatchingMethod)
+     ns0:MatchingRuleStatus
+     ns0:MatchingRules(fullName: xsd:string, matchingRules: ns0:MatchingRule[])
+     ns0:MaxLoginAttempts
+     ns0:Metadata(fullName: xsd:string)
+     ns0:MetadataWithContent(fullName: xsd:string, content: xsd:base64Binary)
+     ns0:MilestoneTimeUnits
+     ns0:MilestoneType(fullName: xsd:string, description: xsd:string, recurrenceType: ns0:MilestoneTypeRecurrenceType)
+     ns0:MilestoneTypeRecurrenceType
+     ns0:MiniLayout(fields: xsd:string[], relatedLists: ns0:RelatedListItem[])
+     ns0:MobileSettings(fullName: xsd:string, chatterMobile: ns0:ChatterMobileSettings, dashboardMobile: ns0:DashboardMobileSettings, salesforceMobile: ns0:SFDCMobileSettings, touchMobile: ns0:TouchMobileSettings)
+     ns0:ModeratedEntityField(entityName: xsd:string, fieldName: xsd:string, keywordList: xsd:string)
+     ns0:ModerationRule(fullName: xsd:string, action: ns0:ModerationRuleAction, actionLimit: xsd:int, active: xsd:boolean, description: xsd:string, entitiesAndFields: ns0:ModeratedEntityField[], masterLabel: xsd:string, notifyLimit: xsd:int, timePeriod: ns0:RateLimitTimePeriod, type: ns0:ModerationRuleType, userCriteria: xsd:string[], userMessage: xsd:string)
+     ns0:ModerationRuleAction
+     ns0:ModerationRuleType
+     ns0:MonitoredEvents
+     ns0:NameSettings(fullName: xsd:string, enableMiddleName: xsd:boolean, enableNameSuffix: xsd:boolean)
+     ns0:NamedCredential(fullName: xsd:string, authProvider: xsd:string, certificate: xsd:string, endpoint: xsd:string, label: xsd:string, oauthRefreshToken: xsd:string, oauthScope: xsd:string, oauthToken: xsd:string, password: xsd:string, principalType: ns0:ExternalPrincipalType, protocol: ns0:AuthenticationProtocol, username: xsd:string)
+     ns0:NavType
+     ns0:NavigationLinkSet(navigationMenuItem: ns0:NavigationMenuItem[])
+     ns0:NavigationMenuItem(defaultListViewId: xsd:string, label: xsd:string, position: xsd:int, publiclyAvailable: xsd:boolean, subMenu: ns0:NavigationSubMenu, target: xsd:string, targetPreference: xsd:string, type: xsd:string)
+     ns0:NavigationSubMenu(navigationMenuItem: ns0:NavigationMenuItem[])
+     ns0:Network(fullName: xsd:string, allowMembersToFlag: xsd:boolean, allowedExtensions: xsd:string, branding: ns0:Branding, caseCommentEmailTemplate: xsd:string, changePasswordTemplate: xsd:string, description: xsd:string, emailSenderAddress: xsd:string, emailSenderName: xsd:string, enableGuestChatter: xsd:boolean, enableInvitation: xsd:boolean, enableKnowledgeable: xsd:boolean, enableNicknameDisplay: xsd:boolean, enablePrivateMessages: xsd:boolean, enableReputation: xsd:boolean, enableSiteAsContainer: xsd:boolean, feedChannel: xsd:string, forgotPasswordTemplate: xsd:string, logoutUrl: xsd:string, maxFileSizeKb: xsd:int, navigationLinkSet: ns0:NavigationLinkSet, networkMemberGroups: ns0:NetworkMemberGroup, newSenderAddress: xsd:string, picassoSite: xsd:string, reputationLevels: ns0:ReputationLevelDefinitions, reputationPointsRules: ns0:ReputationPointsRules, selfRegProfile: xsd:string, selfRegistration: xsd:boolean, sendWelcomeEmail: xsd:boolean, site: xsd:string, status: ns0:NetworkStatus, tabs: ns0:NetworkTabSet, urlPathPrefix: xsd:string, welcomeTemplate: xsd:string)
+     ns0:NetworkAccess(ipRanges: ns0:IpRange[])
+     ns0:NetworkMemberGroup(permissionSet: xsd:string[], profile: xsd:string[])
+     ns0:NetworkStatus
+     ns0:NetworkTabSet(customTab: xsd:string[], defaultTab: xsd:string, standardTab: xsd:string[])
+     ns0:NetworkUserType
+     ns0:NextAutomatedApprover(useApproverFieldOfRecordOwner: xsd:boolean, userHierarchyField: xsd:string)
+     ns0:NextOwnerType
+     ns0:ObjectFilterOperator
+     ns0:ObjectMapping(inputObject: xsd:string, mappingFields: ns0:ObjectMappingField[], outputObject: xsd:string)
+     ns0:ObjectMappingField(inputField: xsd:string, outputField: xsd:string)
+     ns0:ObjectNameCaseValue(article: ns0:Article, caseType: ns0:CaseType, plural: xsd:boolean, possessive: ns0:Possessive, value: xsd:string)
+     ns0:ObjectRelationship(join: ns0:ObjectRelationship, outerJoin: xsd:boolean, relationship: xsd:string)
+     ns0:ObjectSearchSetting(enhancedLookupEnabled: xsd:boolean, lookupAutoCompleteEnabled: xsd:boolean, name: xsd:string, resultsPerPageCount: xsd:int)
+     ns0:ObjectUsage(object: xsd:string[])
+     ns0:OpportunityListFieldsLabelMapping(field: xsd:string, label: xsd:string)
+     ns0:OpportunityListFieldsSelectedSettings(field: xsd:string[])
+     ns0:OpportunityListFieldsUnselectedSettings(field: xsd:string[])
+     ns0:OpportunitySettings(fullName: xsd:string, autoActivateNewReminders: xsd:boolean, enableFindSimilarOpportunities: xsd:boolean, enableOpportunityTeam: xsd:boolean, enableUpdateReminders: xsd:boolean, findSimilarOppFilter: ns0:FindSimilarOppFilter, promptToAddProducts: xsd:boolean)
+     ns0:OrderSettings(fullName: xsd:string, enableNegativeQuantity: xsd:boolean, enableOrders: xsd:boolean, enableReductionOrders: xsd:boolean)
+     ns0:OrgPreferenceSettings(fullName: xsd:string, preferences: ns0:OrganizationSettingsDetail[])
+     ns0:OrganizationSettingsDetail(settingName: xsd:string, settingValue: xsd:boolean)
+     ns0:Package(fullName: xsd:string, apiAccessLevel: ns0:APIAccessLevel, description: xsd:string, namespacePrefix: xsd:string, objectPermissions: ns0:ProfileObjectPermissions[], packageType: xsd:string, postInstallClass: xsd:string, setupWeblink: xsd:string, types: ns0:PackageTypeMembers[], uninstallClass: xsd:string, version: xsd:string)
+     ns0:PackageTypeMembers(members: xsd:string[], name: xsd:string)
+     ns0:PackageVersion(majorNumber: xsd:int, minorNumber: xsd:int, namespace: xsd:string)
+     ns0:PageComponentType
+     ns0:PageComponentWidth
+     ns0:PagesToOpen(pageToOpen: xsd:string[])
+     ns0:PasswordPolicies(apiOnlyUserHomePageURL: xsd:string, complexity: ns0:Complexity, expiration: ns0:Expiration, historyRestriction: xsd:string, lockoutInterval: ns0:LockoutInterval, maxLoginAttempts: ns0:MaxLoginAttempts, minimumPasswordLength: xsd:string, minimumPasswordLifetime: xsd:boolean, obscureSecretAnswer: xsd:boolean, passwordAssistanceMessage: xsd:string, passwordAssistanceURL: xsd:string, questionRestriction: ns0:QuestionRestriction)
+     ns0:PathAssistant(fullName: xsd:string, active: xsd:boolean, entityName: xsd:string, fieldName: xsd:string, masterLabel: xsd:string, pathAssistantSteps: ns0:PathAssistantStep[], recordTypeName: xsd:string)
+     ns0:PathAssistantSettings(fullName: xsd:string, pathAssistantEnabled: xsd:boolean)
+     ns0:PathAssistantStep(fieldNames: xsd:string[], info: xsd:string, picklistValueName: xsd:string)
+     ns0:PeriodTypes
+     ns0:PermissionSet(fullName: xsd:string, applicationVisibilities: ns0:PermissionSetApplicationVisibility[], classAccesses: ns0:PermissionSetApexClassAccess[], customPermissions: ns0:PermissionSetCustomPermissions[], description: xsd:string, externalDataSourceAccesses: ns0:PermissionSetExternalDataSourceAccess[], fieldPermissions: ns0:PermissionSetFieldPermissions[], hasActivationRequired: xsd:boolean, label: xsd:string, license: xsd:string, objectPermissions: ns0:PermissionSetObjectPermissions[], pageAccesses: ns0:PermissionSetApexPageAccess[], recordTypeVisibilities: ns0:PermissionSetRecordTypeVisibility[], tabSettings: ns0:PermissionSetTabSetting[], userPermissions: ns0:PermissionSetUserPermission[])
+     ns0:PermissionSetApexClassAccess(apexClass: xsd:string, enabled: xsd:boolean)
+     ns0:PermissionSetApexPageAccess(apexPage: xsd:string, enabled: xsd:boolean)
+     ns0:PermissionSetApplicationVisibility(application: xsd:string, visible: xsd:boolean)
+     ns0:PermissionSetCustomPermissions(enabled: xsd:boolean, name: xsd:string)
+     ns0:PermissionSetExternalDataSourceAccess(enabled: xsd:boolean, externalDataSource: xsd:string)
+     ns0:PermissionSetFieldPermissions(editable: xsd:boolean, field: xsd:string, readable: xsd:boolean)
+     ns0:PermissionSetObjectPermissions(allowCreate: xsd:boolean, allowDelete: xsd:boolean, allowEdit: xsd:boolean, allowRead: xsd:boolean, modifyAllRecords: xsd:boolean, object: xsd:string, viewAllRecords: xsd:boolean)
+     ns0:PermissionSetRecordTypeVisibility(recordType: xsd:string, visible: xsd:boolean)
+     ns0:PermissionSetTabSetting(tab: xsd:string, visibility: ns0:PermissionSetTabVisibility)
+     ns0:PermissionSetTabVisibility
+     ns0:PermissionSetUserPermission(enabled: xsd:boolean, name: xsd:string)
+     ns0:PersonListSettings(fullName: xsd:string, enablePersonList: xsd:boolean)
+     ns0:PersonalJourneySettings(fullName: xsd:string, enableExactTargetForSalesforceApps: xsd:boolean)
+     ns0:PicklistEntry(active: xsd:boolean, defaultValue: xsd:boolean, label: xsd:string, validFor: xsd:string, value: xsd:string)
+     ns0:PicklistValue(fullName: xsd:string, color: xsd:string, default: xsd:boolean, description: xsd:string, isActive: xsd:boolean, allowEmail: xsd:boolean, closed: xsd:boolean, controllingFieldValues: xsd:string[], converted: xsd:boolean, cssExposed: xsd:boolean, forecastCategory: ns0:ForecastCategories, highPriority: xsd:boolean, probability: xsd:int, reverseRole: xsd:string, reviewed: xsd:boolean, won: xsd:boolean)
+     ns0:PicklistValueTranslation(masterLabel: xsd:string, translation: xsd:string)
+     ns0:PlatformActionGroupCategory
+     ns0:PlatformActionList(fullName: xsd:string, actionListContext: ns0:PlatformActionListContext, platformActionListItems: ns0:PlatformActionListItem[], relatedSourceEntity: xsd:string)
+     ns0:PlatformActionListContext
+     ns0:PlatformActionListItem(actionName: xsd:string, actionType: ns0:PlatformActionType, sortOrder: xsd:int, subtype: xsd:string)
+     ns0:PlatformActionType
+     ns0:PlatformCachePartition(fullName: xsd:string, description: xsd:string, isDefaultPartition: xsd:boolean, masterLabel: xsd:string, platformCachePartitionTypes: ns0:PlatformCachePartitionType[])
+     ns0:PlatformCachePartitionType(allocatedCapacity: xsd:int, allocatedPurchasedCapacity: xsd:int, allocatedTrialCapacity: xsd:int, cacheType: ns0:PlatformCacheType)
+     ns0:PlatformCacheType
+     ns0:Portal(fullName: xsd:string, active: xsd:boolean, admin: xsd:string, defaultLanguage: xsd:string, description: xsd:string, emailSenderAddress: xsd:string, emailSenderName: xsd:string, enableSelfCloseCase: xsd:boolean, footerDocument: xsd:string, forgotPassTemplate: xsd:string, headerDocument: xsd:string, isSelfRegistrationActivated: xsd:boolean, loginHeaderDocument: xsd:string, logoDocument: xsd:string, logoutUrl: xsd:string, newCommentTemplate: xsd:string, newPassTemplate: xsd:string, newUserTemplate: xsd:string, ownerNotifyTemplate: xsd:string, selfRegNewUserUrl: xsd:string, selfRegUserDefaultProfile: xsd:string, selfRegUserDefaultRole: ns0:PortalRoles, selfRegUserTemplate: xsd:string, showActionConfirmation: xsd:boolean, stylesheetDocument: xsd:string, type: ns0:PortalType)
+     ns0:PortalRoles
+     ns0:PortalType
+     ns0:Possessive
+     ns0:PostTemplate(fullName: xsd:string, default: xsd:boolean, description: xsd:string, fields: xsd:string[], label: xsd:string)
+     ns0:PrimaryTabComponents(containers: ns0:Container[])
+     ns0:ProcessSubmitterType
+     ns0:ProductSettings(fullName: xsd:string, enableCascadeActivateToRelatedPrices: xsd:boolean, enableQuantitySchedule: xsd:boolean, enableRevenueSchedule: xsd:boolean)
+     ns0:Profile(fullName: xsd:string, applicationVisibilities: ns0:ProfileApplicationVisibility[], classAccesses: ns0:ProfileApexClassAccess[], custom: xsd:boolean, customPermissions: ns0:ProfileCustomPermissions[], description: xsd:string, externalDataSourceAccesses: ns0:ProfileExternalDataSourceAccess[], fieldPermissions: ns0:ProfileFieldLevelSecurity[], layoutAssignments: ns0:ProfileLayoutAssignment[], loginHours: ns0:ProfileLoginHours, loginIpRanges: ns0:ProfileLoginIpRange[], objectPermissions: ns0:ProfileObjectPermissions[], pageAccesses: ns0:ProfileApexPageAccess[], profileActionOverrides: ns0:ProfileActionOverride[], recordTypeVisibilities: ns0:ProfileRecordTypeVisibility[], tabVisibilities: ns0:ProfileTabVisibility[], userLicense: xsd:string, userPermissions: ns0:ProfileUserPermission[])
+     ns0:ProfileActionOverride(actionName: xsd:string, content: xsd:string, formFactor: ns0:FormFactor, pageOrSobjectType: xsd:string, recordType: xsd:string, type: ns0:ActionOverrideType)
+     ns0:ProfileApexClassAccess(apexClass: xsd:string, enabled: xsd:boolean)
+     ns0:ProfileApexPageAccess(apexPage: xsd:string, enabled: xsd:boolean)
+     ns0:ProfileApplicationVisibility(application: xsd:string, default: xsd:boolean, visible: xsd:boolean)
+     ns0:ProfileCustomPermissions(enabled: xsd:boolean, name: xsd:string)
+     ns0:ProfileExternalDataSourceAccess(enabled: xsd:boolean, externalDataSource: xsd:string)
+     ns0:ProfileFieldLevelSecurity(editable: xsd:boolean, field: xsd:string, readable: xsd:boolean)
+     ns0:ProfileLayoutAssignment(layout: xsd:string, recordType: xsd:string)
+     ns0:ProfileLoginHours(fridayEnd: xsd:string, fridayStart: xsd:string, mondayEnd: xsd:string, mondayStart: xsd:string, saturdayEnd: xsd:string, saturdayStart: xsd:string, sundayEnd: xsd:string, sundayStart: xsd:string, thursdayEnd: xsd:string, thursdayStart: xsd:string, tuesdayEnd: xsd:string, tuesdayStart: xsd:string, wednesdayEnd: xsd:string, wednesdayStart: xsd:string)
+     ns0:ProfileLoginIpRange(description: xsd:string, endAddress: xsd:string, startAddress: xsd:string)
+     ns0:ProfileObjectPermissions(allowCreate: xsd:boolean, allowDelete: xsd:boolean, allowEdit: xsd:boolean, allowRead: xsd:boolean, modifyAllRecords: xsd:boolean, object: xsd:string, viewAllRecords: xsd:boolean)
+     ns0:ProfileRecordTypeVisibility(default: xsd:boolean, personAccountDefault: xsd:boolean, recordType: xsd:string, visible: xsd:boolean)
+     ns0:ProfileTabVisibility(tab: xsd:string, visibility: ns0:TabVisibility)
+     ns0:ProfileUserPermission(enabled: xsd:boolean, name: xsd:string)
+     ns0:PublicFolderAccess
+     ns0:PushNotification(fieldNames: xsd:string[], objectName: xsd:string)
+     ns0:PushNotifications(pushNotification: ns0:PushNotification[])
+     ns0:QuestionRestriction
+     ns0:Queue(fullName: xsd:string, doesSendEmailToMembers: xsd:boolean, email: xsd:string, name: xsd:string, queueSobject: ns0:QueueSobject[])
+     ns0:QueueSobject(sobjectType: xsd:string)
+     ns0:QuickAction(fullName: xsd:string, canvas: xsd:string, description: xsd:string, fieldOverrides: ns0:FieldOverride[], height: xsd:int, icon: xsd:string, isProtected: xsd:boolean, label: xsd:string, lightningComponent: xsd:string, optionsCreateFeedItem: xsd:boolean, page: xsd:string, quickActionLayout: ns0:QuickActionLayout, quickActionSendEmailOptions: ns0:QuickActionSendEmailOptions, standardLabel: ns0:QuickActionLabel, successMessage: xsd:string, targetObject: xsd:string, targetParentField: xsd:string, targetRecordType: xsd:string, type: ns0:QuickActionType, width: xsd:int)
+     ns0:QuickActionLabel
+     ns0:QuickActionLayout(layoutSectionStyle: ns0:LayoutSectionStyle, quickActionLayoutColumns: ns0:QuickActionLayoutColumn[])
+     ns0:QuickActionLayoutColumn(quickActionLayoutItems: ns0:QuickActionLayoutItem[])
+     ns0:QuickActionLayoutItem(emptySpace: xsd:boolean, field: xsd:string, uiBehavior: ns0:UiBehavior)
+     ns0:QuickActionList(quickActionListItems: ns0:QuickActionListItem[])
+     ns0:QuickActionListItem(quickActionName: xsd:string)
+     ns0:QuickActionSendEmailOptions(defaultEmailTemplateName: xsd:string, ignoreDefaultEmailTemplateSubject: xsd:boolean)
+     ns0:QuickActionTranslation(label: xsd:string, name: xsd:string)
+     ns0:QuickActionType
+     ns0:QuotasSettings(showQuotas: xsd:boolean)
+     ns0:QuoteSettings(fullName: xsd:string, enableQuote: xsd:boolean)
+     ns0:RateLimitTimePeriod
+     ns0:ReadResult(records: ns0:Metadata[])
+     ns0:RecordEditabilityType
+     ns0:RecordType(fullName: xsd:string, active: xsd:boolean, businessProcess: xsd:string, compactLayoutAssignment: xsd:string, description: xsd:string, label: xsd:string, picklistValues: ns0:RecordTypePicklistValue[])
+     ns0:RecordTypePicklistValue(picklist: xsd:string, values: ns0:PicklistValue[])
+     ns0:RecordTypeTranslation(label: xsd:string, name: xsd:string)
+     ns0:RegionFlagStatus
+     ns0:RelatedContent(relatedContentItems: ns0:RelatedContentItem[])
+     ns0:RelatedContentItem(layoutItem: ns0:LayoutItem)
+     ns0:RelatedList(hideOnDetail: xsd:boolean, name: xsd:string)
+     ns0:RelatedListItem(customButtons: xsd:string[], excludeButtons: xsd:string[], fields: xsd:string[], relatedList: xsd:string, sortField: xsd:string, sortOrder: ns0:SortOrder)
+     ns0:RemoteSiteSetting(fullName: xsd:string, description: xsd:string, disableProtocolSecurity: xsd:boolean, isActive: xsd:boolean, url: xsd:string)
+     ns0:Report(fullName: xsd:string, aggregates: ns0:ReportAggregate[], block: ns0:Report[], blockInfo: ns0:ReportBlockInfo, buckets: ns0:ReportBucketField[], chart: ns0:ReportChart, colorRanges: ns0:ReportColorRange[], columns: ns0:ReportColumn[], crossFilters: ns0:ReportCrossFilter[], currency: ns0:CurrencyIsoCode, dataCategoryFilters: ns0:ReportDataCategoryFilter[], description: xsd:string, division: xsd:string, filter: ns0:ReportFilter, folderName: xsd:string, format: ns0:ReportFormat, groupingsAcross: ns0:ReportGrouping[], groupingsDown: ns0:ReportGrouping[], historicalSelector: ns0:ReportHistoricalSelector, name: xsd:string, numSubscriptions: xsd:int, params: ns0:ReportParam[], reportType: xsd:string, roleHierarchyFilter: xsd:string, rowLimit: xsd:int, scope: xsd:string, showCurrentDate: xsd:boolean, showDetails: xsd:boolean, sortColumn: xsd:string, sortOrder: ns0:SortOrder, territoryHierarchyFilter: xsd:string, timeFrameFilter: ns0:ReportTimeFrameFilter, userFilter: xsd:string)
+     ns0:ReportAggrType
+     ns0:ReportAggregate(acrossGroupingContext: xsd:string, calculatedFormula: xsd:string, datatype: ns0:ReportAggregateDatatype, description: xsd:string, developerName: xsd:string, downGroupingContext: xsd:string, isActive: xsd:boolean, isCrossBlock: xsd:boolean, masterLabel: xsd:string, reportType: xsd:string, scale: xsd:int)
+     ns0:ReportAggregateDatatype
+     ns0:ReportAggregateReference(aggregate: xsd:string)
+     ns0:ReportBlockInfo(aggregateReferences: ns0:ReportAggregateReference[], blockId: xsd:string, joinTable: xsd:string)
+     ns0:ReportBucketField(bucketType: ns0:ReportBucketFieldType, developerName: xsd:string, masterLabel: xsd:string, nullTreatment: ns0:ReportFormulaNullTreatment, otherBucketLabel: xsd:string, sourceColumnName: xsd:string, useOther: xsd:boolean, values: ns0:ReportBucketFieldValue[])
+     ns0:ReportBucketFieldSourceValue(from: xsd:string, sourceValue: xsd:string, to: xsd:string)
+     ns0:ReportBucketFieldType
+     ns0:ReportBucketFieldValue(sourceValues: ns0:ReportBucketFieldSourceValue[], value: xsd:string)
+     ns0:ReportChart(backgroundColor1: xsd:string, backgroundColor2: xsd:string, backgroundFadeDir: ns0:ChartBackgroundDirection, chartSummaries: ns0:ChartSummary[], chartType: ns0:ChartType, enableHoverLabels: xsd:boolean, expandOthers: xsd:boolean, groupingColumn: xsd:string, legendPosition: ns0:ChartLegendPosition, location: ns0:ChartPosition, secondaryGroupingColumn: xsd:string, showAxisLabels: xsd:boolean, showPercentage: xsd:boolean, showTotal: xsd:boolean, showValues: xsd:boolean, size: ns0:ReportChartSize, summaryAxisManualRangeEnd: xsd:double, summaryAxisManualRangeStart: xsd:double, summaryAxisRange: ns0:ChartRangeType, textColor: xsd:string, textSize: xsd:int, title: xsd:string, titleColor: xsd:string, titleSize: xsd:int)
+     ns0:ReportChartComponentLayoutItem(cacheData: xsd:boolean, contextFilterableField: xsd:string, error: xsd:string, hideOnError: xsd:boolean, includeContext: xsd:boolean, reportName: xsd:string, showTitle: xsd:boolean, size: ns0:ReportChartComponentSize)
+     ns0:ReportChartComponentSize
+     ns0:ReportChartSize
+     ns0:ReportColorRange(aggregate: ns0:ReportSummaryType, columnName: xsd:string, highBreakpoint: xsd:double, highColor: xsd:string, lowBreakpoint: xsd:double, lowColor: xsd:string, midColor: xsd:string)
+     ns0:ReportColumn(aggregateTypes: ns0:ReportSummaryType[], field: xsd:string, reverseColors: xsd:boolean, showChanges: xsd:boolean)
+     ns0:ReportCrossFilter(criteriaItems: ns0:ReportFilterItem[], operation: ns0:ObjectFilterOperator, primaryTableColumn: xsd:string, relatedTable: xsd:string, relatedTableJoinColumn: xsd:string)
+     ns0:ReportDataCategoryFilter(dataCategory: xsd:string, dataCategoryGroup: xsd:string, operator: ns0:DataCategoryFilterOperation)
+     ns0:ReportFilter(booleanFilter: xsd:string, criteriaItems: ns0:ReportFilterItem[], language: ns0:Language)
+     ns0:ReportFilterItem(column: xsd:string, columnToColumn: xsd:boolean, isUnlocked: xsd:boolean, operator: ns0:FilterOperation, snapshot: xsd:string, value: xsd:string)
+     ns0:ReportFolder(fullName: xsd:string, accessType: ns0:FolderAccessTypes, folderShares: ns0:FolderShare[], name: xsd:string, publicFolderAccess: ns0:PublicFolderAccess, sharedTo: ns0:SharedTo)
+     ns0:ReportFormat
+     ns0:ReportFormulaNullTreatment
+     ns0:ReportGrouping(aggregateType: ns0:ReportAggrType, dateGranularity: ns0:UserDateGranularity, field: xsd:string, sortByName: xsd:string, sortOrder: ns0:SortOrder, sortType: ns0:ReportSortType)
+     ns0:ReportHistoricalSelector(snapshot: xsd:string[])
+     ns0:ReportJobSourceTypes
+     ns0:ReportLayoutSection(columns: ns0:ReportTypeColumn[], masterLabel: xsd:string)
+     ns0:ReportParam(name: xsd:string, value: xsd:string)
+     ns0:ReportSortType
+     ns0:ReportSummaryType
+     ns0:ReportTimeFrameFilter(dateColumn: xsd:string, endDate: xsd:date, interval: ns0:UserDateInterval, startDate: xsd:date)
+     ns0:ReportType(fullName: xsd:string, autogenerated: xsd:boolean, baseObject: xsd:string, category: ns0:ReportTypeCategory, deployed: xsd:boolean, description: xsd:string, join: ns0:ObjectRelationship, label: xsd:string, sections: ns0:ReportLayoutSection[])
+     ns0:ReportTypeCategory
+     ns0:ReportTypeColumn(checkedByDefault: xsd:boolean, displayNameOverride: xsd:string, field: xsd:string, table: xsd:string)
+     ns0:ReportTypeColumnTranslation(label: xsd:string, name: xsd:string)
+     ns0:ReportTypeSectionTranslation(columns: ns0:ReportTypeColumnTranslation[], label: xsd:string, name: xsd:string)
+     ns0:ReportTypeTranslation(description: xsd:string, label: xsd:string, name: xsd:string, sections: ns0:ReportTypeSectionTranslation[])
+     ns0:ReputationBranding(smallImage: xsd:string)
+     ns0:ReputationLevel(branding: ns0:ReputationBranding, label: xsd:string, lowerThreshold: xsd:double)
+     ns0:ReputationLevelDefinitions(level: ns0:ReputationLevel[])
+     ns0:ReputationLevels(chatterAnswersReputationLevels: ns0:ChatterAnswersReputationLevel[], ideaReputationLevels: ns0:IdeaReputationLevel[])
+     ns0:ReputationPointsRule(eventType: xsd:string, points: xsd:int)
+     ns0:ReputationPointsRules(pointsRule: ns0:ReputationPointsRule[])
+     ns0:RetrieveMessage(fileName: xsd:string, problem: xsd:string)
+     ns0:RetrieveRequest(apiVersion: xsd:double, packageNames: xsd:string[], singlePackage: xsd:boolean, specificFiles: xsd:string[], unpackaged: ns0:Package)
+     ns0:RetrieveResult(done: xsd:boolean, errorMessage: xsd:string, errorStatusCode: ns0:StatusCode, fileProperties: ns0:FileProperties[], id: xsd:string, messages: ns0:RetrieveMessage[], status: ns0:RetrieveStatus, success: xsd:boolean, zipFile: xsd:base64Binary)
+     ns0:RetrieveStatus
+     ns0:Role(fullName: xsd:string, caseAccessLevel: xsd:string, contactAccessLevel: xsd:string, description: xsd:string, mayForecastManagerShare: xsd:boolean, name: xsd:string, opportunityAccessLevel: xsd:string, parentRole: xsd:string)
+     ns0:RoleOrTerritory(fullName: xsd:string, caseAccessLevel: xsd:string, contactAccessLevel: xsd:string, description: xsd:string, mayForecastManagerShare: xsd:boolean, name: xsd:string, opportunityAccessLevel: xsd:string)
+     ns0:RoutingType
+     ns0:RuleEntry(assignedTo: xsd:string, assignedToType: ns0:AssignToLookupValueType, booleanFilter: xsd:string, businessHours: xsd:string, businessHoursSource: ns0:BusinessHoursSourceType, criteriaItems: ns0:FilterItem[], disableEscalationWhenModified: xsd:boolean, escalationAction: ns0:EscalationAction[], escalationStartTime: ns0:EscalationStartTimeType, formula: xsd:string, notifyCcRecipients: xsd:boolean, overrideExistingTeams: xsd:boolean, replyToEmail: xsd:string, senderEmail: xsd:string, senderName: xsd:string, team: xsd:string[], template: xsd:string)
+     ns0:RunTestFailure(id: ns0:ID, message: xsd:string, methodName: xsd:string, name: xsd:string, namespace: xsd:string, packageName: xsd:string, seeAllData: xsd:boolean, stackTrace: xsd:string, time: xsd:double, type: xsd:string)
+     ns0:RunTestSuccess(id: ns0:ID, methodName: xsd:string, name: xsd:string, namespace: xsd:string, seeAllData: xsd:boolean, time: xsd:double)
+     ns0:RunTestsResult(apexLogId: xsd:string, codeCoverage: ns0:CodeCoverageResult[], codeCoverageWarnings: ns0:CodeCoverageWarning[], failures: ns0:RunTestFailure[], numFailures: xsd:int, numTestsRun: xsd:int, successes: ns0:RunTestSuccess[], totalTime: xsd:double)
+     ns0:SControlContentSource
+     ns0:SFDCMobileSettings(enableMobileLite: xsd:boolean, enableUserToDeviceLinking: xsd:boolean)
+     ns0:SamlEncryptionType
+     ns0:SamlIdentityLocationType
+     ns0:SamlIdentityType
+     ns0:SamlInitiationMethod
+     ns0:SamlNameIdFormatType
+     ns0:SamlSsoConfig(fullName: xsd:string, attributeName: xsd:string, attributeNameIdFormat: xsd:string, decryptionCertificate: xsd:string, errorUrl: xsd:string, executionUserId: xsd:string, identityLocation: ns0:SamlIdentityLocationType, identityMapping: ns0:SamlIdentityType, issuer: xsd:string, loginUrl: xsd:string, logoutUrl: xsd:string, name: xsd:string, oauthTokenEndpoint: xsd:string, redirectBinding: xsd:boolean, requestSignatureMethod: xsd:string, salesforceLoginUrl: xsd:string, samlEntityId: xsd:string, samlJitHandlerId: xsd:string, samlVersion: ns0:SamlType, userProvisioning: xsd:boolean, validationCert: xsd:string)
+     ns0:SamlSubjectType
+     ns0:SamlType
+     ns0:SaveResult(errors: ns0:Error[], fullName: xsd:string, success: xsd:boolean)
+     ns0:Scontrol(fullName: xsd:string, content: xsd:base64Binary, contentSource: ns0:SControlContentSource, description: xsd:string, encodingKey: ns0:Encoding, fileContent: xsd:base64Binary, fileName: xsd:string, name: xsd:string, supportsCaching: xsd:boolean)
+     ns0:ScontrolTranslation(label: xsd:string, name: xsd:string)
+     ns0:SearchLayouts(customTabListAdditionalFields: xsd:string[], excludedStandardButtons: xsd:string[], listViewButtons: xsd:string[], lookupDialogsAdditionalFields: xsd:string[], lookupFilterFields: xsd:string[], lookupPhoneDialogsAdditionalFields: xsd:string[], searchFilterFields: xsd:string[], searchResultsAdditionalFields: xsd:string[], searchResultsCustomButtons: xsd:string[])
+     ns0:SearchSettings(fullName: xsd:string, documentContentSearchEnabled: xsd:boolean, optimizeSearchForCJKEnabled: xsd:boolean, recentlyViewedUsersForBlankLookupEnabled: xsd:boolean, searchSettingsByObject: ns0:SearchSettingsByObject, sidebarAutoCompleteEnabled: xsd:boolean, sidebarDropDownListEnabled: xsd:boolean, sidebarLimitToItemsIOwnCheckboxEnabled: xsd:boolean, singleSearchResultShortcutEnabled: xsd:boolean, spellCorrectKnowledgeSearchEnabled: xsd:boolean)
+     ns0:SearchSettingsByObject(searchSettingsByObject: ns0:ObjectSearchSetting[])
+     ns0:SecuritySettings(fullName: xsd:string, networkAccess: ns0:NetworkAccess, passwordPolicies: ns0:PasswordPolicies, sessionSettings: ns0:SessionSettings)
+     ns0:SendAction
+     ns0:SensitiveDataActionType
+     ns0:SessionSettings(disableTimeoutWarning: xsd:boolean, enableCSPOnEmail: xsd:boolean, enableCSRFOnGet: xsd:boolean, enableCSRFOnPost: xsd:boolean, enableCacheAndAutocomplete: xsd:boolean, enableClickjackNonsetupSFDC: xsd:boolean, enableClickjackNonsetupUser: xsd:boolean, enableClickjackNonsetupUserHeaderless: xsd:boolean, enableClickjackSetup: xsd:boolean, enableContentSniffingProtection: xsd:boolean, enablePostForSessions: xsd:boolean, enableSMSIdentity: xsd:boolean, enableXssProtection: xsd:boolean, enforceIpRangesEveryRequest: xsd:boolean, forceLogoutOnSessionTimeout: xsd:boolean, forceRelogin: xsd:boolean, lockSessionsToDomain: xsd:boolean, lockSessionsToIp: xsd:boolean, logoutURL: xsd:string, securityCentralKillSession: xsd:boolean, sessionTimeout: ns0:SessionTimeout)
+     ns0:SessionTimeout
+     ns0:SetupObjectVisibility
+     ns0:SharedTo(allCustomerPortalUsers: xsd:string, allInternalUsers: xsd:string, allPartnerUsers: xsd:string, group: xsd:string[], groups: xsd:string[], managerSubordinates: xsd:string[], managers: xsd:string[], portalRole: xsd:string[], portalRoleAndSubordinates: xsd:string[], queue: xsd:string[], role: xsd:string[], roleAndSubordinates: xsd:string[], roleAndSubordinatesInternal: xsd:string[], roles: xsd:string[], rolesAndSubordinates: xsd:string[], territories: xsd:string[], territoriesAndSubordinates: xsd:string[], territory: xsd:string[], territoryAndSubordinates: xsd:string[])
+     ns0:SharingBaseRule(fullName: xsd:string, accessLevel: xsd:string, accountSettings: ns0:AccountSharingRuleSettings, description: xsd:string, label: xsd:string, sharedTo: ns0:SharedTo)
+     ns0:SharingCriteriaRule(fullName: xsd:string, accessLevel: xsd:string, accountSettings: ns0:AccountSharingRuleSettings, description: xsd:string, label: xsd:string, sharedTo: ns0:SharedTo, booleanFilter: xsd:string, criteriaItems: ns0:FilterItem[])
+     ns0:SharingModel
+     ns0:SharingOwnerRule(fullName: xsd:string, accessLevel: xsd:string, accountSettings: ns0:AccountSharingRuleSettings, description: xsd:string, label: xsd:string, sharedTo: ns0:SharedTo, sharedFrom: ns0:SharedTo)
+     ns0:SharingReason(fullName: xsd:string, label: xsd:string)
+     ns0:SharingReasonTranslation(label: xsd:string, name: xsd:string)
+     ns0:SharingRecalculation(className: xsd:string)
+     ns0:SharingRules(fullName: xsd:string, sharingCriteriaRules: ns0:SharingCriteriaRule[], sharingOwnerRules: ns0:SharingOwnerRule[], sharingTerritoryRules: ns0:SharingTerritoryRule[])
+     ns0:SharingSet(fullName: xsd:string, accessMappings: ns0:AccessMapping[], description: xsd:string, name: xsd:string, profiles: xsd:string[])
+     ns0:SharingTerritoryRule(fullName: xsd:string, accessLevel: xsd:string, accountSettings: ns0:AccountSharingRuleSettings, description: xsd:string, label: xsd:string, sharedTo: ns0:SharedTo, sharedFrom: ns0:SharedTo)
+     ns0:SidebarComponent(componentType: xsd:string, height: xsd:int, label: xsd:string, lookup: xsd:string, page: xsd:string, relatedLists: ns0:RelatedList[], unit: xsd:string, width: xsd:int)
+     ns0:SiteClickjackProtectionLevel
+     ns0:SiteDotCom(fullName: xsd:string, content: xsd:base64Binary, label: xsd:string, siteType: ns0:SiteType)
+     ns0:SiteRedirect
+     ns0:SiteRedirectMapping(action: ns0:SiteRedirect, isActive: xsd:boolean, source: xsd:string, target: xsd:string)
+     ns0:SiteType
+     ns0:SiteWebAddress(certificate: xsd:string, domainName: xsd:string, primary: xsd:boolean)
+     ns0:Skill(fullName: xsd:string, assignments: ns0:SkillAssignments, description: xsd:string, label: xsd:string)
+     ns0:SkillAssignments(profiles: ns0:SkillProfileAssignments, users: ns0:SkillUserAssignments)
+     ns0:SkillProfileAssignments(profile: xsd:string[])
+     ns0:SkillUserAssignments(user: xsd:string[])
+     ns0:SortOrder
+     ns0:StandardFieldTranslation(label: xsd:string, name: xsd:string)
+     ns0:StandardValue(fullName: xsd:string, color: xsd:string, default: xsd:boolean, description: xsd:string, isActive: xsd:boolean, label: xsd:string, allowEmail: xsd:boolean, closed: xsd:boolean, converted: xsd:boolean, cssExposed: xsd:boolean, forecastCategory: ns0:ForecastCategories, highPriority: xsd:boolean, probability: xsd:int, reverseRole: xsd:string, reviewed: xsd:boolean, won: xsd:boolean)
+     ns0:StandardValueSet(fullName: xsd:string, sorted: xsd:boolean, standardValue: ns0:StandardValue[])
+     ns0:StandardValueSetTranslation(fullName: xsd:string, valueTranslation: ns0:ValueTranslation[])
+     ns0:StartsWith
+     ns0:State(active: xsd:boolean, integrationValue: xsd:string, isoCode: xsd:string, label: xsd:string, standard: xsd:boolean, visible: xsd:boolean)
+     ns0:StaticResource(fullName: xsd:string, content: xsd:base64Binary, cacheControl: ns0:StaticResourceCacheControl, contentType: xsd:string, description: xsd:string)
+     ns0:StaticResourceCacheControl
+     ns0:StatusCode
+     ns0:StepCriteriaNotMetType
+     ns0:StepRejectBehaviorType
+     ns0:SubtabComponents(containers: ns0:Container[])
+     ns0:SummaryLayout(masterLabel: xsd:string, sizeX: xsd:int, sizeY: xsd:int, sizeZ: xsd:int, summaryLayoutItems: ns0:SummaryLayoutItem[], summaryLayoutStyle: ns0:SummaryLayoutStyle)
+     ns0:SummaryLayoutItem(customLink: xsd:string, field: xsd:string, posX: xsd:int, posY: xsd:int, posZ: xsd:int)
+     ns0:SummaryLayoutStyle
+     ns0:SummaryOperations
+     ns0:SupervisorAgentConfigSkills(skill: xsd:string[])
+     ns0:SupervisorAgentStatusFilter
+     ns0:SynonymDictionary(fullName: xsd:string, groups: ns0:SynonymGroup[], isProtected: xsd:boolean, label: xsd:string)
+     ns0:SynonymGroup(languages: ns0:Language[], terms: xsd:string[])
+     ns0:TabLimitConfig(maxNumberOfPrimaryTabs: xsd:string, maxNumberOfSubTabs: xsd:string)
+     ns0:TabVisibility
+     ns0:Template
+     ns0:Territory(fullName: xsd:string, caseAccessLevel: xsd:string, contactAccessLevel: xsd:string, description: xsd:string, mayForecastManagerShare: xsd:boolean, name: xsd:string, opportunityAccessLevel: xsd:string, accountAccessLevel: xsd:string, parentTerritory: xsd:string)
+     ns0:Territory2(fullName: xsd:string, accountAccessLevel: xsd:string, caseAccessLevel: xsd:string, contactAccessLevel: xsd:string, customFields: ns0:FieldValue[], description: xsd:string, name: xsd:string, opportunityAccessLevel: xsd:string, parentTerritory: xsd:string, ruleAssociations: ns0:Territory2RuleAssociation[], territory2Type: xsd:string)
+     ns0:Territory2Model(fullName: xsd:string, customFields: ns0:FieldValue[], description: xsd:string, name: xsd:string)
+     ns0:Territory2Rule(fullName: xsd:string, active: xsd:boolean, booleanFilter: xsd:string, name: xsd:string, objectType: xsd:string, ruleItems: ns0:Territory2RuleItem[])
+     ns0:Territory2RuleAssociation(inherited: xsd:boolean, ruleName: xsd:string)
+     ns0:Territory2RuleItem(field: xsd:string, operation: ns0:FilterOperation, value: xsd:string)
+     ns0:Territory2Settings(fullName: xsd:string, defaultAccountAccessLevel: xsd:string, defaultCaseAccessLevel: xsd:string, defaultContactAccessLevel: xsd:string, defaultOpportunityAccessLevel: xsd:string, opportunityFilterSettings: ns0:Territory2SettingsOpportunityFilter)
+     ns0:Territory2SettingsOpportunityFilter(apexClassName: xsd:string, enableFilter: xsd:boolean, runOnCreate: xsd:boolean)
+     ns0:Territory2Type(fullName: xsd:string, description: xsd:string, name: xsd:string, priority: xsd:int)
+     ns0:TestLevel
+     ns0:TouchMobileSettings(enableTouchAppIPad: xsd:boolean, enableTouchAppIPhone: xsd:boolean, enableTouchBrowserIPad: xsd:boolean, enableTouchIosPhone: xsd:boolean, enableVisualforceInTouch: xsd:boolean)
+     ns0:TransactionSecurityAction(block: xsd:boolean, endSession: xsd:boolean, notifications: ns0:TransactionSecurityNotification[], twoFactorAuthentication: xsd:boolean)
+     ns0:TransactionSecurityNotification(inApp: xsd:boolean, sendEmail: xsd:boolean, user: xsd:string)
+     ns0:TransactionSecurityPolicy(fullName: xsd:string, action: ns0:TransactionSecurityAction, active: xsd:boolean, apexClass: xsd:string, description: xsd:string, developerName: xsd:string, eventType: ns0:MonitoredEvents, executionUser: xsd:string, masterLabel: xsd:string, resourceName: xsd:string)
+     ns0:Translations(fullName: xsd:string, customApplications: ns0:CustomApplicationTranslation[], customDataTypeTranslations: ns0:CustomDataTypeTranslation[], customLabels: ns0:CustomLabelTranslation[], customPageWebLinks: ns0:CustomPageWebLinkTranslation[], customTabs: ns0:CustomTabTranslation[], quickActions: ns0:GlobalQuickActionTranslation[], reportTypes: ns0:ReportTypeTranslation[], scontrols: ns0:ScontrolTranslation[])
+     ns0:TreatBlanksAs
+     ns0:UiBehavior
+     ns0:UiPlugin(fullName: xsd:string, content: xsd:base64Binary, description: xsd:string, extensionPointIdentifier: xsd:string, isEnabled: xsd:boolean, language: xsd:string, masterLabel: xsd:string)
+     ns0:UiType
+     ns0:UpsertResult(created: xsd:boolean, errors: ns0:Error[], fullName: xsd:string, success: xsd:boolean)
+     ns0:UserCriteria(fullName: xsd:string, creationAgeInSeconds: xsd:int, description: xsd:string, lastChatterActivityAgeInSeconds: xsd:int, masterLabel: xsd:string, profiles: xsd:string[], userTypes: ns0:NetworkUserType[])
+     ns0:UserDateGranularity
+     ns0:UserDateInterval
+     ns0:ValidationRule(fullName: xsd:string, active: xsd:boolean, description: xsd:string, errorConditionFormula: xsd:string, errorDisplayField: xsd:string, errorMessage: xsd:string)
+     ns0:ValidationRuleTranslation(errorMessage: xsd:string, name: xsd:string)
+     ns0:ValueSet(controllingField: xsd:string, restricted: xsd:boolean, valueSetDefinition: ns0:ValueSetValuesDefinition, valueSetName: xsd:string, valueSettings: ns0:ValueSettings[])
+     ns0:ValueSetValuesDefinition(sorted: xsd:boolean, value: ns0:CustomValue[])
+     ns0:ValueSettings(controllingFieldValue: xsd:string[], valueName: xsd:string)
+     ns0:ValueTranslation(masterLabel: xsd:string, translation: xsd:string)
+     ns0:ValueTypeField(fields: ns0:ValueTypeField[], foreignKeyDomain: xsd:string[], isForeignKey: xsd:boolean, isNameField: xsd:boolean, minOccurs: xsd:int, name: xsd:string, picklistValues: ns0:PicklistEntry[], soapType: xsd:string, valueRequired: xsd:boolean)
+     ns0:VisibleOrRequired
+     ns0:VisualizationPlugin(fullName: xsd:string, description: xsd:string, developerName: xsd:string, icon: xsd:string, masterLabel: xsd:string, visualizationResources: ns0:VisualizationResource[], visualizationTypes: ns0:VisualizationType[])
+     ns0:VisualizationResource(description: xsd:string, file: xsd:string, rank: xsd:int, type: ns0:VisualizationResourceType)
+     ns0:VisualizationResourceType
+     ns0:VisualizationType(description: xsd:string, developerName: xsd:string, icon: xsd:string, masterLabel: xsd:string, scriptBootstrapMethod: xsd:string)
+     ns0:WaveApplication(fullName: xsd:string, assetIcon: xsd:string, description: xsd:string, folder: xsd:string, masterLabel: xsd:string, shares: ns0:FolderShare[], templateOrigin: xsd:string, templateVersion: xsd:string)
+     ns0:WaveDashboard(fullName: xsd:string, content: xsd:base64Binary, application: xsd:string, description: xsd:string, masterLabel: xsd:string, templateAssetSourceName: xsd:string)
+     ns0:WaveDataflow(fullName: xsd:string, content: xsd:base64Binary, description: xsd:string, masterLabel: xsd:string)
+     ns0:WaveDataset(fullName: xsd:string, application: xsd:string, description: xsd:string, masterLabel: xsd:string, templateAssetSourceName: xsd:string)
+     ns0:WaveLens(fullName: xsd:string, content: xsd:base64Binary, application: xsd:string, datasets: xsd:string[], description: xsd:string, masterLabel: xsd:string, templateAssetSourceName: xsd:string, visualizationType: xsd:string)
+     ns0:WaveTemplateBundle(fullName: xsd:string, assetIcon: xsd:string, assetVersion: xsd:double, description: xsd:string, label: xsd:string, templateType: xsd:string)
+     ns0:WaveXmd(fullName: xsd:string, dataset: xsd:string, datasetConnector: xsd:string, datasetFullyQualifiedName: xsd:string, dates: ns0:WaveXmdDate[], dimensions: ns0:WaveXmdDimension[], measures: ns0:WaveXmdMeasure[], organizations: ns0:WaveXmdOrganization[], origin: xsd:string)
+     ns0:WaveXmdDate(alias: xsd:string, compact: xsd:boolean, dateFieldDay: xsd:string, dateFieldEpochDay: xsd:string, dateFieldEpochSecond: xsd:string, dateFieldFiscalMonth: xsd:string, dateFieldFiscalQuarter: xsd:string, dateFieldFiscalWeek: xsd:string, dateFieldFiscalYear: xsd:string, dateFieldFullYear: xsd:string, dateFieldHour: xsd:string, dateFieldMinute: xsd:string, dateFieldMonth: xsd:string, dateFieldQuarter: xsd:string, dateFieldSecond: xsd:string, dateFieldWeek: xsd:string, dateFieldYear: xsd:string, description: xsd:string, firstDayOfWeek: xsd:int, fiscalMonthOffset: xsd:int, isYearEndFiscalYear: xsd:boolean, label: xsd:string, showInExplorer: xsd:boolean, sortIndex: xsd:int)
+     ns0:WaveXmdDimension(customActions: ns0:WaveXmdDimensionCustomAction[], customActionsEnabled: xsd:boolean, dateFormat: xsd:string, description: xsd:string, field: xsd:string, fullyQualifiedName: xsd:string, imageTemplate: xsd:string, isDerived: xsd:boolean, isMultiValue: xsd:boolean, label: xsd:string, linkTemplate: xsd:string, linkTemplateEnabled: xsd:boolean, linkTooltip: xsd:string, members: ns0:WaveXmdDimensionMember[], origin: xsd:string, recordDisplayFields: ns0:WaveXmdRecordDisplayLookup[], recordIdField: xsd:string, recordOrganizationIdField: xsd:string, salesforceActions: ns0:WaveXmdDimensionSalesforceAction[], salesforceActionsEnabled: xsd:boolean, showDetailsDefaultFieldIndex: xsd:int, showInExplorer: xsd:boolean, sortIndex: xsd:int)
+     ns0:WaveXmdDimensionCustomAction(customActionName: xsd:string, enabled: xsd:boolean, icon: xsd:string, method: xsd:string, sortIndex: xsd:int, target: xsd:string, tooltip: xsd:string, url: xsd:string)
+     ns0:WaveXmdDimensionMember(color: xsd:string, label: xsd:string, member: xsd:string, sortIndex: xsd:int)
+     ns0:WaveXmdDimensionSalesforceAction(enabled: xsd:boolean, salesforceActionName: xsd:string, sortIndex: xsd:int)
+     ns0:WaveXmdMeasure(dateFormat: xsd:string, description: xsd:string, field: xsd:string, formatCustomFormat: xsd:string, formatDecimalDigits: xsd:int, formatIsNegativeParens: xsd:boolean, formatPrefix: xsd:string, formatSuffix: xsd:string, formatUnit: xsd:string, formatUnitMultiplier: xsd:double, fullyQualifiedName: xsd:string, isDerived: xsd:boolean, label: xsd:string, origin: xsd:string, showDetailsDefaultFieldIndex: xsd:int, showInExplorer: xsd:boolean, sortIndex: xsd:int)
+     ns0:WaveXmdOrganization(instanceUrl: xsd:string, label: xsd:string, organizationIdentifier: xsd:string, sortIndex: xsd:int)
+     ns0:WaveXmdRecordDisplayLookup(recordDisplayField: xsd:string)
+     ns0:WebLink(fullName: xsd:string, availability: ns0:WebLinkAvailability, description: xsd:string, displayType: ns0:WebLinkDisplayType, encodingKey: ns0:Encoding, hasMenubar: xsd:boolean, hasScrollbars: xsd:boolean, hasToolbar: xsd:boolean, height: xsd:int, isResizable: xsd:boolean, linkType: ns0:WebLinkType, masterLabel: xsd:string, openType: ns0:WebLinkWindowType, page: xsd:string, position: ns0:WebLinkPosition, protected: xsd:boolean, requireRowSelection: xsd:boolean, scontrol: xsd:string, showsLocation: xsd:boolean, showsStatus: xsd:boolean, url: xsd:string, width: xsd:int)
+     ns0:WebLinkAvailability
+     ns0:WebLinkDisplayType
+     ns0:WebLinkPosition
+     ns0:WebLinkTranslation(label: xsd:string, name: xsd:string)
+     ns0:WebLinkType
+     ns0:WebLinkWindowType
+     ns0:WebToCaseSettings(caseOrigin: xsd:string, defaultResponseTemplate: xsd:string, enableWebToCase: xsd:boolean)
+     ns0:WeightedSourceCategory(sourceCategoryApiName: xsd:string, weight: xsd:double)
+     ns0:Workflow(fullName: xsd:string, alerts: ns0:WorkflowAlert[], fieldUpdates: ns0:WorkflowFieldUpdate[], flowActions: ns0:WorkflowFlowAction[], knowledgePublishes: ns0:WorkflowKnowledgePublish[], outboundMessages: ns0:WorkflowOutboundMessage[], rules: ns0:WorkflowRule[], send: ns0:WorkflowSend[], tasks: ns0:WorkflowTask[])
+     ns0:WorkflowAction(fullName: xsd:string)
+     ns0:WorkflowActionReference(name: xsd:string, type: ns0:WorkflowActionType)
+     ns0:WorkflowActionType
+     ns0:WorkflowAlert(fullName: xsd:string, ccEmails: xsd:string[], description: xsd:string, protected: xsd:boolean, recipients: ns0:WorkflowEmailRecipient[], senderAddress: xsd:string, senderType: ns0:ActionEmailSenderType, template: xsd:string)
+     ns0:WorkflowEmailRecipient(field: xsd:string, recipient: xsd:string, type: ns0:ActionEmailRecipientTypes)
+     ns0:WorkflowFieldUpdate(fullName: xsd:string, description: xsd:string, field: xsd:string, formula: xsd:string, literalValue: xsd:string, lookupValue: xsd:string, lookupValueType: ns0:LookupValueType, name: xsd:string, notifyAssignee: xsd:boolean, operation: ns0:FieldUpdateOperation, protected: xsd:boolean, reevaluateOnChange: xsd:boolean, targetObject: xsd:string)
+     ns0:WorkflowFlowAction(fullName: xsd:string, description: xsd:string, flow: xsd:string, flowInputs: ns0:WorkflowFlowActionParameter[], label: xsd:string, language: xsd:string, protected: xsd:boolean)
+     ns0:WorkflowFlowActionParameter(name: xsd:string, value: xsd:string)
+     ns0:WorkflowKnowledgePublish(fullName: xsd:string, action: ns0:KnowledgeWorkflowAction, description: xsd:string, label: xsd:string, language: xsd:string, protected: xsd:boolean)
+     ns0:WorkflowOutboundMessage(fullName: xsd:string, apiVersion: xsd:double, description: xsd:string, endpointUrl: xsd:string, fields: xsd:string[], includeSessionId: xsd:boolean, integrationUser: xsd:string, name: xsd:string, protected: xsd:boolean, useDeadLetterQueue: xsd:boolean)
+     ns0:WorkflowRule(fullName: xsd:string, actions: ns0:WorkflowActionReference[], active: xsd:boolean, booleanFilter: xsd:string, criteriaItems: ns0:FilterItem[], description: xsd:string, formula: xsd:string, triggerType: ns0:WorkflowTriggerTypes, workflowTimeTriggers: ns0:WorkflowTimeTrigger[])
+     ns0:WorkflowSend(fullName: xsd:string, action: ns0:SendAction, description: xsd:string, label: xsd:string, language: xsd:string, protected: xsd:boolean)
+     ns0:WorkflowTask(fullName: xsd:string, assignedTo: xsd:string, assignedToType: ns0:ActionTaskAssignedToTypes, description: xsd:string, dueDateOffset: xsd:int, notifyAssignee: xsd:boolean, offsetFromField: xsd:string, priority: xsd:string, protected: xsd:boolean, status: xsd:string, subject: xsd:string)
+     ns0:WorkflowTaskTranslation(description: xsd:string, name: xsd:string, subject: xsd:string)
+     ns0:WorkflowTimeTrigger(actions: ns0:WorkflowActionReference[], offsetFromField: xsd:string, timeLength: xsd:string, workflowTimeTriggerUnit: ns0:WorkflowTimeUnits)
+     ns0:WorkflowTimeUnits
+     ns0:WorkflowTriggerTypes
+     ns0:WorkspaceMapping(fieldName: xsd:string, tab: xsd:string)
+     ns0:WorkspaceMappings(mapping: ns0:WorkspaceMapping[])
+     ns0:XOrgHub(fullName: xsd:string, label: xsd:string, lockSharedObjects: xsd:boolean, permissionSets: xsd:string[], sharedObjects: ns0:XOrgHubSharedObject[])
+     ns0:XOrgHubSharedObject(fields: xsd:string[], name: xsd:string)
+     xsd:ENTITIES
+     xsd:ENTITY
+     xsd:ID
+     xsd:IDREF
+     xsd:IDREFS
+     xsd:NCName
+     xsd:NMTOKEN
+     xsd:NMTOKENS
+     xsd:NOTATION
+     xsd:Name
+     xsd:QName
+     xsd:anySimpleType
+     xsd:anyURI
+     xsd:base64Binary
+     xsd:boolean
+     xsd:byte
+     xsd:date
+     xsd:dateTime
+     xsd:decimal
+     xsd:double
+     xsd:duration
+     xsd:float
+     xsd:gDay
+     xsd:gMonth
+     xsd:gMonthDay
+     xsd:gYear
+     xsd:gYearMonth
+     xsd:hexBinary
+     xsd:int
+     xsd:integer
+     xsd:language
+     xsd:long
+     xsd:negativeInteger
+     xsd:nonNegativeInteger
+     xsd:nonPositiveInteger
+     xsd:normalizedString
+     xsd:positiveInteger
+     xsd:short
+     xsd:string
+     xsd:time
+     xsd:token
+     xsd:unsignedByte
+     xsd:unsignedInt
+     xsd:unsignedLong
+     xsd:unsignedShort
+
+Bindings:
+     Soap11Binding: {http://soap.sforce.com/2006/04/metadata}MetadataBinding
+
+Service: MetadataService
+     Port: Metadata (Soap11Binding: {http://soap.sforce.com/2006/04/metadata}MetadataBinding)
+         Operations:
+            cancelDeploy(String: ns0:ID, _soapheaders={SessionHeader: ns0:SessionHeader, CallOptions: ns0:CallOptions}) -> result: ns0:CancelDeployResult
+            checkDeployStatus(asyncProcessId: ns0:ID, includeDetails: xsd:boolean, _soapheaders={SessionHeader: ns0:SessionHeader, CallOptions: ns0:CallOptions}) -> header: {DebuggingInfo: ns0:DebuggingInfo}, body: {result: ns0:DeployResult}
+            checkRetrieveStatus(asyncProcessId: ns0:ID, includeZip: xsd:boolean, _soapheaders={SessionHeader: ns0:SessionHeader, CallOptions: ns0:CallOptions}) -> result: ns0:RetrieveResult
+            createMetadata(metadata: ns0:Metadata[], _soapheaders={SessionHeader: ns0:SessionHeader, CallOptions: ns0:CallOptions, AllOrNoneHeader: ns0:AllOrNoneHeader}) -> result: ns0:SaveResult[]
+            deleteMetadata(type: xsd:string, fullNames: xsd:string[], _soapheaders={SessionHeader: ns0:SessionHeader, CallOptions: ns0:CallOptions, AllOrNoneHeader: ns0:AllOrNoneHeader}) -> result: ns0:DeleteResult[]
+            deploy(ZipFile: xsd:base64Binary, DeployOptions: ns0:DeployOptions, _soapheaders={SessionHeader: ns0:SessionHeader, DebuggingHeader: ns0:DebuggingHeader, CallOptions: ns0:CallOptions}) -> result: ns0:AsyncResult
+            deployRecentValidation(validationId: ns0:ID, _soapheaders={SessionHeader: ns0:SessionHeader, DebuggingHeader: ns0:DebuggingHeader, CallOptions: ns0:CallOptions}) -> result: xsd:string
+            describeMetadata(asOfVersion: xsd:double, _soapheaders={SessionHeader: ns0:SessionHeader, CallOptions: ns0:CallOptions}) -> result: ns0:DescribeMetadataResult
+            describeValueType(type: xsd:string, _soapheaders={SessionHeader: ns0:SessionHeader}) -> result: ns0:DescribeValueTypeResult
+            listMetadata(queries: ns0:ListMetadataQuery[], asOfVersion: xsd:double, _soapheaders={SessionHeader: ns0:SessionHeader, CallOptions: ns0:CallOptions}) -> result: ns0:FileProperties[]
+            readMetadata(type: xsd:string, fullNames: xsd:string[], _soapheaders={SessionHeader: ns0:SessionHeader, CallOptions: ns0:CallOptions}) -> result: ns0:ReadResult
+            renameMetadata(type: xsd:string, oldFullName: xsd:string, newFullName: xsd:string, _soapheaders={SessionHeader: ns0:SessionHeader, CallOptions: ns0:CallOptions}) -> result: ns0:SaveResult
+            retrieve(retrieveRequest: ns0:RetrieveRequest, _soapheaders={SessionHeader: ns0:SessionHeader, CallOptions: ns0:CallOptions}) -> result: ns0:AsyncResult
+            updateMetadata(metadata: ns0:Metadata[], _soapheaders={SessionHeader: ns0:SessionHeader, CallOptions: ns0:CallOptions, AllOrNoneHeader: ns0:AllOrNoneHeader}) -> result: ns0:SaveResult[]
+            upsertMetadata(metadata: ns0:Metadata[], _soapheaders={SessionHeader: ns0:SessionHeader, CallOptions: ns0:CallOptions, AllOrNoneHeader: ns0:AllOrNoneHeader}) -> result: ns0:UpsertResult[]

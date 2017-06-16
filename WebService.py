@@ -34,7 +34,7 @@ class Tools:
             for e in sys.exc_info():
                 errors += " " + repr(e)
             
-            print ("Errors with response from {}: {}".format(str(URL), errors))
+            print("Errors with response from {}: {}".format(str(URL), errors))
             sys.exit(68) # code: host name unknown
         
         return response

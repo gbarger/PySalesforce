@@ -14,8 +14,14 @@ import json
 import WebService
 import urllib
 import time
+import sys
+from zeep import Client
+from zeep import xsd
+from zeep import ns
 
-apiVersion = '37.0'
+API_VERSION = '39.0'
+METADATA_WSDL_FILE = './metadata.wsdl'
+PARTNER_WSDL_FILE = './partner.wsdl'
 
 ##
 # This is a collection of utilities that will need to be reused bye the methods
@@ -141,6 +147,10 @@ class Util:
         for i in range(0, len(list), n):
             yield list[i:i + n]
 
+    def getSoapClient(wsdlFile):
+        soap_client = Client(wsdlFile)
+        return soap_client
+
 ##
 # The Authentication class is used to log in and out of Salesforce
 ##
@@ -218,11 +228,80 @@ class Authentication:
 
         return jsonResponse
 
+    ##
+    # Only use this for authenticating as a self-service user
+    #
+    # @param orgId          The ID of the organization against which you will
+    #                       authenticate Self-Service users.
+    # @param portalId       Specify only if user is a Customer Portal user. The
+    #                       ID of the portal for this organization.
+    #
+    def getLoginScopeHeader(orgId, portalId):
+        login_scope_header = {}
+        login_scope_header['organizationId'] = orgId
+
+        if portalId != None:
+            login_scope_header['portalId'] = portalId
+
+        return login_scope_header
+
+    def getLoginCallOptions(clientName, defaultNS):
+        call_options = {}
+
+        if clientName != None:
+            call_options['client'] = clientName
+
+        if defaultNS != None:
+            call_options['defaultNamespace'] = defaultNS
+
+        return call_options
+
+    ##
+    # This method builds the headers for soap calls. Leave orgId and 
+    # portalId as None if you are using a normal authentication. These
+    # values are only used for self-service authentication
+    #
+    # @param orgId          The ID of the organization against which you will
+    #                       authenticate Self-Service users.
+    # @param portalId       Specify only if user is a Customer Portal user. The
+    #                       ID of the portal for this organization.
+    # @param clientName     A string that identifies a client.
+    # @param defaultNS      A string that identifies a developer namespace 
+    #                       prefix. Use this field to resolve field names in
+    #                       managed packages without having to fully specify
+    #                       the fieldName everywhere.
+    def getSoapHeaders(orgId, portalId, clientName, defaultNS):
+        client = Util.getSoapClient(PARTNER_WSDL_FILE)
+        soap_headers = {}
+
+        if orgId != None or portalId != None:
+            login_scope = Authentication.getLoginScopeHeader(orgId, portalId)
+            soap_headers['LoginScopeHeader'] = login_scope
+
+        call_options = Authentication.getLoginCallOptions(clientName, defaultNS)
+        soap_headers['CallOptions'] = call_options
+
+        return soap_headers
+
+    def getSoapLogin(loginUsername, loginPassword, orgId, portalId, clientName, defaultNS):
+        # login(
+        #   username: xsd:string, 
+        #   password: xsd:string, 
+        #   _soapheaders={
+        #       LoginScopeHeader: ns1:LoginScopeHeader, 
+        #       CallOptions: ns1:CallOptions}
+        # ) -> result: ns1:LoginResult
+        client = Util.getSoapClient(PARTNER_WSDL_FILE)
+        soap_headers = Authentication.getSoapHeaders(orgId, portalId, clientName, defaultNS)
+        login_result = client.service.login(loginUsername, loginPassword, _soapheaders=soap_headers)
+
+        return login_result
+
 ##
 # The purpose of this class is to expose the Salesforce Tooling API methods
 ##
 class Tooling:
-    baseToolingUri = '/services/data/v' + apiVersion + '/tooling'
+    baseToolingUri = '/services/data/v' + API_VERSION + '/tooling'
 
     ##
     # Retrieves available code completions of the referenced type for Apex system 
@@ -468,7 +547,7 @@ class Standard:
         if fieldListString != None:
             getRowUri = getRowUri + '?fields=' + fieldListString
 
-        response = WebService.Tools.getHTResponse(instanceUrl + Standard.baseStandardUri + 'v' + apiVersion + getRowUri, headerDetails)
+        response = WebService.Tools.getHTResponse(instanceUrl + Standard.baseStandardUri + 'v' + API_VERSION + getRowUri, headerDetails)
         jsonResponse = json.loads(response.text)
 
         return jsonResponse
@@ -496,7 +575,7 @@ class Standard:
 
         dataBodyJson = json.dumps(recordJson, indent=4, separators=(',', ': '))
 
-        response = WebService.Tools.postHTResponse(instanceUrl + Standard.baseStandardUri + 'v' + apiVersion + patchRowUri, dataBodyJson, headerDetails)
+        response = WebService.Tools.postHTResponse(instanceUrl + Standard.baseStandardUri + 'v' + API_VERSION + patchRowUri, dataBodyJson, headerDetails)
         responseText = ""
 
         if response.status_code is 204:
@@ -536,7 +615,7 @@ class Standard:
 
         dataBodyJson = json.dumps(recordJson, indent=4, separators=(',', ': '))
 
-        response = WebService.Tools.patchHTResponse(instanceUrl + Standard.baseStandardUri + 'v' + apiVersion + patchRowUri, dataBodyJson, headerDetails)
+        response = WebService.Tools.patchHTResponse(instanceUrl + Standard.baseStandardUri + 'v' + API_VERSION + patchRowUri, dataBodyJson, headerDetails)
         responseText = ""
 
         if response.status_code is 204:
@@ -566,7 +645,7 @@ class Standard:
         headerDetails = Util.getStandardHeader(accessToken)
         urlEncodedQuery = urllib.parse.quote(queryString)
 
-        response = WebService.Tools.getHTResponse(instanceUrl + Standard.baseStandardUri + 'v' + apiVersion + queryUri + urlEncodedQuery, headerDetails)
+        response = WebService.Tools.getHTResponse(instanceUrl + Standard.baseStandardUri + 'v' + API_VERSION + queryUri + urlEncodedQuery, headerDetails)
         jsonResponse = json.loads(response.text)
 
         return jsonResponse
@@ -579,7 +658,7 @@ class Standard:
 # examples here: https://trailhead-salesforce-com.firelayers.net/en/api_basics/api_basics_bulk
 ##
 class Bulk:
-    baseBulkUri = '/services/async/' + apiVersion
+    baseBulkUri = '/services/async/' + API_VERSION
     batchUri = '/job/'
 
     ##
@@ -885,3 +964,229 @@ class Bulk:
             queryResultList.extend(queryResult)
 
         return queryResultList
+
+class Metadata:
+
+    def getSessionHeader(sessionId):
+        client = Util.getSoapClient(METADATA_WSDL_FILE)
+        session_header_element = client.get_element('ns0:SessionHeader')
+        session_header = session_header_element(sessionId)
+
+        return session_header
+
+    def getCallOptions(clientName):
+        client = Util.getSoapClient(METADATA_WSDL_FILE)
+        call_options_element = client.get_element('ns0:CallOptions')
+        call_options = call_options_element(clientName)
+
+        return call_options
+
+    ##
+    # This builds the session header for the Metadata requests
+    #
+    # @param sessionId      The session ID that the login call returns.
+    # @param clientName     A value that identifies an API client.
+    #
+    def getSoapHeaders(sessionId, clientName):
+        soap_headers = {}
+        soap_headers['SessionHeader'] = Metadata.getSessionHeader(sessionId)
+        soap_headers['CallOptions'] = Metadata.getCallOptions(clientName)
+
+        return soap_headers
+
+    ##
+    # This builds the list of members for a specific type. For example this wil
+    # store the list of all the ApexClass members you want to reference. Only a
+    #
+    # @param memberName         This is the Metadata type being referenced.
+    #                           A list of types can be found here:
+    #                           https://developer.salesforce.com/docs/atlas.en-us.api_meta.meta/api_meta/meta_types_list.htm
+    # @param memberList         An array of the members you're working with in 
+    #                           the package.
+    def getPackageTypeMembers(memberName, memberList):
+        package_type_members = {}
+        package_type_members['name'] = memberName
+        package_type_members['members'] = memberList
+
+        return package_type_members
+
+    ##
+    # Specifies which metadata components to retrieve as part of a retrieve() 
+    # call or defines a package of components.
+    #
+    # @param fullName              The package name used as a unique identifier
+    #                              for API access. The fullName can contain
+    #                              only underscores and alphanumeric characters.
+    #                              It must be unique, begin with a letter, not
+    #                              include spaces, not end with an underscore,
+    #                              and not contain two consecutive underscores.
+    #                              This field is inherited from the Metadata
+    #                              component.
+    # @param apiAccessLevel        Package components have access via dynamic
+    #                              Apex and the API to standard and custom
+    #                              objects in the organization where they are
+    #                              installed. Administrators who install
+    #                              packages may wish to restrict this access 
+    #                              after installation for improved security.
+    #                              The valid values are:
+    #                                * Unrestricted—Package components have
+    #                                  the same API access to standard objects
+    #                                  as the user who is logged in when the
+    #                                  component sends a request to the API.
+    #                                * Restricted—The administrator can select
+    #                                  which standard objects the components
+    #                                  can access. Further, the components in
+    #                                  restricted packages can only access 
+    #                                  custom objects in the current package
+    #                                  if the user's permissions allow access
+    #                                  to them.
+    #                              For more information, see “About API and
+    #                              Dynamic Apex Access in Packages” in the
+    #                              Salesforce online help.
+    # @param description           A short description of the package.
+    # @param namespacePrefix       The namespace of the developer organization
+    #                              where the package was created.
+    # @param objectPermissions     Indicates which objects are accessible to
+    #                              the package, and the kind of access available
+    #                              (create, read, update, delete).
+    # @param packageType           Reserved for future use.
+    # @param postInstallClass      The name of the Apex class that specifies
+    #                              the actions to execute after the package has
+    #                              been installed or upgraded. The Apex class
+    #                              must be a member of the package and must
+    #                              implement the Apex InstallHandler interface.
+    #                              In patch upgrades, you can't change the class
+    #                              name in this field but you can change the 
+    #                              contents of the Apex class. The class name
+    #                              can be changed in major upgrades.
+    #                              This field is available in API version 24.0
+    #                              and later.
+    # @param setupWeblink          The weblink used to describe package
+    #                              installation.
+    # @param types                 The type of component being retrieved. You
+    #                              can build the types with the 
+    #                              getPackageTypeMembers() method.
+    # @param uninstallClass        The name of the Apex class that specifies
+    #                              the actions to execute after the package has
+    #                              been uninstalled. The Apex class must be a 
+    #                              member of the package and must implement the
+    #                              Apex UninstallHandler interface. In patch
+    #                              upgrades, you can't change the class name in
+    #                              this field but you can change the contents of
+    #                              the Apex class. The class name can be changed
+    #                              in major upgrades.
+    #                              This field is available in API version 25.0
+    #                              and later.
+    # @param version               Required. The version of the component type.
+    #
+    def getPackage(**kwargs):
+        if kwargs.get('version') is None:
+            print('The version parameter is required to create a package.')
+            sys.exit(0)
+
+        client = Util.getSoapClient(METADATA_WSDL_FILE)
+        package_type = client.get_type('ns0:Package')
+        this_package = package_type(
+            kwargs.get('fullName'),
+            kwargs.get('apiAccessLevel'),
+            kwargs.get('description'),
+            kwargs.get('namespacePrefix'),
+            kwargs.get('objectPermissions'),
+            kwargs.get('packageType'),
+            kwargs.get('postInstallClass'),
+            kwargs.get('setupWeblink'),
+            kwargs.get('types'),
+            kwargs.get('uninstallClass'),
+            kwargs.get('version')
+        )
+
+        return this_package
+
+    ##
+    # This is the package of data needed to retrieve metadata
+    #
+    # @param apiVersion         Required. The API version for the retrieve 
+    #                           request. The API version determines the fields
+    #                           retrieved for each metadata type. For example,
+    #                           an icon field was added to the CustomTab for
+    #                           API version 14.0. If you retrieve components
+    #                           for version 13.0 or earlier, the components
+    #                           will not include the icon field.
+    # @param packageNames       A list of package names to be retrieved. If you
+    #                           are retrieving only unpackaged components, do
+    #                           not specify a name here. You can retrieve
+    #                           packaged and unpackaged components in the same
+    #                           retrieve.
+    # @param singlePackage      Specifies whether only a single package is
+    #                           being retrieved (true) or not (false). If false,
+    #                           then more than one package is being retrieved.
+    # @param specificFiles      A list of file names to be retrieved. If a value
+    #                           is specified for this property, packageNames
+    #                           must be set to null and singlePackage must be
+    #                           set to true.
+    # @param unpackaged         A list of components to retrieve that are not
+    #                           in a package. You can build the package using
+    #                           the getPackage() method.
+    #
+    def getRetrieveRequest(**kwargs):
+        if kwargs.get('apiVersion') is None:
+            print('The version parameter is required to create a package.')
+            sys.exit(0)
+
+        client = Util.getSoapClient(METADATA_WSDL_FILE)
+        retrieveRequest_type = client.get_type('ns0:RetrieveRequest')
+        this_retrieveRequest = retrieveRequest_type(
+            kwargs.get('apiVersion'),
+            kwargs.get('packageNames'),
+            kwargs.get('singlePackage'),
+            kwargs.get('specificFiles'),
+            kwargs.get('unpackaged')
+        )
+
+        return this_retrieveRequest
+
+    ##
+    # This returns the async result of a retrieve request that can then be used
+    # to check the retrieve status
+    #
+    # @param retrieveRequest        The request settings which can be created
+    #                               using the getRetrieveRequest() method
+    # @param sessionId              The session ID that the login call returns.
+    # @param clientName             A value that identifies an API client.
+    #
+    def retrieve(retrieveRequest, sessionId, metadataUrl, clientName):
+        soap_headers = Metadata.getSoapHeaders(sessionId, clientName)
+
+        client = Util.getSoapClient(METADATA_WSDL_FILE)
+        client_service = client.create_service('{http://soap.sforce.com/2006/04/metadata}MetadataBinding', metadataUrl)
+        this_retrieve = client_service.retrieve(retrieveRequest, _soapheaders=soap_headers)
+
+        return this_retrieve
+
+
+    ##
+    # This checks the status of the retrieve request. You can have the response
+    # include a zip file if you wish, or you can set that to false and get the
+    # zip in a later response
+    #
+    # @param asyncProcessId       Required. The ID of the component that’s being
+    #                             deployed or retrieved.
+    # @param includeZip           This tells the process whether or not to 
+    #                             include the zip file in the result or. Starting
+    #                             with API version 34.0, pass a boolean value for
+    #                             the includeZip argument of checkRetrieveStatus()
+    #                             to indicate whether to retrieve the zip file.
+    #                             The includeZip argument gives you the option to
+    #                             retrieve the file in a separate process after
+    #                             the retrieval operation is completed.
+    # @param sessionId            The session ID that the login call returns.
+    # @param clientName           A value that identifies an API client.
+    #
+    def checkRetrieveStatus(asyncProcessId, includeZip, sessionId, metadataUrl, clientName):
+        soap_headers = Metadata.getSoapHeaders(sessionId, clientName)
+
+        client = Util.getSoapClient(METADATA_WSDL_FILE)
+        client_service = client.create_service('{http://soap.sforce.com/2006/04/metadata}MetadataBinding', metadataUrl)
+        this_retrieveStatus = client_service.checkRetrieveStatus(asyncProcessId, includeZip, _soapheaders=soap_headers)
+
+        return this_retrieveStatus
