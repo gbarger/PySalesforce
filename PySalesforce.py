@@ -20,8 +20,10 @@ from zeep import xsd
 from zeep import ns
 
 API_VERSION = '39.0'
-METADATA_WSDL_FILE = './metadata.wsdl'
-PARTNER_WSDL_FILE = './partner.wsdl'
+METADATA_WSDL_FILE = './WSDL/metadata.wsdl'
+METADATA_SANDBOX_WSDL_FILE = './WSDL/metadata_sandbox.wsdl'
+PARTNER_WSDL_FILE = './WSDL/partner.wsdl'
+PARTNER_SANDBOX_WSDL_FILE = './WSDL/partner_sandbox.wsdl'
 
 ##
 # This is a collection of utilities that will need to be reused bye the methods
@@ -54,7 +56,7 @@ class Util:
     #                           by Salesforce to reduce the size of the responses.
     #                           This works becuase requests will automatically
     #                           unzip the zipped responses.
-    ##
+    #
     def getBulkHeader(accessToken):
         bulkHeader = Util.getStandardHeader(accessToken)
         bulkHeader['X-SFDC-Session'] = accessToken
@@ -115,7 +117,7 @@ class Util:
     #                                   numberRecordsFailed field contains the 
     #                                   number of records that were not processed 
     #                                   successfully.
-    ##
+    #
     def getBulkJobBody(objectApiName, operationType, assignmentRuleId=None, concurrencyMode=None, externalIdFieldName=None, numberRetries=None, jobState=None):
         bulkJobBody = {'operation': operationType, 'object': objectApiName, 'contentType': 'JSON'}
 
@@ -142,18 +144,25 @@ class Util:
     #
     # @param list   The list provided to be chunked
     # @param n      The number of items in each chunk
-    ##
+    #
     def chunk(list, n):
         for i in range(0, len(list), n):
             yield list[i:i + n]
 
+    ##
+    # Pass the wsdl and generate the soap client for the given WSDL
+    #
+    # @param wsdlFile       The file location for the WSDL used to generate the 
+    #                       client
+    # @return               Returns the SOAP client.
+    #
     def getSoapClient(wsdlFile):
         soap_client = Client(wsdlFile)
         return soap_client
 
 ##
 # The Authentication class is used to log in and out of Salesforce
-##
+#
 class Authentication:
     ##
     # this function logs into Salesforce using the oAuth 2.0 password grant type, and 
@@ -179,7 +188,7 @@ class Authentication:
     #                             access_token, which will be used to authenticate
     #                             the other calls, and instance_url, which is the
     #                             base endpoint used for the other calls
-    ##
+    #
     def getOAuthLogin(loginUsername, loginPassword, loginClientId, loginClientSecret, isProduction):
         if isProduction:
             baseOAuthUrl = 'https://login.salesforce.com/services/oauth2/token'
@@ -209,7 +218,7 @@ class Authentication:
     # @return                     returns a json response with success (True or 
     #                             False), and the status_code returned by the 
     #                             call to revoke the token
-    ##
+    #
     def getOAuthLogout(authToken, isProduction):
         if isProduction:
             logoutUrl = 'https://login.salesforce.com/services/oauth2/revoke'
@@ -235,6 +244,7 @@ class Authentication:
     #                       authenticate Self-Service users.
     # @param portalId       Specify only if user is a Customer Portal user. The
     #                       ID of the portal for this organization.
+    # @return               Returns the ScopeHeader for SOAP login requests.
     #
     def getLoginScopeHeader(orgId, portalId):
         login_scope_header = {}
@@ -245,6 +255,16 @@ class Authentication:
 
         return login_scope_header
 
+    ##
+    # This creates the call options for the SOAP login.
+    #
+    # @param clientName     A string that identifies a client.
+    # @param defaultNS      A string that identifies a developer namespace 
+    #                       prefix. Use this field to resolve field names in
+    #                       managed packages without having to fully specify
+    #                       the fieldName everywhere.
+    # @return               Returns the CallOptions for SOAP login requests.
+    #
     def getLoginCallOptions(clientName, defaultNS):
         call_options = {}
 
@@ -270,6 +290,8 @@ class Authentication:
     #                       prefix. Use this field to resolve field names in
     #                       managed packages without having to fully specify
     #                       the fieldName everywhere.
+    # @return               Returns the SOAP headers needed to log in
+    #
     def getSoapHeaders(orgId, portalId, clientName, defaultNS):
         client = Util.getSoapClient(PARTNER_WSDL_FILE)
         soap_headers = {}
@@ -278,20 +300,49 @@ class Authentication:
             login_scope = Authentication.getLoginScopeHeader(orgId, portalId)
             soap_headers['LoginScopeHeader'] = login_scope
 
-        call_options = Authentication.getLoginCallOptions(clientName, defaultNS)
-        soap_headers['CallOptions'] = call_options
+        if clientName != None or defaultNS != None:
+            call_options = Authentication.getLoginCallOptions(clientName, defaultNS)
+            soap_headers['CallOptions'] = call_options
 
         return soap_headers
 
-    def getSoapLogin(loginUsername, loginPassword, orgId, portalId, clientName, defaultNS):
-        # login(
-        #   username: xsd:string, 
-        #   password: xsd:string, 
-        #   _soapheaders={
-        #       LoginScopeHeader: ns1:LoginScopeHeader, 
-        #       CallOptions: ns1:CallOptions}
-        # ) -> result: ns1:LoginResult
-        client = Util.getSoapClient(PARTNER_WSDL_FILE)
+    ##
+    # This method logs into Salesforce with SOAP given the provided details.
+    # Only use orgId and portalId for self-service user authentication. For 
+    # most purposes, these should be set to None. The clientName is actually a
+    # clientId used for partner applications and the defaultNS is the default
+    # namespace used for an application. So these values can also be set to None
+    # for most requests. For most requests, you will only need the username and
+    # password.
+    #
+    # @param loginUsername        this is the salesforce login
+    # @param loginPassword        this is the salesforce password AND security 
+    #                             token
+    # @param orgId                The ID of the organization against which you 
+    #                             will authenticate Self-Service users.
+    # @param portalId             Specify only if user is a Customer Portal 
+    #                             user. The ID of the portal for this 
+    #                             organization.
+    # @param clientName           A string that identifies a client.
+    # @param defaultNS            A string that identifies a developer namespace 
+    #                             prefix. Use this field to resolve field names
+    #                             in managed packages without having to fully 
+    #                             specify the fieldName everywhere.
+    # @param isProduction         this is a boolean value to set whether or not 
+    #                             the base oAuth connection will be in production
+    #                             or a sandbox environment.
+    # @return                     returns a long response object that contains
+    #                             the session id login_result['sessionId'], 
+    #                             metadata server url login_result['metadataServerUrl']
+    #                             and server url login_result['serverUrl']
+    #
+    def getSoapLogin(loginUsername, loginPassword, orgId, portalId, clientName, defaultNS, isProduction):
+        wsdl_file = PARTNER_WSDL_FILE
+
+        if not(isProduction):
+            wsdl_file = PARTNER_SANDBOX_WSDL_FILE
+
+        client = Util.getSoapClient(wsdl_file)
         soap_headers = Authentication.getSoapHeaders(orgId, portalId, clientName, defaultNS)
         login_result = client.service.login(loginUsername, loginPassword, _soapheaders=soap_headers)
 
@@ -315,7 +366,7 @@ class Tooling:
     #                            login response
     # @return                    Returns the completion values for the specified 
     #                            type like apex.
-    ##
+    #
     def completions(completionsType, accessToken, instanceUrl):
         completionsUri = '/completions?type='
         headerDetails = Util.getStandardHeader(accessToken)
@@ -342,7 +393,7 @@ class Tooling:
     #                            login response
     # @return                    returns the response result from executing the 
     #                            salesforce script
-    ##
+    #
     def executeAnonymous(codeString, accessToken, instanceUrl):
         executeAnonymousUri = '/executeAnonymous/?anonymousBody='
         headerDetails = Util.getStandardHeader(accessToken)
@@ -371,7 +422,7 @@ class Tooling:
     #                            login response
     # @return                    returns a JSON object with the results of the 
     #                            query.
-    ##
+    #
     def query(queryString, accessToken, instanceUrl):
         queryUri = '/query/?q='
         headerDetails = Util.getStandardHeader(accessToken)
@@ -414,7 +465,7 @@ class Tooling:
     # @param instanceUrl        This is the instance_url value received from the 
     #                           login response
     # @return                   returns the Id of the test run
-    ##
+    #
     def runTestsAsynchronousList(classIds, suiteIds, maxFailedTests, testLevel, accessToken, instanceUrl):
         testAsyncUri = '/runTestsAsynchronous/'
         headerDetails = Util.getStandardHeader(accessToken)
@@ -463,7 +514,7 @@ class Tooling:
     # @param instanceUrl    This is the instance_url value received from the 
     #                       login response
     # @return               returns the Id of the test run
-    ##
+    #
     def runTestsAsynchronousJson(testArray, accessToken, instanceUrl):
         testAsyncUri = '/runTestsAsynchronous/'
         headerDetails = Util.getStandardHeader(accessToken)
@@ -480,7 +531,7 @@ class Tooling:
 # about this can be found here: https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/intro_what_is_rest_api.htm
 # You can get more details about each of the methods by looking in the reference
 # section of the documentation.
-##
+#
 class Standard:
     baseStandardUri = '/services/data/'
 
@@ -493,7 +544,7 @@ class Standard:
     # @param instanceUrl    This is the instance_url value received from the 
     #                       login response
     # @return               Returns an object with the list of Salesforce versions
-    ##
+    #
     def versions(accessToken, instanceUrl):
         headerDetails = Util.getStandardHeader(accessToken)
 
@@ -513,7 +564,7 @@ class Standard:
     #                           login response
     # @return                   Returns an object containing the list of availble
     #                           reousrces for this version number.
-    ##
+    #
     def resourcesByVersion(versionNumString, accessToken, instanceUrl):
         headerDetails = Util.getStandardHeader(accessToken)
 
@@ -539,7 +590,7 @@ class Standard:
     # @param return           returns the record with the explicit field list, or
     #                         all (or a lot) of the fields if the fieldListString
     #                         is None.
-    ##
+    #
     def getSObjectRow(object, recordId, fieldListString, accessToken, instanceUrl):
         getRowUri = '/sobjects/' + object + '/' + recordId
         headerDetails = Util.getStandardHeader(accessToken)
@@ -567,8 +618,7 @@ class Standard:
     #                           }
     # @param instanceUrl    This is the instance_url value received from the 
     #                       login response
-    # @return               Returns .......................................................................
-    ##
+    #
     def createSObjectRow(object, recordJson, accessToken, instanceUrl):
         patchRowUri = '/sobjects/' + object + '/'
         headerDetails = Util.getStandardHeader(accessToken)
@@ -608,7 +658,7 @@ class Standard:
     #                       wasn't successful. The response isn't more detailed
     #                       because Salesforce returns no text, only a response
     #                       code of 204
-    ##
+    #
     def updateSObjectRow(object, recordId, recordJson, accessToken, instanceUrl):
         patchRowUri = '/sobjects/' + object + '/' + recordId
         headerDetails = Util.getStandardHeader(accessToken)
@@ -639,7 +689,7 @@ class Standard:
     # @return               returns the query results, if they are too large, 
     #                       then it will also return a nextRecordsUrl to get
     #                       more records.
-    ##
+    #
     def query(queryString, accessToken, instanceUrl):
         queryUri = '/query/?q='
         headerDetails = Util.getStandardHeader(accessToken)
@@ -656,7 +706,7 @@ class Standard:
 # will use fewer of your API calls.
 # API details here: https://developer.salesforce.com/docs/atlas.en-us.api_asynch.meta/api_asynch/asynch_api_intro.htm
 # examples here: https://trailhead-salesforce-com.firelayers.net/en/api_basics/api_basics_bulk
-##
+#
 class Bulk:
     baseBulkUri = '/services/async/' + API_VERSION
     batchUri = '/job/'
@@ -674,7 +724,7 @@ class Bulk:
     #                       update ever pollingWait seconds until the 
     #                       numberBatchesQueued = 0, then it will break out and
     #                       just returns the final job status response.
-    ##
+    #
     def getJobStatus(jobId, pollingWait, accessToken, instanceUrl):
         headerDetails = Util.getBulkHeader(accessToken)
 
@@ -703,7 +753,7 @@ class Bulk:
     #                       login response
     # @return               Returns the an array containing the results for each
     #                       record in the given batch
-    ##
+    #
     def getBatchResult(jobId, batchId, accessToken, instanceUrl):
         headerDetails = Util.getBulkHeader(accessToken)
 
@@ -725,7 +775,7 @@ class Bulk:
     #                       login response
     # @return               Returns the an array containing the results for the 
     #                       query request
-    ##
+    #
     def getQueryResult(jobId, batchId, queryResultId, accessToken, instanceUrl):
         headerDetails = Util.getBulkHeader(accessToken)
 
@@ -755,7 +805,7 @@ class Bulk:
     #                       login response
     # @return               Returns an object containing the status for each 
     #                       record that was put into the batch
-    ##
+    #
     def performBulkOperation(objectApiName, records, batchSize, operationType, pollingWait, externalIdFieldName, accessToken, instanceUrl):
         headerDetails = Util.getBulkHeader(accessToken)
         bodyDetails = {}
@@ -821,7 +871,7 @@ class Bulk:
     #                       login response
     # @return               Returns an object containing the status for each 
     #                       record that was put into the batch
-    ##
+    #
     def insertSObjectRows(objectApiName, records, batchSize, pollingWait, accessToken, instanceUrl):
         result = Bulk.performBulkOperation(objectApiName, records, batchSize, 'insert', pollingWait, None, accessToken, instanceUrl)
 
@@ -845,7 +895,7 @@ class Bulk:
     #                       login response
     # @return               Returns an object containing the status for each 
     #                       record that was put into the batch
-    ##
+    #
     def updateSObjectRows(objectApiName, records, batchSize, pollingWait, accessToken, instanceUrl):
         result = Bulk.performBulkOperation(objectApiName, records, batchSize, 'update', pollingWait, None, accessToken, instanceUrl)
 
@@ -873,7 +923,7 @@ class Bulk:
     #                             will default to the record Id field
     # @return               Returns an object containing the status for each 
     #                       record that was put into the batch
-    ##
+    #
     def upsertSObjectRows(objectApiName, records, batchSize, pollingWait, accessToken, instanceUrl, externalIdFieldName='Id'):
         result = Bulk.performBulkOperation(objectApiName, records, batchSize, 'upsert', pollingWait, externalIdFieldName, accessToken, instanceUrl)
 
@@ -901,7 +951,7 @@ class Bulk:
     #                       login response
     # @return               Returns an object containing the status for each 
     #                       record that was put into the batch
-    ##
+    #
     def deleteSObjectRows(objectApiName, records, hardDelete, batchSize, pollingWait, accessToken, instanceUrl):
         deleteType = 'delete';
 
@@ -922,7 +972,7 @@ class Bulk:
     # @param instanceUrl    This is the instance_url value received from the 
     #                       login response
     # @return               Returns an array of results for the specified query
-    ##
+    #
     def querySObjectRows(objectApiName, query, queryAll, accessToken, instanceUrl):
         headerDetails = Util.getBulkHeader(accessToken)
         batchResultsList = []
