@@ -22,6 +22,7 @@ from zeep import ns
 API_VERSION = '39.0'
 METADATA_WSDL_FILE = './WSDL/metadata.wsdl'
 METADATA_SANDBOX_WSDL_FILE = './WSDL/metadata_sandbox.wsdl'
+METADATA_SERVICE_BINDING = '{http://soap.sforce.com/2006/04/metadata}MetadataBinding'
 PARTNER_WSDL_FILE = './WSDL/partner.wsdl'
 PARTNER_SANDBOX_WSDL_FILE = './WSDL/partner_sandbox.wsdl'
 
@@ -160,6 +161,12 @@ class Util:
         soap_client = Client(wsdlFile)
         return soap_client
 
+    def getSoapClientService(wsdlFile, serviceBinding, endpointUrl):
+        soap_client = Util.getSoapClient(wsdlFile)
+        soap_client_service = soap_client.create_service(serviceBinding, endpointUrl)
+
+        return soap_client_service
+
 ##
 # The Authentication class is used to log in and out of Salesforce
 #
@@ -258,7 +265,7 @@ class Authentication:
     ##
     # This creates the call options for the SOAP login.
     #
-    # @param clientName     A string that identifies a client.
+    # @param clientName     A string that identifies a client. 
     # @param defaultNS      A string that identifies a developer namespace 
     #                       prefix. Use this field to resolve field names in
     #                       managed packages without having to fully specify
@@ -323,7 +330,8 @@ class Authentication:
     # @param portalId             Specify only if user is a Customer Portal 
     #                             user. The ID of the portal for this 
     #                             organization.
-    # @param clientName           A string that identifies a client.
+    # @param clientName           A string that identifies a client. Used for 
+    #                             partner applications.
     # @param defaultNS            A string that identifies a developer namespace 
     #                             prefix. Use this field to resolve field names
     #                             in managed packages without having to fully 
@@ -1017,6 +1025,11 @@ class Bulk:
 
 class Metadata:
 
+    ##
+    # Used to get the session header for the given sessionId
+    #
+    # @param sessionId      The session ID that the login call returns.
+    #
     def getSessionHeader(sessionId):
         client = Util.getSoapClient(METADATA_WSDL_FILE)
         session_header_element = client.get_element('ns0:SessionHeader')
@@ -1024,6 +1037,11 @@ class Metadata:
 
         return session_header
 
+    ##
+    # This returns the call options for the soap header
+    #
+    # @param clientName     A value that identifies an API client.
+    #
     def getCallOptions(clientName):
         client = Util.getSoapClient(METADATA_WSDL_FILE)
         call_options_element = client.get_element('ns0:CallOptions')
@@ -1032,15 +1050,64 @@ class Metadata:
         return call_options
 
     ##
+    # Indicates whether to roll back all metadata changes when some of the 
+    # records in a call result in failures.
+    #
+    # @param allOrNone      Set to true to cause all metadata changes to be
+    #                       rolled back if any records in the call cause 
+    #                       failures. Set to false to enable saving only the
+    #                       records that are processed successfully when other
+    #                       records in the call cause failures.
+    #
+    def getAllOrNoneHeader(allOrNone):
+        client = Util.getSoapClient(METADATA_WSDL_FILE)
+        all_or_none_header_element = client.get_element('ns0:AllOrNoneHeader')
+        all_or_none_header = all_or_none_header_element(allOrNone)
+
+        return all_or_none_header
+
+    ##
+    # Specifies that the deployment result will contain the debug log output,
+    # and specifies the level of detail included in the log. The debug log
+    # contains the output of Apex tests that are executed as part of a
+    # deployment.
+    #
+    # @param categories     A list of log categories with their associated log 
+    #                       levels.
+    #
+    def getDebuggingHeader(categories):
+        client = Util.getSoapClient(METADATA_WSDL_FILE)
+        debugging_header_element = client.get_element('ns0:DebuggingHeader')
+        debugging_header = debugging_header_element(categories, None)
+
+        return debugging_header
+
+    ##
     # This builds the session header for the Metadata requests
     #
-    # @param sessionId      The session ID that the login call returns.
-    # @param clientName     A value that identifies an API client.
+    # @param sessionId          The session ID that the login call returns.
+    # @param clientName         A value that identifies an API client.
+    # @param allOrNone          Set to true to cause all metadata changes to be
+    #                           rolled back if any records in the call cause 
+    #                           failures. Set to false to enable saving only the
+    #                           records that are processed successfully when other
+    #                           records in the call cause failures.
+    # @param debugCategories    A list of log categories with their associated
+    #                           log levels.
     #
-    def getSoapHeaders(sessionId, clientName):
+    def getSoapHeaders(sessionId, clientName, allOrNone, debugCategories):
         soap_headers = {}
         soap_headers['SessionHeader'] = Metadata.getSessionHeader(sessionId)
-        soap_headers['CallOptions'] = Metadata.getCallOptions(clientName)
+
+        if clientName != None:
+            soap_headers['CallOptions'] = Metadata.getCallOptions(clientName)
+
+        if allOrNone != None:
+            soap_headers['AllOrNoneHeader'] = Metadata.getAllOrNoneHeader(allOrNone)
+
+        if debugCategories != None:
+            soap_headers['DebuggingHeader'] = Metadata.getDebuggingHeader()
+
 
         return soap_headers
 
@@ -1059,6 +1126,16 @@ class Metadata:
         package_type_members['members'] = memberList
 
         return package_type_members
+
+    ##
+    # This method builds the client service for the Metadata API
+    #
+    # @param metadataUrl          The Url used to send this request to
+    #
+    def getClientService(metadataUrl):
+        soap_client_service = Util.getSoapClientService(METADATA_WSDL_FILE, METADATA_SERVICE_BINDING, metadataUrl)
+
+        return soap_client_service
 
     ##
     # Specifies which metadata components to retrieve as part of a retrieve() 
@@ -1202,13 +1279,13 @@ class Metadata:
     # @param retrieveRequest        The request settings which can be created
     #                               using the getRetrieveRequest() method
     # @param sessionId              The session ID that the login call returns.
-    # @param clientName             A value that identifies an API client.
+    # @param clientName             A value that identifies an API client. This
+    #                               is used for partner applications
     #
     def retrieve(retrieveRequest, sessionId, metadataUrl, clientName):
-        soap_headers = Metadata.getSoapHeaders(sessionId, clientName)
+        soap_headers = Metadata.getSoapHeaders(sessionId, clientName, None, None)
 
-        client = Util.getSoapClient(METADATA_WSDL_FILE)
-        client_service = client.create_service('{http://soap.sforce.com/2006/04/metadata}MetadataBinding', metadataUrl)
+        client_service = Metadata.getClientService(metadataUrl)
         this_retrieve = client_service.retrieve(retrieveRequest, _soapheaders=soap_headers)
 
         return this_retrieve
@@ -1230,13 +1307,108 @@ class Metadata:
     #                             retrieve the file in a separate process after
     #                             the retrieval operation is completed.
     # @param sessionId            The session ID that the login call returns.
-    # @param clientName           A value that identifies an API client.
+    # @param metadataUrl          The Url used to send this request to
+    # @param clientName           A value that identifies an API client. This is
+    #                             used for partner applications
     #
     def checkRetrieveStatus(asyncProcessId, includeZip, sessionId, metadataUrl, clientName):
-        soap_headers = Metadata.getSoapHeaders(sessionId, clientName)
+        soap_headers = Metadata.getSoapHeaders(sessionId, clientName, None, None)
 
-        client = Util.getSoapClient(METADATA_WSDL_FILE)
-        client_service = client.create_service('{http://soap.sforce.com/2006/04/metadata}MetadataBinding', metadataUrl)
+        client_service = Metadata.getClientService(metadataUrl)
         this_retrieveStatus = client_service.checkRetrieveStatus(asyncProcessId, includeZip, _soapheaders=soap_headers)
 
         return this_retrieveStatus
+
+    ##
+    # This method cancels the deploy
+    #
+    # @param deployId             The Id returned from the deploy request
+    # @param sessionId            The session ID that the login call returns.
+    # @param metadataUrl          The Url used to send this request to
+    # @param clientName           A value that identifies an API client. This is
+    #                             used for partner applications
+    #
+    def cancelDeploy(deployId, sessionId, metadataUrl, clientName):
+        soap_headers = Metadata.getSoapHeaders(sessionId, clientName, None, None)
+
+        client_service = Metadata.getClientService(metadataUrl)
+        cancel_deploy_result = client_service.cancelDeploy(deployId, _soapheaders=soap_headers)
+
+        return cancelDeployResult
+
+    ##
+    # This method checks the status of the requested deploy
+    #
+    # @param deployId             The Id returned from the deploy request
+    # @param includeDetails       Sets the DeployResult object to include 
+    #                             DeployDetails information ((true) or not 
+    #                             (false). The default is false. Available in
+    #                             API version 29.0 and later.
+    # @param sessionId            The session ID that the login call returns.
+    # @param metadataUrl          The Url used to send this request to
+    # @param clientName           A value that identifies an API client. This is
+    #                             used for partner applications
+    #
+    def checkDeployStatus(deployId, includeDetails, sessionId, metadataUrl, clientName):
+        soap_headers = Metadata.getSoapHeaders(sessionId, clientName, None, None)
+
+        client_service = Metadata.getClientService(metadataUrl)
+        check_deploy_result = client_service.checkDeployStatus(deployId, includeDetails, _soapheaders=soap_headers)
+
+        return check_deploy_result
+
+    def createMetadata():
+        # createMetadata(metadata: ns0:Metadata[], _soapheaders={SessionHeader: ns0:SessionHeader, CallOptions: ns0:CallOptions, AllOrNoneHeader: ns0:AllOrNoneHeader})
+        # ns0:Metadata(fullName: xsd:string) ==> is a type
+
+        return True
+
+    def deleteMetadata():
+        # deleteMetadata(type: xsd:string, fullNames: xsd:string[], _soapheaders={SessionHeader: ns0:SessionHeader, CallOptions: ns0:CallOptions, AllOrNoneHeader: ns0:AllOrNoneHeader}) -> result: ns0:DeleteResult[]
+
+        return True
+
+    def deploy():
+        # deploy(ZipFile: xsd:base64Binary, DeployOptions: ns0:DeployOptions, _soapheaders={SessionHeader: ns0:SessionHeader, DebuggingHeader: ns0:DebuggingHeader, CallOptions: ns0:CallOptions}) -> result: ns0:AsyncResult
+
+        return True
+
+    def deployRecentValidation():
+        # deployRecentValidation(validationId: ns0:ID, _soapheaders={SessionHeader: ns0:SessionHeader, DebuggingHeader: ns0:DebuggingHeader, CallOptions: ns0:CallOptions}) -> result: xsd:string
+
+        return True
+
+    def describeMetadata():
+        # describeMetadata(asOfVersion: xsd:double, _soapheaders={SessionHeader: ns0:SessionHeader, CallOptions: ns0:CallOptions}) -> result: ns0:DescribeMetadataResult
+
+        return True
+
+    def describeValueType():
+        # describeValueType(type: xsd:string, _soapheaders={SessionHeader: ns0:SessionHeader}) -> result: ns0:DescribeValueTypeResult
+
+        return True
+
+    def listMetadata():
+        # listMetadata(queries: ns0:ListMetadataQuery[], asOfVersion: xsd:double, _soapheaders={SessionHeader: ns0:SessionHeader, CallOptions: ns0:CallOptions}) -> result: ns0:FileProperties[]
+
+        return True
+
+    def readMetadata():
+        # readMetadata(type: xsd:string, fullNames: xsd:string[], _soapheaders={SessionHeader: ns0:SessionHeader, CallOptions: ns0:CallOptions}) -> result: ns0:ReadResult
+
+        return True
+
+    def renameMetadata():
+        # renameMetadata(type: xsd:string, oldFullName: xsd:string, newFullName: xsd:string, _soapheaders={SessionHeader: ns0:SessionHeader, CallOptions: ns0:CallOptions}) -> result: ns0:SaveResult
+
+        return True
+
+    def updateMetadata():
+        # updateMetadata(metadata: ns0:Metadata[], _soapheaders={SessionHeader: ns0:SessionHeader, CallOptions: ns0:CallOptions, AllOrNoneHeader: ns0:AllOrNoneHeader}) -> result: ns0:SaveResult[]
+
+        return True
+
+    def upsertMetadata():
+        # upsertMetadata(metadata: ns0:Metadata[], _soapheaders={SessionHeader: ns0:SessionHeader, CallOptions: ns0:CallOptions, AllOrNoneHeader: ns0:AllOrNoneHeader}) -> result: ns0:UpsertResult[]
+
+        return True
