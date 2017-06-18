@@ -1112,6 +1112,38 @@ class Metadata:
         return soap_headers
 
     ##
+    # This is the base class for all metadata types. You cannot edit this object. 
+    # A component is an instance of a metadata type.
+    # Metadata is analogous to sObject, which represents all standard objects. 
+    # Metadata represents all components and fields in Metadata API. Instead of 
+    # identifying each component with an ID, each custom object or custom field 
+    # has a unique fullName, which must be distinct from standard object names, 
+    # as it must be when you create custom objects or custom fields in the 
+    # Salesforce user interface.
+    #
+    # @param fullName       Required. The name of the component. If a field, the
+    #                       name must specify the parent object, for example 
+    #                       Account.FirstName. The __c suffix must be appended 
+    #                       to custom object names and custom field names when 
+    #                       you are setting the fullName. For example, a custom 
+    #                       field in a custom object could have a fullName of 
+    #                       MyCustomObject__c.MyCustomField__c.
+    #                       To reference a component in a package, prepend the 
+    #                       package’s namespace prefix to the component name in 
+    #                       the fullName field. Use the following syntax: 
+    #                       namespacePrefix__ComponentName. For example, for the 
+    #                       custom field component MyCustomObject__c.MyCustomField__c 
+    #                       and the namespace MyNS, the full name is 
+    #                       MyNS__MyCustomObject__c.MyCustomField__c.
+    #
+    def getMetadata(metdataName):
+        client = Util.getSoapClient(METADATA_WSDL_FILE)
+        metadata_type = client.get_type('ns0:Metadata')
+        metadata = metadata_type(metadataName)
+
+        return metadata
+
+    ##
     # This builds the list of members for a specific type. For example this wil
     # store the list of all the ApexClass members you want to reference. Only a
     #
@@ -1228,6 +1260,133 @@ class Metadata:
         )
 
         return this_package
+
+    ##
+    # The options that can be set for deploying a metadata package
+    #
+    # @param allowMissingFiles      If files that are specified in package.xml 
+    #                               are not in the .zip file, specifies whether 
+    #                               a deployment can still succeed.
+    #                               Do not set this argument for deployment to 
+    #                               production orgs.
+    # @param autoUpdatePackage      If a file is in the .zip file but not 
+    #                               specified in package.xml, specifies whether 
+    #                               the file is automatically added to the 
+    #                               package. A retrieve() is issued with the 
+    #                               updated package.xml that includes the .zip 
+    #                               file.
+    #                               Do not set this argument for deployment to 
+    #                               production orgs.
+    # @param checkOnly              Defaults to false. Set to true to perform a 
+    #                               test deployment (validation) of components 
+    #                               without saving the components in the target 
+    #                               org. A validation enables you to verify the 
+    #                               results of tests that would be generated in 
+    #                               a deployment, but doesn’t commit any changes. 
+    #                               After a validation finishes with passing tests, 
+    #                               it might qualify for deployment without 
+    #                               rerunning tests. See deployRecentValidation().
+    # @param ignoreWarnings         Indicates whether a warning should allow a 
+    #                               deployment to complete successfully (true) 
+    #                               or not (false). Defaults to false.
+    #                               The DeployMessage object for a warning 
+    #                               contains the following values:
+    #                                   -problemType—Warning
+    #                                   -problem—The text of the warning.
+    #                               If a warning occurs and ignoreWarnings is 
+    #                               set to true, the success field in 
+    #                               DeployMessage is true. If ignoreWarnings is 
+    #                               set to false, success is set to false and 
+    #                               the warning is treated like an error.
+    # @param performRetrieve        Indicates whether a retrieve() call is 
+    #                               performed immediately after the deployment 
+    #                               (true) or not (false). Set to true in order 
+    #                               to retrieve whatever was just deployed.
+    # @param purgeOnDelete          If true, the deleted components in the 
+    #                               destructiveChanges.xml manifest file aren't 
+    #                               stored in the Recycle Bin. Instead, they 
+    #                               become immediately eligible for deletion.
+    #                               This option only works in Developer Edition 
+    #                               or sandbox orgs; it doesn't work in 
+    #                               production orgs.
+    # @param rollbackOnError        Indicates whether any failure causes a 
+    #                               complete rollback (true) or not (false). If 
+    #                               false, whatever actions can be performed 
+    #                               without errors are performed, and errors are 
+    #                               returned for the remaining actions. This 
+    #                               parameter must be set to true if you are 
+    #                               deploying to a production org. The default 
+    #                               is false.
+    # @param runAllTests            (Deprecated and only available in API 
+    #                               version 33.0 and earlier.) This field 
+    #                               defaults to false. Set to true to run all 
+    #                               Apex tests after deployment, including tests 
+    #                               that originate from installed managed 
+    #                               packages.
+    # @param runTests               A list of Apex tests to run during 
+    #                               deployment. Specify the class name, one name 
+    #                               per instance. The class name can also 
+    #                               specify a namespace with a dot notation. For 
+    #                               more information, see Running a Subset of 
+    #                               Tests in a Deployment.
+    #                               To use this option, set testLevel to 
+    #                               RunSpecifiedTests.
+    # @param singlePackage          Indicates whether the specified .zip file 
+    #                               points to a directory structure with a 
+    #                               single package (true) or a set of packages 
+    #                               (false).
+    # @param testLevel              Optional. Specifies which tests are run as 
+    #                               part of a deployment. The test level is 
+    #                               enforced regardless of the types of 
+    #                               components that are present in the deployment 
+    #                               package. Valid values are:
+    #                                   -NoTestRun—No tests are run. This test 
+    #                                    level applies only to deployments to 
+    #                                    development environments, such as 
+    #                                    sandbox, Developer Edition, or trial 
+    #                                    organizations. This test level is the 
+    #                                    default for development environments.
+    #                                   -RunSpecifiedTests—Only the tests that 
+    #                                    you specify in the runTests option are 
+    #                                    run. Code coverage requirements differ 
+    #                                    from the default coverage requirements 
+    #                                    when using this test level. Each class 
+    #                                    and trigger in the deployment package 
+    #                                    must be covered by the executed tests 
+    #                                    for a minimum of 75% code coverage. 
+    #                                    This coverage is computed for each 
+    #                                    class and trigger individually and is 
+    #                                    different than the overall coverage 
+    #                                    percentage.
+    #                                   -RunLocalTests—All tests in your org are 
+    #                                    run, except the ones that originate 
+    #                                    from installed managed packages. This 
+    #                                    test level is the default for production 
+    #                                    deployments that include Apex classes 
+    #                                    or triggers.
+    #                                   -RunAllTestsInOrg—All tests are run. The 
+    #                                    tests include all tests in your org, 
+    #                                    including tests of managed packages.
+    #
+    def getDeployOptions(**kwargs):
+        # ns0:DeployOptions(allowMissingFiles: xsd:boolean, autoUpdatePackage: xsd:boolean, checkOnly: xsd:boolean, ignoreWarnings: xsd:boolean, performRetrieve: xsd:boolean, purgeOnDelete: xsd:boolean, rollbackOnError: xsd:boolean, runTests: xsd:string[], singlePackage: xsd:boolean, testLevel: ns0:TestLevel)
+        client = Util.getSoapClient(METADATA_WSDL_FILE)
+        deploy_options_type = client.get_type('ns0:DeployOptions')
+        deploy_options = deploy_options_type(
+            kwargs.get('allowMissingFiles'),
+            kwargs.get('autoUpdatePackage'),
+            kwargs.get('checkOnly'),
+            kwargs.get('ignoreWarnings'),
+            kwargs.get('performRetrieve'),
+            kwargs.get('purgeOnDelete'),
+            kwargs.get('rollbackOnError'),
+            kwargs.get('runAllTests'),
+            kwargs.get('runTests'),
+            kwargs.get('singlePackage'),
+            kwargs.get('testLevel')
+        )
+
+        return deploy_options
 
     ##
     # This is the package of data needed to retrieve metadata
@@ -1357,21 +1516,86 @@ class Metadata:
 
         return check_deploy_result
 
-    def createMetadata():
-        # createMetadata(metadata: ns0:Metadata[], _soapheaders={SessionHeader: ns0:SessionHeader, CallOptions: ns0:CallOptions, AllOrNoneHeader: ns0:AllOrNoneHeader})
-        # ns0:Metadata(fullName: xsd:string) ==> is a type
+    ##
+    # Adds one or more new metadata components to your organization synchronously.
+    #
+    # @param metadataList         Array of one or more metadata components.
+    #                             Limit: 10. (For CustomMetadata and 
+    #                             CustomApplication only, the limit is 200.)
+    #                             You must submit arrays of only one type of 
+    #                             component. For example, you can submit an 
+    #                             array of 10 custom objects or 10 profiles, 
+    #                             but not a mix of both types.
+    # @param sessionId            The session ID that the login call returns.
+    # @param metadataUrl          The Url used to send this request to
+    # @param clientName           A value that identifies an API client. This is
+    #                             used for partner applications
+    # @param allOrNone            Set to true to cause all metadata changes to 
+    #                             be rolled back if any records in the call 
+    #                             cause failures. Set to false to enable saving 
+    #                             only the records that are processed 
+    #                             successfully when other records in the call 
+    #                             cause failures.
+    #
+    def createMetadata(metadataList, sessionId, metadataUrl, clientName, allOrNone):
+        soap_headers = Metadata.getSoapHeaders(sessionId, clientName, allOrNone, None)
 
-        return True
+        client_service = Metadata.getClientService(metadataUrl)
+        create_metadata_result = client_service.createMetadata(metadataList, _soapheaders=soap_headers)
 
-    def deleteMetadata():
-        # deleteMetadata(type: xsd:string, fullNames: xsd:string[], _soapheaders={SessionHeader: ns0:SessionHeader, CallOptions: ns0:CallOptions, AllOrNoneHeader: ns0:AllOrNoneHeader}) -> result: ns0:DeleteResult[]
+        return create_metadata_result
 
-        return True
+    # Deletes one or more metadata components from your organization synchronously.
+    #
+    # @param metadataType         The metadata type of the components to delete.
+    # @param fullNames            Array of full names of the components to delete.
+    #                             Limit: 10. (For CustomMetadata and 
+    #                             CustomApplication only, the limit is 200.)
+    #                             You must submit arrays of only one type of 
+    #                             component. For example, you can submit an 
+    #                             array of 10 custom objects or 10 profiles, but 
+    #                             not a mix of both types.
+    # @param sessionId            The session ID that the login call returns.
+    # @param metadataUrl          The Url used to send this request to
+    # @param clientName           A value that identifies an API client. This is
+    #                             used for partner applications
+    # @param allOrNone            Set to true to cause all metadata changes to 
+    #                             be rolled back if any records in the call 
+    #                             cause failures. Set to false to enable saving 
+    #                             only the records that are processed 
+    #                             successfully when other records in the call 
+    #                             cause failures.
+    #
+    def deleteMetadata(metadataType, fullNames, sessionId, metadataUrl, clientName, allOrNone):
+        soap_headers = Metadata.getSoapHeaders(sessionId, clientName, allOrNone, None)
 
-    def deploy():
+        client_service = Metadata.getClientService(metadataUrl)
+        delete_metadata_result = client_service.deleteMetadata(metadataType, fullNames, _soapheaders=soap_headers)
+
+        return delete_metadata_result
+
+    ##
+    # Uses file representations of components to create, update, or delete those 
+    # components in a Salesforce org.
+    #
+    # @param zipFile         Base 64-encoded binary data. Client applications 
+    #                        must encode the binary data as base64.
+    # @param deployOptions   Encapsulates options for determining which packages 
+    #                        or files are deployed.
+    # @param sessionId       The session ID that the login call returns.
+    # @param metadataUrl     The Url used to send this request to
+    # @param clientName      A value that identifies an API client. This is used 
+    #                        for partner applications
+    # @param debugCategories A list of log categories with their associated log levels.
+    #
+    def deploy(zipFile, deployOptions, sessionId, metadataUrl, clientName, debugCategories):
         # deploy(ZipFile: xsd:base64Binary, DeployOptions: ns0:DeployOptions, _soapheaders={SessionHeader: ns0:SessionHeader, DebuggingHeader: ns0:DebuggingHeader, CallOptions: ns0:CallOptions}) -> result: ns0:AsyncResult
+        soap_headers = Metadata.getSoapHeaders(sessionId, clientName, None, debugCategories)
 
-        return True
+        client_service = Metadata.getClientService(metadataUrl)
+        deploy_result = client_service.deploy(zipFile, deployOptions, _soapheaders=soap_headers)
+
+        return deploy_result
 
     def deployRecentValidation():
         # deployRecentValidation(validationId: ns0:ID, _soapheaders={SessionHeader: ns0:SessionHeader, DebuggingHeader: ns0:DebuggingHeader, CallOptions: ns0:CallOptions}) -> result: xsd:string
