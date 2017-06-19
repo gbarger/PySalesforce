@@ -1431,6 +1431,12 @@ class Metadata:
 
         return this_retrieveRequest
 
+    def getListMetadataQuery(folder, metadataType):
+        list_metadata_query_type = client.get_type('ns0:ListMetadataQuery')
+        metadata_query = list_metadata_query_type(folder, metadataType)
+
+        return metadata_query
+
     ##
     # This returns the async result of a retrieve request that can then be used
     # to check the retrieve status
@@ -1597,42 +1603,66 @@ class Metadata:
 
         return deploy_result
 
-    def deployRecentValidation():
-        # deployRecentValidation(validationId: ns0:ID, _soapheaders={SessionHeader: ns0:SessionHeader, DebuggingHeader: ns0:DebuggingHeader, CallOptions: ns0:CallOptions}) -> result: xsd:string
+    def deployRecentValidation(validationId, sessionId, metadataUrl, clientName, debugCategories):
+        soap_headers = Metadata.getSoapHeaders(sessionId, clientName, None, debugCategories)
 
-        return True
+        client_service = Metadata.getClientService(metadataUrl)
+        deploy_validation_result = client_service.deployRecentValidation(validationId, _soapheaders=soap_headers)
 
-    def describeMetadata():
-        # describeMetadata(asOfVersion: xsd:double, _soapheaders={SessionHeader: ns0:SessionHeader, CallOptions: ns0:CallOptions}) -> result: ns0:DescribeMetadataResult
+        return deploy_validation_result
 
-        return True
+    def describeMetadata(asOfVersion, sessionId, metadataUrl, clientName):
+        soap_headers = Metadata.getSoapHeaders(sessionId, clientName, None, None)
 
-    def describeValueType():
-        # describeValueType(type: xsd:string, _soapheaders={SessionHeader: ns0:SessionHeader}) -> result: ns0:DescribeValueTypeResult
+        client_service = Metadata.getClientService(metadataUrl)
+        describe_metadata_result = client_service.describeMetadata(asOfVersion, _soapheaders=soap_headers)
 
-        return True
+        return describe_metadata_result
 
-    def listMetadata():
-        # listMetadata(queries: ns0:ListMetadataQuery[], asOfVersion: xsd:double, _soapheaders={SessionHeader: ns0:SessionHeader, CallOptions: ns0:CallOptions}) -> result: ns0:FileProperties[]
+    def describeValueType(valueType, sessionId, metadataUrl):
+        soap_headers = Metadata.getSoapHeaders(sessionId, None, None, None)
 
-        return True
+        client_service = Metadata.getClientService(metadataUrl)
+        describe_value_type = client_service.describeValueType(valueType, _soapheaders=soap_headers)
 
-    def readMetadata():
-        # readMetadata(type: xsd:string, fullNames: xsd:string[], _soapheaders={SessionHeader: ns0:SessionHeader, CallOptions: ns0:CallOptions}) -> result: ns0:ReadResult
+        return describe_value_type
 
-        return True
+    def listMetadata(listMetadataQuery, asOfVersion, sessionId, metadataUrl, clientName):
+        soap_headers = Metadata.getSoapHeaders(sessionId, clientName, None, None)
 
-    def renameMetadata():
-        # renameMetadata(type: xsd:string, oldFullName: xsd:string, newFullName: xsd:string, _soapheaders={SessionHeader: ns0:SessionHeader, CallOptions: ns0:CallOptions}) -> result: ns0:SaveResult
+        client_service = Metadata.getClientService(metadataUrl)
+        list_metadata_result = client_service.listMetadata(listMetadataQuery, asOfVersion, _soapheaders=soap_headers)
 
-        return True
+        return list_metadata_result
 
-    def updateMetadata():
-        # updateMetadata(metadata: ns0:Metadata[], _soapheaders={SessionHeader: ns0:SessionHeader, CallOptions: ns0:CallOptions, AllOrNoneHeader: ns0:AllOrNoneHeader}) -> result: ns0:SaveResult[]
+    def readMetadata(metadataType, fullNames, sessionId, metadataUrl, clientName)
+        soap_headers = Metadata.getSoapHeaders(sessionId, clientName, None, None)
 
-        return True
+        client_service = Metadata.getClientService(metadataUrl)
+        read_metadata_result = client_service.readMetadata(metadataType, fullNames, _soapheaders=soap_headers)
 
-    def upsertMetadata():
-        # upsertMetadata(metadata: ns0:Metadata[], _soapheaders={SessionHeader: ns0:SessionHeader, CallOptions: ns0:CallOptions, AllOrNoneHeader: ns0:AllOrNoneHeader}) -> result: ns0:UpsertResult[]
+        return read_metadata_result
 
-        return True
+    def renameMetadata(metadataType, oldFullName, newFullName, sessionId, metadataUrl, clientName)
+        soap_headers = Metadata.getSoapHeaders(sessionId, clientName, None, None)
+
+        client_service = Metadata.getClientService(metadataUrl)
+        rename_metadata_result = client_service.renameMetadata(metadataType, oldFullName, newFullName, _soapheaders=soap_headers)
+
+        return rename_metadata_result
+
+    def updateMetadata(metadataList, sessionId, metadataUrl, clientName, allOrNone):
+        soap_headers = Metadata.getSoapClientService(sessionId, clientName, None, allOrNone)
+
+        client_service = Metadata.getClientService(metadataUrl)
+        update_metadata_result = client_service.updateMetadata(metadataList, soap_headers)
+
+        return update_metadata_result
+
+    def upsertMetadata(metadataList, sessionId, metadataUrl, clientName, allOrNone):
+        soap_headers = Metadata.getSoapClientService(sessionId, clientName, None, allOrNone)
+
+        client_service = Metadata.getClientService(metadataUrl)
+        upsert_metadata_result = client_service.upsertMetadata(metadataList, soap_headers)
+
+        return upsert_metadata_result
