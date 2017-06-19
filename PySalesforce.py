@@ -1635,7 +1635,7 @@ class Metadata:
 
         return list_metadata_result
 
-    def readMetadata(metadataType, fullNames, sessionId, metadataUrl, clientName)
+    def readMetadata(metadataType, fullNames, sessionId, metadataUrl, clientName):
         soap_headers = Metadata.getSoapHeaders(sessionId, clientName, None, None)
 
         client_service = Metadata.getClientService(metadataUrl)
@@ -1643,7 +1643,7 @@ class Metadata:
 
         return read_metadata_result
 
-    def renameMetadata(metadataType, oldFullName, newFullName, sessionId, metadataUrl, clientName)
+    def renameMetadata(metadataType, oldFullName, newFullName, sessionId, metadataUrl, clientName):
         soap_headers = Metadata.getSoapHeaders(sessionId, clientName, None, None)
 
         client_service = Metadata.getClientService(metadataUrl)
