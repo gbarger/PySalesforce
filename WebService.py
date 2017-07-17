@@ -14,7 +14,7 @@ class Tools:
     # @param dataBody        The body to send for the POST. Defaults to None
     # @return 				 Returns the response for the HTTP Request.
     ##
-    def htRequest(**kwargs):
+    def http_request(**kwargs):
         requestType = kwargs.get('requestType')
         URL = kwargs.get('URL')
         headerDetails = kwargs.get('headerDetails', None)
@@ -26,7 +26,7 @@ class Tools:
             req = requests.Request(requestType, URL, data=dataBody, headers=headerDetails)
             prepReq = req.prepare()
             session = requests.Session()
-            session.mount('https://', sslHttpAdapter())
+            session.mount('https://', SslHttpAdapter())
             response = session.send(prepReq)
         except:
             errors = "";
@@ -47,8 +47,8 @@ class Tools:
     # @param headerDetails   Object containing the headers for the request
     # @return                Returns the result of the HTTP GET request.
     ##
-    def getHTResponse(URL, headerDetails):
-        response = Tools.htRequest(requestType='GET', URL=URL, headerDetails=headerDetails)
+    def get_http_response(URL, headerDetails):
+        response = Tools.http_request(requestType='GET', URL=URL, headerDetails=headerDetails)
         
         return response
 
@@ -60,8 +60,8 @@ class Tools:
     # @param headerDetails   Object containing the headers for the request
     # @return                Returns the result of the HTTP POST request.
     ##
-    def postHTResponse(URL, dataBody, headerDetails):
-        response = Tools.htRequest(requestType='POST', URL=URL, dataBody=dataBody, headerDetails=headerDetails)
+    def post_http_response(URL, dataBody, headerDetails):
+        response = Tools.http_request(requestType='POST', URL=URL, dataBody=dataBody, headerDetails=headerDetails)
 
         return response
 
@@ -73,12 +73,12 @@ class Tools:
     # @param headerDetails   Object containing the headers for the request
     # @return                Returns the result of the HTTP POST request.
     ##
-    def patchHTResponse(URL, dataBody, headerDetails):
-        response = Tools.htRequest(requestType='PATCH', URL=URL, dataBody=dataBody, headerDetails=headerDetails)
+    def patch_http_response(URL, dataBody, headerDetails):
+        response = Tools.http_request(requestType='PATCH', URL=URL, dataBody=dataBody, headerDetails=headerDetails)
 
         return response
 
-class sslHttpAdapter(requests.adapters.HTTPAdapter):
+class SslHttpAdapter(requests.adapters.HTTPAdapter):
     def init_poolmanager(self, connections, maxsize, block=False):
         self.poolmanager = requests.packages.urllib3.poolmanager.PoolManager(
                                 num_pools=connections, maxsize=maxsize,
