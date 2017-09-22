@@ -35,10 +35,10 @@ class Util:
 
     def get_standard_header(access_token):
         """
-        This method will be used to generated headers. The documentation shows 
-        that there are header options availble, but doesn't do a good job of 
+        This method will be used to generated headers. The documentation shows
+        that there are header options availble, but doesn't do a good job of
         explaining what they're for or what they do, so I'm leaving this here to
-        generate the headers. For now it will just be a static header with the 
+        generate the headers. For now it will just be a static header with the
         access_token and X-PrettyPrint.
 
         Args:
@@ -81,8 +81,8 @@ class Util:
             object_api_name (str): REQUIRED: The object name this job will
                                    perform operations on
             operation_type (str): REQUIRED: This is the type of operation that
-                                  will be run with this request. Possible 
-                                  values include: delete, insert, query, 
+                                  will be run with this request. Possible
+                                  values include: delete, insert, query,
                                   upsert, update, and hardDelete
             assignment_rule_id (str): The ID of a specific assignment rule to
                                       run for a case or a lead. The assignment
@@ -106,31 +106,31 @@ class Util:
                                           the external ID field for an
                                           upsert().
             number_retries (int): The number of times that Salesforce attempted
-                                  to save the results of an operation. The 
+                                  to save the results of an operation. The
                                   repeated attempts are due to a problem,
                                   such as a lock contention.
-            job_state (str): REQUIRED IF CREATING, CLOSING OR ABORIGN A JOB. 
+            job_state (str): REQUIRED IF CREATING, CLOSING OR ABORIGN A JOB.
                              The current state of processing for the job:
                              Values:
-                             Open: The job has been created, and batches 
+                             Open: The job has been created, and batches
                                  can be added to the job.
-                             Closed: No new batches can be added to this 
-                                 job. Batches associated with the job may 
-                                 be processed after a job is closed. You 
+                             Closed: No new batches can be added to this
+                                 job. Batches associated with the job may
+                                 be processed after a job is closed. You
                                  cannot edit or save a closed job.
-                             Aborted: The job has been aborted. You can 
-                                 abort a job if you created it or if you 
-                                 have the “Manage Data Integrations” 
+                             Aborted: The job has been aborted. You can
+                                 abort a job if you created it or if you
+                                 have the “Manage Data Integrations”
                                  permission.
-                             Failed: The job has failed. Batches that were 
-                                 successfully processed can't be rolled back. 
-                                 The BatchInfoList contains a list of all 
-                                 batches for the job. From the results of 
-                                 BatchInfoList, results can be retrieved 
-                                 for completed batches. The results indicate 
-                                 which records have been processed. The 
-                                 numberRecordsFailed field contains the 
-                                 number of records that were not processed 
+                             Failed: The job has failed. Batches that were
+                                 successfully processed can't be rolled back.
+                                 The BatchInfoList contains a list of all
+                                 batches for the job. From the results of
+                                 BatchInfoList, results can be retrieved
+                                 for completed batches. The results indicate
+                                 which records have been processed. The
+                                 numberRecordsFailed field contains the
+                                 number of records that were not processed
                                  successfully.
 
         Returns:
@@ -174,7 +174,7 @@ class Util:
     def get_soap_client(wsdl_file):
         """
         Pass the wsdl and generate the soap client for the given WSDL
-        
+
         Args:
             wsdl_file (str): The file location for the WSDL used to generate
                              the client
@@ -211,10 +211,10 @@ class Authentication:
     def get_oauth_login(login_username, login_password, login_client_id, login_client_secret, is_production):
         """
         this function logs into Salesforce using the oAuth 2.0 password grant type,
-        and returns the response that can be used for other salesforce api requests. 
+        and returns the response that can be used for other salesforce api requests.
         There are two parts of the response that will be needed, the token, and
-        the instance url. The token can be retrieved with json_response['access_token'], 
-        and the instance url with json_response['instance_url']. In order for this 
+        the instance url. The token can be retrieved with json_response['access_token'],
+        and the instance url with json_response['instance_url']. In order for this
         function to work, a connected app must be set up in Salesforce, which is
         where the client id and client secret come from the Client Id is the
         connected app Consumer Key, and the client secret is the consumer secret.
@@ -254,13 +254,13 @@ class Authentication:
 
     def get_oauth_logout(auth_token, is_production):
         """
-        this function calls the correct endpoint for the oauth logout by providing 
+        this function calls the correct endpoint for the oauth logout by providing
         the token and whether or not the login is production or test.
 
         Args:
             auth_token (str): this is the token received in the access_token
                               response from the get_oauth_login function.
-            is_production (bool): this is a boolean value to set whether or not 
+            is_production (bool): this is a boolean value to set whether or not
                                   the base oAuth connection will be in production
                                   or a sandbox environment.
         Returns:
@@ -308,9 +308,9 @@ class Authentication:
     def get_login_call_options(client_name, default_ns):
         """
         This creates the call options for the SOAP login.
-        
+
         Args:
-            client_name (str): A string that identifies a client. 
+            client_name (str): A string that identifies a client.
             default_ns (str): A string that identifies a developer namespace
                               prefix. Use this field to resolve field names in
                               managed packages without having to fully specify
@@ -318,7 +318,7 @@ class Authentication:
 
         Returns:
             object: Returns the CallOptions for SOAP login requests.
-        
+
         """
         call_options = {}
 
@@ -332,7 +332,7 @@ class Authentication:
 
     def get_soap_headers(org_id, portal_id, client_name, default_ns):
         """
-        This method builds the headers for soap calls. Leave org_id and 
+        This method builds the headers for soap calls. Leave org_id and
         portal_id as None if you are using a normal authentication. These
         values are only used for self-service authentication
 
@@ -365,7 +365,7 @@ class Authentication:
     def get_soap_login(login_username, login_password, org_id, portal_id, client_name, default_ns, is_production):
         """
         This method logs into Salesforce with SOAP given the provided details.
-        Only use org_id and portal_id for self-service user authentication. For 
+        Only use org_id and portal_id for self-service user authentication. For
         most purposes, these should be set to None. The client_name is actually a
         clientId used for partner applications and the default_ns is the default
         namespace used for an application. So these values can also be set to
@@ -374,7 +374,7 @@ class Authentication:
 
         Args:
             login_username (str): this is the salesforce login
-            login_password (str): this is the salesforce password AND security 
+            login_password (str): this is the salesforce password AND security
                                   token
             org_id (str): The ID of the organization against which you will
                           authenticate Self-Service users.
@@ -386,7 +386,7 @@ class Authentication:
                               prefix. Use this field to resolve field names in
                               managed packages without having to fully specify
                               the fieldName everywhere.
-            is_production (bool): this is a boolean value to set whether or not 
+            is_production (bool): this is a boolean value to set whether or not
                                   the base oAuth connection will be in
                                   production or a sandbox environment.
         Returns:
@@ -418,11 +418,11 @@ class Tooling:
         system method symbols (type=apex).
 
         Args:
-        completions_type (str): The type of metadata to get completions for. 
+        completions_type (str): The type of metadata to get completions for.
                                 e.g. 'apex'
-        access_token (str): This is the access_token value received from the 
+        access_token (str): This is the access_token value received from the
                             login response
-        instance_url (str): This is the instance_url value received from the 
+        instance_url (str): This is the instance_url value received from the
                             login response
 
         Returns:
@@ -449,9 +449,9 @@ class Tooling:
         Args:
             code_string (str): this is the non url encoded code string that you
                                would like to execute
-            access_token (str): This is the access_token value received from the 
+            access_token (str): This is the access_token value received from the
                                 login response
-            instance_url (str): This is the instance_url value received from the 
+            instance_url (str): This is the instance_url value received from the
                                 login response
 
         Returns:
@@ -468,21 +468,21 @@ class Tooling:
 
     def query(query_string, access_token, instance_url):
         """
-        Executes a query against an object and returns data that matches the 
-        specified criteria. Tooling API exposes objects like EntityDefinition and 
-        FieldDefinition that use the external object framework--that is, they don’t 
-        exist in the database but are constructed dynamically. Special query rules 
-        apply to virtual entities. If the query result is too large, it’s broken up 
-        into batches. The response contains the first batch of results and a query 
-        identifier. The identifier can be used in a request to retrieve the next 
-        batch. A list of the tooling api objects can be found here: 
+        Executes a query against an object and returns data that matches the
+        specified criteria. Tooling API exposes objects like EntityDefinition and
+        FieldDefinition that use the external object framework--that is, they don’t
+        exist in the database but are constructed dynamically. Special query rules
+        apply to virtual entities. If the query result is too large, it’s broken up
+        into batches. The response contains the first batch of results and a query
+        identifier. The identifier can be used in a request to retrieve the next
+        batch. A list of the tooling api objects can be found here:
         https://developer.salesforce.com/docs/atlas.en-us.api_tooling.meta/api_tooling/reference_objects_list.htm
 
         Args:
             query_string (str): the query to be executed
-            access_token (str): This is the access_token value received from the 
+            access_token (str): This is the access_token value received from the
                                 login response
-            instance_url (str): This is the instance_url value received from the 
+            instance_url (str): This is the instance_url value received from the
                                 login response
 
         Returns:
@@ -499,37 +499,37 @@ class Tooling:
 
     def run_tests_asynchronous_list(class_ids, suite_ids, max_failed_tests, test_level, access_token, instance_url):
         """
-        This method runs the tests provided with the class Ids or suite Ids, then 
+        This method runs the tests provided with the class Ids or suite Ids, then
         returns the direct results from the Salesforce tooling API.
-        
+
         Args:
             class_ids (array): List of comma separated class Ids to run the tests
             suite_ids (array): List of suite ids to run
-            max_failed_tests (int): To stop the test run from executing new tests 
+            max_failed_tests (int): To stop the test run from executing new tests
                                     after a given number of tests fail, set to
                                     an integer value from 0 to 1,000,000. To
                                     allow all tests in your run to execute,
                                     regardless of how many tests fail, omit
                                     max_failed_tests or set it to -1
-            test_level (str): The testLevel parameter is optional. If you don’t 
+            test_level (str): The testLevel parameter is optional. If you don’t
                               provide a testLevel value, we use RunSpecifiedTests.
                               values:
-                              RunSpecifiedTests - Only the tests that you 
+                              RunSpecifiedTests - Only the tests that you
                                                   specify are run.
-                              RunLocalTests - All tests in your org are run, 
+                              RunLocalTests - All tests in your org are run,
                                               except the ones that originate
                                               from installed managed packages.
                                               Omit identifiers for specific tests
                                               when you use this value.
                               RunAllTestsInOrg - All tests are run. The tests
-                                                 include all tests in your org, 
+                                                 include all tests in your org,
                                                  including tests of managed
                                                  packages. Omit identifiers for
                                                  specific tests when you use
                                                  this value.
-            access_token (str): This is the access_token value received from the 
+            access_token (str): This is the access_token value received from the
                                 login response
-            instance_url (str): This is the instance_url value received from the 
+            instance_url (str): This is the instance_url value received from the
                                 login response
 
         Returns:
@@ -561,13 +561,13 @@ class Tooling:
 
     def run_tests_asynchronous_json(test_array, access_token, instance_url):
         """
-        This method runs specified tests in the test_array with more control than 
+        This method runs specified tests in the test_array with more control than
         the run_tests_asynchronous_list method by allowing you to specify which methods
         you'd like to run with each test class.
-        
+
         Args:
         test_array (array): This is an array of tests that you'd like to run with
-                            the specified methods if you wish. Like the 
+                            the specified methods if you wish. Like the
                             run_tests_asynchronous_list method, you can also specify
                             the maxFailedTests and testLevel values
                             e.g.
@@ -579,9 +579,9 @@ class Tooling:
                                 {"maxFailedTests": "2"},
                                 {"testLevel": "RunSpecifiedTests"}
                                 ]
-        access_token (str): This is the access_token value received from the 
+        access_token (str): This is the access_token value received from the
                             login response
-        instance_url (str): This is the instance_url value received from the 
+        instance_url (str): This is the instance_url value received from the
                             login response
 
         Returns:
@@ -600,7 +600,7 @@ class Tooling:
 class Standard:
     """
     This class provides a front end for the Salesforce standard REST API. More
-    details about this can be found here: 
+    details about this can be found here:
     https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/intro_what_is_rest_api.htm
     You can get more details about each of the methods by looking in the reference
     section of the documentation.
@@ -609,13 +609,13 @@ class Standard:
 
     def versions(access_token, instance_url):
         """
-        Lists summary information about each Salesforce version currently available, 
+        Lists summary information about each Salesforce version currently available,
         including the version, label, and a link to each version's root.
-        
+
         Args:
-            access_token (str): This is the access_token value received from the 
+            access_token (str): This is the access_token value received from the
                                 login response
-            instance_url (str): This is the instance_url value received from the 
+            instance_url (str): This is the instance_url value received from the
                                 login response
 
         Returns:
@@ -630,15 +630,15 @@ class Standard:
 
     def resources_by_version(version_num_string, access_token, instance_url):
         """
-        This method returns the available resources (API services) available for 
+        This method returns the available resources (API services) available for
         the supplied version number.
-        
+
         Args:
             version_num_string (str): This is the version number as a string,
                                       e.g. 37.0
-            access_token (str): This is the access_token value received from the 
+            access_token (str): This is the access_token value received from the
                                 login response
-            instance_url (str): This is the instance_url value received from the 
+            instance_url (str): This is the instance_url value received from the
                                 login response
 
         Returns:
@@ -657,9 +657,9 @@ class Standard:
         Provides the details requested for the specified record. In practice, if you
         provide an explicit list of fields, it will be just like a query for that
         record, but if you leave the fields blank, this will return a lot if not
-        all fields. I'm not sure about that because the description of what is 
+        all fields. I'm not sure about that because the description of what is
         returned if you leave the fields empty isn't explaind in the API documentaiton
-        
+
         Args:
             object (str): The API name of the object.
             record_id (str): The record Id you're trying to retreive
@@ -667,7 +667,7 @@ class Standard:
                                      to retrieve
             access_token (str): This is the access_token value received from the
                                 login response
-            instance_url (str): This is the instance_url value received from the 
+            instance_url (str): This is the instance_url value received from the
                                 login response
 
         Returns:
@@ -688,7 +688,7 @@ class Standard:
     def create_sobject_row(object, record_json, access_token, instance_url):
         """
         Creates the provided record in the recordJson paaram
-        
+
         Args:
             object (str): The API name of the object.
             record_json (object): The JSON describing the fields you want to
@@ -701,17 +701,17 @@ class Standard:
                                           'BillingCity': 'Bellevue',
                                           'BillingState': 'WA'
                                       }
-            instance_url (str): This is the instance_url value received from the 
+            instance_url (str): This is the instance_url value received from the
                                 login response
         Returns:
             object: returns the text from the creation response
         """
-        patch_row_uri = '/sobjects/' + object + '/'
+        post_row_uri = '/sobjects/' + object + '/'
         header_details = Util.get_standard_header(access_token)
 
         data_body_json = json.dumps(record_json, indent=4, separators=(',', ': '))
 
-        response = webservice.Tools.post_http_response(instance_url + Standard.base_standard_uri + 'v' + API_VERSION + patch_row_uri, data_body_json, header_details)
+        response = webservice.Tools.post_http_response(instance_url + Standard.base_standard_uri + 'v' + API_VERSION + post_row_uri, data_body_json, header_details)
         response_text = ""
 
         if response.status_code is 204:
@@ -721,10 +721,44 @@ class Standard:
 
         return response_text
 
+    def create_sobject_rows(object, records_json, access_token, instance_url):
+        """
+        Creates the provided records in the records_json param
+
+        Args:
+            object (str): The API name of the object.
+            records_json (object): The JSON describing the records you want to
+                                   insert on the given object. Each object needs
+                                   to contain an attributes field that contains
+                                   the "type" which is the object name, and a
+                                   "referenceId" field which is a unique key for
+                                   each record being inserted. This key is used
+                                   in the response to show a result for each
+                                   record being inserted.
+            access_key (str): This is the access_key value received from the
+                              login response
+            instance_url (str): This is the instance_url value received from the
+                                login response
+        """
+        post_row_uri = '/composite/tree/' + object + '/'
+        header_details = Util.get_standard_header(access_token)
+
+        data_body_json = json.dumps(records_json, indent=4, separators=(',', ': '))
+
+        response = webservice.Tools.post_http_response(instance_url + Standard.base_standard_uri + 'v' + API_VERSION + post_row_uri, data_body_json, header_details)
+        responseText = ""
+
+        if response.status_code is 204:
+            responseText = "Update Successful"
+        else:
+            responseText = response.text
+
+        return responseText
+
     def update_sobject_row(object, record_id, record_json, access_token, instance_url):
         """
         Updates a specific record with the data in the record_json param
-        
+
         Args:
             object (str): The API name of the object.
             record_id (str): The record Id you're trying to update
@@ -738,9 +772,9 @@ class Standard:
                                           'BillingCity': 'Bellevue',
                                           'BillingState': 'WA'
                                       }
-            access_token (str): This is the access_token value received from the 
+            access_token (str): This is the access_token value received from the
                                 login response
-            instance_url (str): This is the instance_url value received from the 
+            instance_url (str): This is the instance_url value received from the
                                 login response
 
         Returns:
@@ -770,12 +804,12 @@ class Standard:
         the response contains the first batch of results and a query identifier
         in the nextRecordsUrl field of the response. The identifier can be used
         in an additional request to retrieve the next batch.
-        
+
         Args:
             query_string (str): This query you'd like to run
-            access_token (str): This is the access_token value received from the 
+            access_token (str): This is the access_token value received from the
                                 login response
-            instance_url (str): This is the instance_url value received from the 
+            instance_url (str): This is the instance_url value received from the
                                 login response
 
         Returns:
@@ -805,13 +839,13 @@ class Bulk:
     def get_job_status(job_id, polling_wait, access_token, instance_url):
         """
         This method is used for printing job status
-        
+
         Args:
             job_id (str): The job id returned when creating a batch job
             polling_wait (int): This is the number of seconds
-            access_token (str): This is the access_token value received from the 
+            access_token (str): This is the access_token value received from the
                                 login response
-            instance_url (str): This is the instance_url value received from the 
+            instance_url (str): This is the instance_url value received from the
                                 login response
 
         Returns:
@@ -839,14 +873,14 @@ class Bulk:
     def get_batch_result(job_id, batch_id, access_token, instance_url):
         """
         This method will retrieve the results of a batch operation.
-        
+
         Args:
             job_id (str): The job id returned when creating a batch job
             batch_id (str): This is the batch Id returned when creating a new
                             batch
-            access_token (str): This is the access_token value received from the 
+            access_token (str): This is the access_token value received from the
                                 login response
-            instance_url (str): This is the instance_url value received from the 
+            instance_url (str): This is the instance_url value received from the
                                 login response
 
         Returns:
@@ -863,16 +897,16 @@ class Bulk:
     def get_query_result(job_id, batch_id, query_result_id, access_token, instance_url):
         """
         This method will retrieve the results of a batch operation.
-        
+
         Args:
             job_id (str): The job id returned when creating a batch job
             batch_id (str): This is the batch Id returned when creating a new
                             batch
             query_result_id (str): Ths is the Id returned with a successful
                                    batch for a Salseforce bulk query.
-            access_token (str): This is the access_token value received from the 
+            access_token (str): This is the access_token value received from the
                                 login response
-            instance_url (str): This is the instance_url value received from the 
+            instance_url (str): This is the instance_url value received from the
                                 login response
 
         Returns:
@@ -896,8 +930,8 @@ class Bulk:
                              Should be provided as an array. For example:
                              [{'id':'recordId', 'phone':'(123) 456-7890'}]
             batch_size (int): This is the batch size of the records to process.
-                              If you were to pass 5000 records into the process 
-                              with a batch size of 1000, then there would be 5 
+                              If you were to pass 5000 records into the process
+                              with a batch size of 1000, then there would be 5
                               batches processed.
             operation_type (str): This is the operation being performed: delete,
                                   insert, query, upsert, update, hardDelete
@@ -952,7 +986,7 @@ class Bulk:
         # set default job check polling to 5 seconds
         if polling_wait is None:
             polling_wait = 5
-        
+
         # check job status until the job completes
         Bulk.get_job_status(job_id, polling_wait, access_token, instance_url)
 
@@ -966,21 +1000,21 @@ class Bulk:
     def insert_sobject_rows(object_api_name, records, batch_size, polling_wait, access_token, instance_url):
         """
         This method inserts a list of records provided as an object.
-        
+
         Args:
             object_api_name (str): The API Name of the object being updated
             records (array): The list of records that needs to be updated. This
                              Should be provided as an array. For example:
                              [{'id':'recordId', 'phone':'(123) 456-7890'}]
-            batch_size (int): This is the batch size of the records to process. 
-                              If you were to pass 5000 records into the process 
-                              with a batch size of 1000, then there would be 5 
+            batch_size (int): This is the batch size of the records to process.
+                              If you were to pass 5000 records into the process
+                              with a batch size of 1000, then there would be 5
                               batches processed.
             polling_wait (int): This is the number of seconds to wait between
                                 each poll for updates on the job
-            access_token (str): This is the access_token value received from the 
+            access_token (str): This is the access_token value received from the
                                 login response
-            instance_url (str): This is the instance_url value received from the 
+            instance_url (str): This is the instance_url value received from the
                                login response
 
         Returns:
@@ -994,21 +1028,21 @@ class Bulk:
     def update_sobject_rows(object_api_name, records, batch_size, polling_wait, access_token, instance_url):
         """
         This method updates a list of records provided as an object.
-        
+
         Args:
             object_api_name (str): The API Name of the object being updated
             records (array): The list of records that needs to be updated. This
                              Should be provided as an array. For example:
                              [{'id':'recordId', 'phone':'(123) 456-7890'}]
-            batch_size (int): This is the batch size of the records to process. 
-                              If you were to pass 5000 records into the process 
-                              with a batch size of 1000, then there would be 5 
+            batch_size (int): This is the batch size of the records to process.
+                              If you were to pass 5000 records into the process
+                              with a batch size of 1000, then there would be 5
                               batches processed.
             polling_wait (int): This is the number of seconds to wait between
                                 each poll for updates on the job
             access_token (str): This is the access_token value received from the
                                 login response
-            instance_url (str): This is the instance_url value received from the 
+            instance_url (str): This is the instance_url value received from the
                                 login response
 
         Returns:
@@ -1022,21 +1056,21 @@ class Bulk:
     def upsert_sobject_rows(object_api_name, records, batch_size, polling_wait, access_token, instance_url, external_id_field_name='Id'):
         """
         This method upserts a list of records provided as an object.
-        
+
         Args:
             object_api_name (str): The API Name of the object being updated
             records (array): The list of records that needs to be updated. This
                              Should be provided as an array. For example:
                              [{'id':'recordId', 'phone':'(123) 456-7890'}]
-            batch_size (int): This is the batch size of the records to process. 
-                              If you were to pass 5000 records into the process 
-                              with a batch size of 1000, then there would be 5 
+            batch_size (int): This is the batch size of the records to process.
+                              If you were to pass 5000 records into the process
+                              with a batch size of 1000, then there would be 5
                               batches processed.
             polling_wait (int): This is the number of seconds to wait between
                                 each poll for updates on the job
-            access_token (str): This is the access_token value received from the 
+            access_token (str): This is the access_token value received from the
                                 login response
-            instance_url (str): This is the instance_url value received from the 
+            instance_url (str): This is the instance_url value received from the
                                 login response
             external_id_field_name (str): This is the external Id field that is
                                           used to determine whether this record
@@ -1045,7 +1079,7 @@ class Bulk:
                                           to the record Id field
 
         Returns:
-            @return               Returns an object containing the status for each 
+            @return               Returns an object containing the status for each
                                   record that was put into the batch
         """
         result = Bulk.perform_bulk_operation(object_api_name, records, batch_size, 'upsert', polling_wait, external_id_field_name, access_token, instance_url)
@@ -1055,7 +1089,7 @@ class Bulk:
     def delete_sobject_rows(object_api_name, records, hard_delete, batch_size, polling_wait, access_token, instance_url):
         """
         This method upserts a list of records provided as an object.
-        
+
         Args:
             object_api_name (str): The API Name of the object being updated
             records (array): The list of records that needs to be updated. This
@@ -1066,15 +1100,15 @@ class Bulk:
                                 System Permission option called "Bulk API Hard
                                 Delete" that must be enabled for this option to
                                 work.
-            batch_size (int): This is the batch size of the records to process. 
-                              If you were to pass 5000 records into the process 
-                              with a batch size of 1000, then there would be 5 
+            batch_size (int): This is the batch size of the records to process.
+                              If you were to pass 5000 records into the process
+                              with a batch size of 1000, then there would be 5
                               batches processed.
             polling_wait (int): This is the number of seconds to wait between
                                 each poll for updates on the job
             access_token (str): This is the access_token value received from the
                                 login response
-            instance_url (str): This is the instance_url value received from the 
+            instance_url (str): This is the instance_url value received from the
                                 login response
 
         Returns:
@@ -1093,15 +1127,15 @@ class Bulk:
     def query_sobject_rows(object_api_name, query, query_all, access_token, instance_url):
         """
         This returns the result for a bulk query operations.
-        
+
         Args:
             object_api_name (str): The API Name of the object being updated
             query (str): The query you'd like to run to retrieve records
             query_all (bool): State whether or not this query should query all
                               records (so you can get deleted records)
-            access_token (str): This is the access_token value received from the 
+            access_token (str): This is the access_token value received from the
                                 login response
-            instance_url (str): This is the instance_url value received from the 
+            instance_url (str): This is the instance_url value received from the
                                 login response
 
         Returns:
@@ -1115,7 +1149,7 @@ class Bulk:
 
         if query_all:
             query_type = 'queryAll'
-        
+
         # create the bulk job
         job_body_details = Util.get_bulk_job_body(object_api_name, query_type, None, None)
         create_job_json_body = json.dumps(job_body_details, indent=4, separators=(',', ': '))
@@ -1159,7 +1193,7 @@ class Metadata:
     def get_session_header(session_id):
         """
         Used to get the session header for the given session_id
-        
+
         Args:
             session_id (str): The session ID that the login call returns.
 
@@ -1176,7 +1210,7 @@ class Metadata:
     def get_call_options(client_name):
         """
         This returns the call options for the soap header
-        
+
         Args:
             client_name     A value that identifies an API client.
 
@@ -1191,9 +1225,9 @@ class Metadata:
 
     def get_all_or_none_header(all_or_none):
         """
-        Indicates whether to roll back all metadata changes when some of the 
+        Indicates whether to roll back all metadata changes when some of the
         records in a call result in failures.
-        
+
         Args:
             all_or_none (bool): Set to true to cause all metadata changes to be
                                 rolled back if any records in the call cause
@@ -1217,7 +1251,7 @@ class Metadata:
         and specifies the level of detail included in the log. The debug log
         contains the output of Apex tests that are executed as part of a
         deployment.
-        
+
         Args:
             categories (array): A list of log categories with their associated
                                 log levels.
@@ -1234,12 +1268,12 @@ class Metadata:
     def get_soap_headers(session_id, client_name, all_or_none, debug_categories):
         """
         This builds the session header for the Metadata requests
-        
+
         Args:
             session_id (str): The session ID that the login call returns.
             client_name (str): A value that identifies an API client.
             all_or_none (bool): Set to true to cause all metadata changes to be
-                                rolled back if any records in the call cause 
+                                rolled back if any records in the call cause
                                 failures. Set to false to enable saving only the
                                 records that are processed successfully when
                                 other records in the call cause failures.
@@ -1267,13 +1301,13 @@ class Metadata:
         """
         This is the base class for all metadata types. You cannot edit this
         object. A component is an instance of a metadata type.
-        Metadata is analogous to sObject, which represents all standard objects. 
+        Metadata is analogous to sObject, which represents all standard objects.
         Metadata represents all components and fields in Metadata API. Instead
         of identifying each component with an ID, each custom object or custom
         field has a unique fullName, which must be distinct from standard object
         names, as it must be when you create custom objects or custom fields in
         the Salesforce user interface.
-        
+
         Args:
             full_name (str): Required. The name of the component. If a field,
                              the name must specify the parent object, for
@@ -1282,12 +1316,12 @@ class Metadata:
                              names when you are setting the fullName. For
                              example, a custom field in a custom object could
                              have a fullName of MyCustomObject__c.MyCustomField__c.
-                             To reference a component in a package, prepend the 
-                             package’s namespace prefix to the component name in 
-                             the fullName field. Use the following syntax: 
-                             namespacePrefix__ComponentName. For example, for the 
-                             custom field component MyCustomObject__c.MyCustomField__c 
-                             and the namespace MyNS, the full name is 
+                             To reference a component in a package, prepend the
+                             package’s namespace prefix to the component name in
+                             the fullName field. Use the following syntax:
+                             namespacePrefix__ComponentName. For example, for the
+                             custom field component MyCustomObject__c.MyCustomField__c
+                             and the namespace MyNS, the full name is
                              MyNS__MyCustomObject__c.MyCustomField__c.
 
         Returns:
@@ -1303,7 +1337,7 @@ class Metadata:
         """
         This builds the list of members for a specific type. For example this
         will store the list of all the ApexClass members you want to reference.
-        
+
         Args:
             member_name (str): This is the Metadata type being referenced.
                                A list of types can be found here: https://
@@ -1325,7 +1359,7 @@ class Metadata:
     def get_client_service(metadata_url):
         """
         This method builds the client service for the Metadata API
-        
+
         Args:
             metadata_url (str): The Url used to send this request to
 
@@ -1338,7 +1372,7 @@ class Metadata:
 
     def get_package(**kwargs):
         """
-        Specifies which metadata components to retrieve as part of a retrieve() 
+        Specifies which metadata components to retrieve as part of a retrieve()
         call or defines a package of components.
 
         Args:
@@ -1353,7 +1387,7 @@ class Metadata:
                                     Apex and the API to standard and custom
                                     objects in the organization where they are
                                     installed. Administrators who install
-                                    packages may wish to restrict this access 
+                                    packages may wish to restrict this access
                                     after installation for improved security.
                                     The valid values are:
                                     * Unrestricted—Package components have
@@ -1363,7 +1397,7 @@ class Metadata:
                                     * Restricted—The administrator can select
                                         which standard objects the components
                                         can access. Further, the components in
-                                        restricted packages can only access 
+                                        restricted packages can only access
                                         custom objects in the current package
                                         if the user's permissions allow access
                                         to them.
@@ -1394,7 +1428,7 @@ class Metadata:
                            the types with the get_package_type_members() method.
             uninstall_class (str): The name of the Apex class that specifies
                                    the actions to execute after the package has
-                                   been uninstalled. The Apex class must be a 
+                                   been uninstalled. The Apex class must be a
                                    member of the package and must implement the
                                    Apex UninstallHandler interface. In patch
                                    upgrades, you can't change the class name in
@@ -1433,104 +1467,104 @@ class Metadata:
     def get_deploy_options(**kwargs):
         """
         The options that can be set for deploying a metadata package
-        
+
         Args:
-            allow_missing_files (bool): If files that are specified in package.xml 
-                                        are not in the .zip file, specifies whether 
+            allow_missing_files (bool): If files that are specified in package.xml
+                                        are not in the .zip file, specifies whether
                                         a deployment can still succeed.
-                                        Do not set this argument for deployment to 
+                                        Do not set this argument for deployment to
                                         production orgs.
-            auto_update_package (bool): If a file is in the .zip file but not 
-                                        specified in package.xml, specifies whether 
-                                        the file is automatically added to the 
-                                        package. A retrieve() is issued with the 
-                                        updated package.xml that includes the .zip 
+            auto_update_package (bool): If a file is in the .zip file but not
+                                        specified in package.xml, specifies whether
+                                        the file is automatically added to the
+                                        package. A retrieve() is issued with the
+                                        updated package.xml that includes the .zip
                                         file.
-                                        Do not set this argument for deployment to 
+                                        Do not set this argument for deployment to
                                         production orgs.
-            check_only (bool): Defaults to false. Set to true to perform a 
-                               test deployment (validation) of components 
-                               without saving the components in the target 
-                               org. A validation enables you to verify the 
-                               results of tests that would be generated in 
-                               a deployment, but doesn’t commit any changes. 
-                               After a validation finishes with passing tests, 
-                               it might qualify for deployment without 
+            check_only (bool): Defaults to false. Set to true to perform a
+                               test deployment (validation) of components
+                               without saving the components in the target
+                               org. A validation enables you to verify the
+                               results of tests that would be generated in
+                               a deployment, but doesn’t commit any changes.
+                               After a validation finishes with passing tests,
+                               it might qualify for deployment without
                                rerunning tests. See deployRecentValidation().
-            ignore_warnings (bool): Indicates whether a warning should allow a 
-                                    deployment to complete successfully (true) 
+            ignore_warnings (bool): Indicates whether a warning should allow a
+                                    deployment to complete successfully (true)
                                     or not (false). Defaults to false.
-                                    The DeployMessage object for a warning 
+                                    The DeployMessage object for a warning
                                     contains the following values:
                                         -problemType—Warning
                                         -problem—The text of the warning.
-                                    If a warning occurs and ignoreWarnings is 
-                                    set to true, the success field in 
-                                    DeployMessage is true. If ignoreWarnings is 
-                                    set to false, success is set to false and 
+                                    If a warning occurs and ignoreWarnings is
+                                    set to true, the success field in
+                                    DeployMessage is true. If ignoreWarnings is
+                                    set to false, success is set to false and
                                     the warning is treated like an error.
-            perform_retrieve (bool): Indicates whether a retrieve() call is 
-                                     performed immediately after the deployment 
-                                     (true) or not (false). Set to true in order 
+            perform_retrieve (bool): Indicates whether a retrieve() call is
+                                     performed immediately after the deployment
+                                     (true) or not (false). Set to true in order
                                      to retrieve whatever was just deployed.
-            purge_on_delete (bool): If true, the deleted components in the 
-                                    destructiveChanges.xml manifest file aren't 
-                                    stored in the Recycle Bin. Instead, they 
+            purge_on_delete (bool): If true, the deleted components in the
+                                    destructiveChanges.xml manifest file aren't
+                                    stored in the Recycle Bin. Instead, they
                                     become immediately eligible for deletion.
-                                    This option only works in Developer Edition 
-                                    or sandbox orgs; it doesn't work in 
+                                    This option only works in Developer Edition
+                                    or sandbox orgs; it doesn't work in
                                     production orgs.
-            rollback_on_error (bool): Indicates whether any failure causes a 
-                                      complete rollback (true) or not (false). If 
-                                      false, whatever actions can be performed 
-                                      without errors are performed, and errors are 
-                                      returned for the remaining actions. This 
-                                      parameter must be set to true if you are 
-                                      deploying to a production org. The default 
+            rollback_on_error (bool): Indicates whether any failure causes a
+                                      complete rollback (true) or not (false). If
+                                      false, whatever actions can be performed
+                                      without errors are performed, and errors are
+                                      returned for the remaining actions. This
+                                      parameter must be set to true if you are
+                                      deploying to a production org. The default
                                       is false.
-            run_tests (array): A list of Apex tests to run during 
-                               deployment. Specify the class name, one name 
-                               per instance. The class name can also 
-                               specify a namespace with a dot notation. For 
-                               more information, see Running a Subset of 
+            run_tests (array): A list of Apex tests to run during
+                               deployment. Specify the class name, one name
+                               per instance. The class name can also
+                               specify a namespace with a dot notation. For
+                               more information, see Running a Subset of
                                Tests in a Deployment.
-                               To use this option, set testLevel to 
+                               To use this option, set testLevel to
                                RunSpecifiedTests.
-            single_package (bool): Indicates whether the specified .zip file 
-                                   points to a directory structure with a 
-                                   single package (true) or a set of packages 
+            single_package (bool): Indicates whether the specified .zip file
+                                   points to a directory structure with a
+                                   single package (true) or a set of packages
                                    (false).
-            test_level (str): Optional. Specifies which tests are run as 
-                              part of a deployment. The test level is 
-                              enforced regardless of the types of 
-                              components that are present in the deployment 
+            test_level (str): Optional. Specifies which tests are run as
+                              part of a deployment. The test level is
+                              enforced regardless of the types of
+                              components that are present in the deployment
                               package. Valid values are:
-                                  -NoTestRun—No tests are run. This test 
-                                  level applies only to deployments to 
-                                  development environments, such as 
-                                  sandbox, Developer Edition, or trial 
-                                  organizations. This test level is the 
+                                  -NoTestRun—No tests are run. This test
+                                  level applies only to deployments to
+                                  development environments, such as
+                                  sandbox, Developer Edition, or trial
+                                  organizations. This test level is the
                                   default for development environments.
-                                  -RunSpecifiedTests—Only the tests that 
-                                  you specify in the runTests option are 
-                                  run. Code coverage requirements differ 
-                                  from the default coverage requirements 
-                                  when using this test level. Each class 
-                                  and trigger in the deployment package 
-                                  must be covered by the executed tests 
-                                  for a minimum of 75% code coverage. 
-                                  This coverage is computed for each 
-                                  class and trigger individually and is 
-                                  different than the overall coverage 
+                                  -RunSpecifiedTests—Only the tests that
+                                  you specify in the runTests option are
+                                  run. Code coverage requirements differ
+                                  from the default coverage requirements
+                                  when using this test level. Each class
+                                  and trigger in the deployment package
+                                  must be covered by the executed tests
+                                  for a minimum of 75% code coverage.
+                                  This coverage is computed for each
+                                  class and trigger individually and is
+                                  different than the overall coverage
                                   percentage.
-                                  -RunLocalTests—All tests in your org are 
-                                  run, except the ones that originate 
-                                  from installed managed packages. This 
-                                  test level is the default for production 
-                                  deployments that include Apex classes 
+                                  -RunLocalTests—All tests in your org are
+                                  run, except the ones that originate
+                                  from installed managed packages. This
+                                  test level is the default for production
+                                  deployments that include Apex classes
                                   or triggers.
-                                  -RunAllTestsInOrg—All tests are run. The 
-                                  tests include all tests in your org, 
+                                  -RunAllTestsInOrg—All tests are run. The
+                                  tests include all tests in your org,
                                   including tests of managed packages.
 
         Returns:
@@ -1557,7 +1591,7 @@ class Metadata:
     def get_retrieve_request(**kwargs):
         """
         This is the package of data needed to retrieve metadata
-        
+
         Args:
             api_version (dbl): Required. The API version for the retrieve
                                request. The API version determines the fields
@@ -1613,7 +1647,7 @@ class Metadata:
         """
         This returns the async result of a retrieve request that can then be
         used to check the retrieve status
-        
+
         Args:
             retrieve_request (object): The request settings which can be created
                                        using the get_retrieve_request() method
@@ -1634,11 +1668,11 @@ class Metadata:
         This checks the status of the retrieve request. You can have the response
         include a zip file if you wish, or you can set that to false and get the
         zip in a later response
-        
+
         Args:
             async_process_id (str): Required. The ID of the component that’s
                                     being deployed or retrieved.
-            include_zip (bool): This tells the process whether or not to 
+            include_zip (bool): This tells the process whether or not to
                                 include the zip file in the result or. Starting
                                 with API version 34.0, pass a boolean value for
                                 the include_zip argument of checkRetrieveStatus()
@@ -1664,7 +1698,7 @@ class Metadata:
     def cancel_deploy(deploy_id, session_id, metadata_url, client_name):
         """
         This method cancels the deploy
-        
+
         Args:
             deploy_id (str): The Id returned from the deploy request
             session_id (str): The session ID that the login call returns.
@@ -1685,11 +1719,11 @@ class Metadata:
     def check_deploy_status(deploy_id, include_details, session_id, metadata_url, client_name):
         """
         This method checks the status of the requested deploy
-        
+
         Args:
             deploy_id             The Id returned from the deploy request
-            include_details       Sets the DeployResult object to include 
-                                    DeployDetails information ((true) or not 
+            include_details       Sets the DeployResult object to include
+                                    DeployDetails information ((true) or not
                                     (false). The default is false. Available in
                                     API version 29.0 and later.
             session_id            The session ID that the login call returns.
@@ -1707,24 +1741,24 @@ class Metadata:
     def create_metadata(metadata_list, session_id, metadata_url, client_name, all_or_none):
         """
         Adds one or more new metadata components to your organization synchronously.
-        
+
         Args:
             metadata_list (array): Array of one or more metadata components.
-                                   Limit: 10. (For CustomMetadata and 
+                                   Limit: 10. (For CustomMetadata and
                                    CustomApplication only, the limit is 200.)
-                                   You must submit arrays of only one type of 
-                                   component. For example, you can submit an 
-                                   array of 10 custom objects or 10 profiles, 
+                                   You must submit arrays of only one type of
+                                   component. For example, you can submit an
+                                   array of 10 custom objects or 10 profiles,
                                    but not a mix of both types.
             session_id (str): The session ID that the login call returns.
             metadata_url (str): The Url used to send this request to
             client_name (str): A value that identifies an API client. This is
                                used for partner applications
-            all_or_none (bool): Set to true to cause all metadata changes to 
-                                be rolled back if any records in the call 
-                                cause failures. Set to false to enable saving 
-                                only the records that are processed 
-                                successfully when other records in the call 
+            all_or_none (bool): Set to true to cause all metadata changes to
+                                be rolled back if any records in the call
+                                cause failures. Set to false to enable saving
+                                only the records that are processed
+                                successfully when other records in the call
                                 cause failures.
 
         Returns:
@@ -1740,25 +1774,25 @@ class Metadata:
     def delete_metadata(metadata_type, full_names, session_id, metadata_url, client_name, all_or_none):
         """
         Deletes one or more metadata components from your organization synchronously.
-        
+
         Args:
             metadata_type (str): The metadata type of the components to delete.
             full_names (array): Array of full names of the components to delete.
-                                Limit: 10. (For CustomMetadata and 
+                                Limit: 10. (For CustomMetadata and
                                 CustomApplication only, the limit is 200.)
-                                You must submit arrays of only one type of 
-                                component. For example, you can submit an 
-                                array of 10 custom objects or 10 profiles, but 
+                                You must submit arrays of only one type of
+                                component. For example, you can submit an
+                                array of 10 custom objects or 10 profiles, but
                                 not a mix of both types.
             session_id (str): The session ID that the login call returns.
             metadata_url (str): The Url used to send this request to
             client_name (str): A value that identifies an API client. This is
                                used for partner applications
-            all_or_none (bool): Set to true to cause all metadata changes to 
-                                be rolled back if any records in the call 
-                                cause failures. Set to false to enable saving 
-                                only the records that are processed 
-                                successfully when other records in the call 
+            all_or_none (bool): Set to true to cause all metadata changes to
+                                be rolled back if any records in the call
+                                cause failures. Set to false to enable saving
+                                only the records that are processed
+                                successfully when other records in the call
                                 cause failures.
 
         Returns:
@@ -1773,11 +1807,11 @@ class Metadata:
 
     def deploy(zip_file, deploy_options, session_id, metadata_url, client_name, debug_categories):
         """
-        Uses file representations of components to create, update, or delete those 
+        Uses file representations of components to create, update, or delete those
         components in a Salesforce org.
-        
+
         Args:
-            zip_file (file): Base 64-encoded binary data. Client applications 
+            zip_file (file): Base 64-encoded binary data. Client applications
                              must encode the binary data as base64.
             deploy_options (object): Encapsulates options for determining which
                                      packages or files are deployed.
