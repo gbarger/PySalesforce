@@ -3,6 +3,8 @@ import requests
 import sys
 import ssl
 
+from urllib3.poolmanager import PoolManager
+
 class Tools:
     ##
     # This method is the generic method used for creating HTTP requests.
@@ -29,14 +31,14 @@ class Tools:
             session.mount('https://', SslHttpAdapter())
             response = session.send(prepReq)
         except:
-            errors = "";
-            
+            errors = ""
+
             for e in sys.exc_info():
                 errors += " " + repr(e)
-            
+
             print("Errors with response from {}: {}".format(str(URL), errors))
             sys.exit(68) # code: host name unknown
-        
+
         return response
 
 
@@ -49,7 +51,7 @@ class Tools:
     ##
     def get_http_response(URL, headerDetails):
         response = Tools.http_request(requestType='GET', URL=URL, headerDetails=headerDetails)
-        
+
         return response
 
     ##
@@ -80,6 +82,6 @@ class Tools:
 
 class SslHttpAdapter(requests.adapters.HTTPAdapter):
     def init_poolmanager(self, connections, maxsize, block=False):
-        self.poolmanager = requests.packages.urllib3.poolmanager.PoolManager(
+        self.poolmanager = PoolManager(
                                 num_pools=connections, maxsize=maxsize,
                                 block=block, ssl_version=ssl.PROTOCOL_SSLv23)
