@@ -1,6 +1,6 @@
 #!usr/bin/python
 
-#TODO: 
+#TODO:
 # Add connection to authenitcate and pull the object so it doesn't need to be done manually
 
 import requests
@@ -69,7 +69,7 @@ def main():
                         continue
 
                     if len(controllingElements) == 0:
-                        non_used_dependency_values.add(picklistName);
+                        non_used_dependency_values.add(picklistName)
 
                 break
         except:
@@ -93,7 +93,7 @@ def main():
 
     non_used_recordtype_values = allValues.difference(record_type_used_values)
     all_non_used_picklist_values = non_used_dependency_values.union(non_used_recordtype_values)
-    
+
     if len(all_non_used_picklist_values) > 0:
         sortedList = sorted(all_non_used_picklist_values, key=lambda item: (int(item.partition(' ')[0])
                             if item[0].isdigit() else float('inf'), item))

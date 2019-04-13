@@ -64,7 +64,7 @@ class Util:
             object: Returns a header that has the required values for the bulk
                     API. Namely, this takes the standard header and adds gzip
                     encoding, which is recommended by Salesforce to reduce the
-                    size of the responses. This works becuase requests will
+                    size of the responses. This works because requests will
                     automatically unzip the zipped responses.
         """
         bulk_header = Util.get_standard_header(access_token)
@@ -109,7 +109,7 @@ class Util:
                                   to save the results of an operation. The
                                   repeated attempts are due to a problem,
                                   such as a lock contention.
-            job_state (str): REQUIRED IF CREATING, CLOSING OR ABORIGN A JOB.
+            job_state (str): REQUIRED IF CREATING, CLOSING OR ABORTING A JOB.
                              The current state of processing for the job:
                              Values:
                              Open: The job has been created, and batches
@@ -658,11 +658,11 @@ class Standard:
         provide an explicit list of fields, it will be just like a query for that
         record, but if you leave the fields blank, this will return a lot if not
         all fields. I'm not sure about that because the description of what is
-        returned if you leave the fields empty isn't explaind in the API documentaiton
+        returned if you leave the fields empty isn't explained in the API documentation
 
         Args:
             object (str): The API name of the object.
-            record_id (str): The record Id you're trying to retreive
+            record_id (str): The record Id you're trying to retrieve
             field_list_string (str): List of comma separated values for fields
                                      to retrieve
             access_token (str): This is the access_token value received from the
@@ -687,7 +687,7 @@ class Standard:
 
     def create_sobject_row(object, record_json, access_token, instance_url):
         """
-        Creates the provided record in the recordJson paaram
+        Creates the provided record in the recordJson param
 
         Args:
             object (str): The API name of the object.
@@ -903,7 +903,7 @@ class Bulk:
             batch_id (str): This is the batch Id returned when creating a new
                             batch
             query_result_id (str): Ths is the Id returned with a successful
-                                   batch for a Salseforce bulk query.
+                                   batch for a Salesforce bulk query.
             access_token (str): This is the access_token value received from the
                                 login response
             instance_url (str): This is the instance_url value received from the
@@ -1115,7 +1115,7 @@ class Bulk:
             object: Returns an object containing the status for each record that
                     was put into the batch
         """
-        delete_type = 'delete';
+        delete_type = 'delete'
 
         if hard_delete:
             delete_type = 'hardDelete'
@@ -1219,7 +1219,7 @@ class Metadata:
         """
         client = Util.get_soap_client(METADATA_WSDL_FILE)
         call_options_element = client.get_element('ns0:CallOptions')
-        call_options = call_options_element(clientName)
+        call_options = call_options_element(client_name)
 
         return call_options
 
@@ -1881,7 +1881,7 @@ class Metadata:
         return rename_metadata_result
 
     def update_metadata(metadata_list, session_id, metadata_url, client_name, all_or_none):
-        soap_headers = Metadata.get_soap_client_service(session_id, client_name, None, all_or_none)
+        soap_headers = Metadata.get_soap_headers(session_id, client_name, None, all_or_none)
 
         client_service = Metadata.get_client_service(metadata_url)
         update_metadata_result = client_service.updateMetadata(metadata_list, soap_headers)
@@ -1889,7 +1889,7 @@ class Metadata:
         return update_metadata_result
 
     def upsert_metadata(metadata_list, session_id, metadata_url, client_name, all_or_none):
-        soap_headers = Metadata.get_soap_client_service(session_id, client_name, None, all_or_none)
+        soap_headers = Metadata.get_soap_headers(session_id, client_name, None, all_or_none)
 
         client_service = Metadata.get_client_service(metadata_url)
         upsert_metadata_result = client_service.upsertMetadata(metadata_list, soap_headers)
