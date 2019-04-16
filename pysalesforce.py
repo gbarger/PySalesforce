@@ -1881,17 +1881,17 @@ class Metadata:
         return rename_metadata_result
 
     def update_metadata(metadata_list, session_id, metadata_url, client_name, all_or_none):
-        soap_headers = Metadata.get_soap_headers(session_id, client_name, None, all_or_none)
+        soap_headers = Metadata.get_soap_headers(session_id, client_name, all_or_none, None)
 
         client_service = Metadata.get_client_service(metadata_url)
-        update_metadata_result = client_service.updateMetadata(metadata_list, soap_headers)
+        update_metadata_result = client_service.updateMetadata(metadata_list, _soapheaders=soap_headers)
 
         return update_metadata_result
 
     def upsert_metadata(metadata_list, session_id, metadata_url, client_name, all_or_none):
-        soap_headers = Metadata.get_soap_headers(session_id, client_name, None, all_or_none)
+        soap_headers = Metadata.get_soap_headers(session_id, client_name, all_or_none, None)
 
         client_service = Metadata.get_client_service(metadata_url)
-        upsert_metadata_result = client_service.upsertMetadata(metadata_list, soap_headers)
+        upsert_metadata_result = client_service.upsertMetadata(metadata_list, _soapheaders=soap_headers)
 
         return upsert_metadata_result
