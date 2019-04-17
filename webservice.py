@@ -6,26 +6,31 @@ import ssl
 from urllib3.poolmanager import PoolManager
 
 class Tools:
-    ##
-    # This method is the generic method used for creating HTTP requests.
-    #
-    # @param requestType     The request type: GET, POST, PATCH, DELETE, etc
-    # @param URL             The full URL to call
-    # @param headerDetails   Object containing the headers for the request. 
-    #						 Defaults to None
-    # @param dataBody        The body to send for the POST. Defaults to None
-    # @return 				 Returns the response for the HTTP Request.
-    ##
+
+
     def http_request(**kwargs):
+        """
+        This method is the generic method used for creating HTTP requests.
+        
+        Args:
+            requestType (str): The request type: GET, POST, PATCH, DELETE, etc
+            URL (str): The full URL to call
+            header_details (dict): Object containing the headers for the request. 
+                                  Defaults to None
+            data_body (dict): The body to send for the POST. Defaults to None
+
+        Returns:
+            dict: Returns the response for the HTTP Request.
+        """
         requestType = kwargs.get('requestType')
         URL = kwargs.get('URL')
-        headerDetails = kwargs.get('headerDetails', None)
-        dataBody = kwargs.get('dataBody', None)
+        header_details = kwargs.get('header_details', None)
+        data_body = kwargs.get('data_body', None)
 
         response = ""
 
         try:
-            req = requests.Request(requestType, URL, data=dataBody, headers=headerDetails)
+            req = requests.Request(requestType, URL, data=data_body, headers=header_details)
             prepReq = req.prepare()
             session = requests.Session()
             session.mount('https://', SslHttpAdapter())
@@ -42,43 +47,72 @@ class Tools:
         return response
 
 
-    ##
-    # This returns the response from an HTTP GET request
-    #
-    # @param URL             The full URL to call
-    # @param headerDetails   Object containing the headers for the request
-    # @return                Returns the result of the HTTP GET request.
-    ##
-    def get_http_response(URL, headerDetails):
-        response = Tools.http_request(requestType='GET', URL=URL, headerDetails=headerDetails)
+    def get_http_response(URL, header_details):
+        """
+        This returns the response from an HTTP GET request
+
+        Args:
+            URL (str): The full URL to call
+            header_details (dict): Object containing the headers for the request
+
+        Returns:
+            dict: Returns the result of the HTTP GET request.
+        """
+        response = Tools.http_request(requestType='GET', URL=URL, header_details=header_details)
 
         return response
 
-    ##
-    # This returns the response from an HTTP POST request
-    #
-    # @param URL             The full URL to call
-    # @param dataBody        The body to send for the POST
-    # @param headerDetails   Object containing the headers for the request
-    # @return                Returns the result of the HTTP POST request.
-    ##
-    def post_http_response(URL, dataBody, headerDetails):
-        response = Tools.http_request(requestType='POST', URL=URL, dataBody=dataBody, headerDetails=headerDetails)
+
+    def post_http_response(URL, data_body, header_details):
+        """
+        This returns the response from an HTTP POST request
+
+        Args:
+            URL (str): The full URL to call
+            data_body (str): The body to send for the POST
+            header_details (dict): Object containing the headers for the request
+
+        Returns:
+            dict: Returns the result of the HTTP POST request.
+        """
+        response = Tools.http_request(requestType='POST', URL=URL, data_body=data_body, header_details=header_details)
 
         return response
 
-    ##
-    # This returns the response from an HTTP POST request
-    #
-    # @param URL             The full URL to call
-    # @param dataBody        The body to send for the POST
-    # @param headerDetails   Object containing the headers for the request
-    # @return                Returns the result of the HTTP POST request.
-    ##
-    def patch_http_response(URL, dataBody, headerDetails):
-        response = Tools.http_request(requestType='PATCH', URL=URL, dataBody=dataBody, headerDetails=headerDetails)
+
+    def patch_http_response(URL, data_body, header_details):
+        """
+        This returns the response from an HTTP POST request
+
+        Args:
+            URL (str): The full URL to call
+            data_body (str): The body to send for the POST
+            header_details (dict): Object containing the headers for the request
+        
+        Returns:
+            dict: Returns the result of the HTTP POST request.
+        """
+        response = Tools.http_request(requestType='PATCH', URL=URL, data_body=data_body, header_details=header_details)
 
         return response
+
+
+    def delete_http_response(URL, data_body, header_details):
+        """
+        This returns the response from an HTTP DELETE request
+
+        Args:
+            URL (str): The full URL to call
+            data_body (str): The body to send for the DELETE
+            header_details (dict): Object containing the headers for the request
+        
+        Returns:
+            dict: Returns the result of the HTTP DELETE request.
+        """
+        response = Tools.http_request(requestType='DELETE', URL=URL, data_body=data_body, header_details=header_details)
+
+        return response
+
 
 class SslHttpAdapter(requests.adapters.HTTPAdapter):
     def init_poolmanager(self, connections, maxsize, block=False):
