@@ -20,7 +20,7 @@ import time
 import sys
 from zeep import Client, xsd, ns
 
-API_VERSION = '39.0'
+API_VERSION = '43.0'
 METADATA_WSDL_FILE = './WSDL/metadata.wsdl'
 METADATA_SANDBOX_WSDL_FILE = './WSDL/metadata_sandbox.wsdl'
 METADATA_SERVICE_BINDING = '{http://soap.sforce.com/2006/04/metadata}MetadataBinding'
@@ -32,6 +32,7 @@ class Util:
     This is a collection of utilities that will need to be reused by the methods
     within the classes.
     """
+
 
     def get_standard_header(access_token):
         """
@@ -52,6 +53,7 @@ class Util:
         object_header = {"Authorization": "Bearer " + access_token,"Content-Type": "application/json"}
         return object_header
 
+
     def get_bulk_header(access_token):
         """
         This method builds the header for bulk requests using the access_token
@@ -71,6 +73,7 @@ class Util:
         bulk_header['X-SFDC-Session'] = access_token
         #bulkHeader['Content-Encoding'] = 'gzip'
         return bulk_header
+
 
     def get_bulk_job_body(object_api_name, operation_type, assignment_rule_id=None, concurrency_mode=None, external_id_field_name=None, number_retries=None, job_state=None):
         """
@@ -155,6 +158,7 @@ class Util:
 
         return bulk_job_body
 
+
     def chunk(list, n):
         """
         This generator breaks up a list into a list of lists that contains n
@@ -171,6 +175,7 @@ class Util:
         for i in range(0, len(list), n):
             yield list[i:i + n]
 
+
     def get_soap_client(wsdl_file):
         """
         Pass the wsdl and generate the soap client for the given WSDL
@@ -184,6 +189,7 @@ class Util:
         """
         soap_client = Client(wsdl_file)
         return soap_client
+
 
     def get_soap_client_service(wsdl_file, service_binding, endpoint_url):
         """
@@ -202,6 +208,7 @@ class Util:
         soap_client_service = soap_client.create_service(service_binding, endpoint_url)
 
         return soap_client_service
+
 
 class Authentication:
     """
@@ -252,6 +259,7 @@ class Authentication:
 
         return json_response
 
+
     def get_oauth_logout(auth_token, is_production):
         """
         this function calls the correct endpoint for the oauth logout by providing
@@ -284,6 +292,7 @@ class Authentication:
 
         return json_response
 
+
     def get_login_scope_header(org_id, portal_id):
         """
         Only use this for authenticating as a self-service user
@@ -304,6 +313,7 @@ class Authentication:
             login_scope_header['portalId'] = portal_id
 
         return login_scope_header
+
 
     def get_login_call_options(client_name, default_ns):
         """
@@ -329,6 +339,7 @@ class Authentication:
             call_options['defaultNamespace'] = default_ns
 
         return call_options
+
 
     def get_soap_headers(org_id, portal_id, client_name, default_ns):
         """
@@ -361,6 +372,7 @@ class Authentication:
             soap_headers['CallOptions'] = call_options
 
         return soap_headers
+
 
     def get_soap_login(login_username, login_password, org_id, portal_id, client_name, default_ns, is_production):
         """
@@ -406,11 +418,13 @@ class Authentication:
 
         return login_result
 
+
 class Tooling:
     """
     The purpose of this class is to expose the Salesforce Tooling API methods
     """
     base_tooling_uri = '/services/data/v' + API_VERSION + '/tooling'
+
 
     def completions(completions_type, access_token, instance_url):
         """
@@ -436,6 +450,7 @@ class Tooling:
         json_response = json.loads(response.text)
 
         return json_response
+
 
     def execute_anonymous(code_string, access_token, instance_url):
         """
@@ -465,6 +480,7 @@ class Tooling:
         json_response = json.loads(response.text)
 
         return json_response
+
 
     def query(query_string, access_token, instance_url):
         """
@@ -496,6 +512,7 @@ class Tooling:
         json_response = json.loads(response.text)
 
         return json_response
+
 
     def run_tests_asynchronous_list(class_ids, suite_ids, max_failed_tests, test_level, access_token, instance_url):
         """
@@ -559,6 +576,7 @@ class Tooling:
 
         return json_response
 
+
     def run_tests_asynchronous_json(test_array, access_token, instance_url):
         """
         This method runs specified tests in the test_array with more control than
@@ -597,6 +615,7 @@ class Tooling:
 
         return json_response
 
+
 class Standard:
     """
     This class provides a front end for the Salesforce standard REST API. More
@@ -606,6 +625,7 @@ class Standard:
     section of the documentation.
     """
     base_standard_uri = '/services/data/'
+
 
     def versions(access_token, instance_url):
         """
@@ -627,6 +647,7 @@ class Standard:
         json_response = json.loads(response.text)
 
         return json_response
+
 
     def resources_by_version(version_num_string, access_token, instance_url):
         """
@@ -651,6 +672,7 @@ class Standard:
         json_response = json.loads(response.text)
 
         return json_response
+
 
     def get_sobject_row(object, record_id, field_list_string, access_token, instance_url):
         """
@@ -684,6 +706,7 @@ class Standard:
         json_response = json.loads(response.text)
 
         return json_response
+
 
     def create_sobject_row(object, record_json, access_token, instance_url):
         """
@@ -721,6 +744,7 @@ class Standard:
 
         return response_text
 
+
     def create_sobject_rows(object, records_json, access_token, instance_url):
         """
         Creates the provided records in the records_json param
@@ -754,6 +778,7 @@ class Standard:
             responseText = response.text
 
         return responseText
+
 
     def update_sobject_row(object, record_id, record_json, access_token, instance_url):
         """
@@ -798,6 +823,61 @@ class Standard:
 
         return response_text
 
+
+    def update_sobject_rows(records, all_or_none, run_assignment_rules, access_token, instance_url):
+        """
+        Updates a list of up to 200 records.
+        documentation: https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/resources_composite_sobjects_collections.htm
+
+        Args:
+            records_json (object): The JSON describing the records you want to
+                                   insert on the given object. Each object needs
+                                   to contain an attributes field that contains
+                                   the "type" which is the object name, and a
+                                   "referenceId" field which is a unique key for
+                                   each record being inserted. This key is used
+                                   in the response to show a result for each
+                                   record being inserted.
+            all_or_none (bool): Indicates whether to roll back the entire request
+                                when the update of any object fails (true) or to
+                                continue with the independent update of other
+                                objects in the request. The default is false.
+            run_assignment_rules (bool): If true this will add the assginment 
+                                         rule header to the request.
+            access_token (str): This is the access_token value received from the
+                                login response
+            instance_url (str): This is the instance_url value received from the
+                                login response
+
+        Returns:
+            str: This only returns 'Update Successful' if the update worked, or
+                 returns an error message if the update wasn't successful. The
+                 response isn't more detailed because Salesforce returns no
+                 text, only a response code of 204
+        """
+        patch_rows_uri = '/composite/sobjects'
+        header_details = Util.get_standard_header(access_token)
+
+        if run_assignment_rules:
+            header_details["Sforce-Auto-Assign"] = "true"
+
+        request_body = {}
+        request_body["allOrNone"] = all_or_none
+        request_body["records"] = records
+
+        data_body_json = json.dumps(request_body, indent=4, separators=(',', ': '))
+
+        response = webservice.Tools.patch_http_response(instance_url + Standard.base_standard_uri + 'v' + API_VERSION + patch_rows_uri, data_body_json, header_details)
+        response_text = ""
+
+        if response.status_code is 204:
+            response_text = "Updates Successful"
+        else:
+            response_text = response.text
+
+        return response_text
+
+
     def query(query_string, access_token, instance_url):
         """
         Executes the specified SOQL query. If the query results are too large,
@@ -825,6 +905,7 @@ class Standard:
 
         return json_response
 
+
 class Bulk:
     """
     This class is used for doing bulk operations. Please use this and not the
@@ -835,6 +916,7 @@ class Bulk:
     """
     base_bulk_uri = '/services/async/' + API_VERSION
     batch_uri = '/job/'
+
 
     def get_job_status(job_id, polling_wait, access_token, instance_url):
         """
@@ -870,6 +952,7 @@ class Bulk:
 
         return json_response
 
+
     def get_batch_result(job_id, batch_id, access_token, instance_url):
         """
         This method will retrieve the results of a batch operation.
@@ -893,6 +976,7 @@ class Bulk:
         json_response = json.loads(response.text)
 
         return json_response
+
 
     def get_query_result(job_id, batch_id, query_result_id, access_token, instance_url):
         """
@@ -919,6 +1003,7 @@ class Bulk:
         json_response = json.loads(response.text)
 
         return json_response
+
 
     def perform_bulk_operation(object_api_name, records, batch_size, operation_type, polling_wait, external_id_field_name, access_token, instance_url):
         """
@@ -997,6 +1082,7 @@ class Bulk:
 
         return results_list
 
+
     def insert_sobject_rows(object_api_name, records, batch_size, polling_wait, access_token, instance_url):
         """
         This method inserts a list of records provided as an object.
@@ -1025,6 +1111,7 @@ class Bulk:
 
         return result
 
+
     def update_sobject_rows(object_api_name, records, batch_size, polling_wait, access_token, instance_url):
         """
         This method updates a list of records provided as an object.
@@ -1052,6 +1139,7 @@ class Bulk:
         result = Bulk.perform_bulk_operation(object_api_name, records, batch_size, 'update', polling_wait, None, access_token, instance_url)
 
         return result
+
 
     def upsert_sobject_rows(object_api_name, records, batch_size, polling_wait, access_token, instance_url, external_id_field_name='Id'):
         """
@@ -1085,6 +1173,7 @@ class Bulk:
         result = Bulk.perform_bulk_operation(object_api_name, records, batch_size, 'upsert', polling_wait, external_id_field_name, access_token, instance_url)
 
         return result
+
 
     def delete_sobject_rows(object_api_name, records, hard_delete, batch_size, polling_wait, access_token, instance_url):
         """
@@ -1123,6 +1212,7 @@ class Bulk:
         result = Bulk.perform_bulk_operation(object_api_name, records, batch_size, delete_type, polling_wait, None, access_token, instance_url)
 
         return result
+
 
     def query_sobject_rows(object_api_name, query, query_all, access_token, instance_url):
         """
@@ -1182,6 +1272,7 @@ class Bulk:
 
         return query_result_list
 
+
 class Metadata:
     """
     Use Metadata API to retrieve, deploy, create, update or delete customization
@@ -1189,6 +1280,7 @@ class Metadata:
     organization. This API is intended for managing customizations and for
     building tools that can manage the metadata model, not the data itself.
     """
+
 
     def get_session_header(session_id):
         """
@@ -1207,6 +1299,7 @@ class Metadata:
 
         return session_header
 
+
     def get_call_options(client_name):
         """
         This returns the call options for the soap header
@@ -1222,6 +1315,7 @@ class Metadata:
         call_options = call_options_element(client_name)
 
         return call_options
+
 
     def get_all_or_none_header(all_or_none):
         """
@@ -1245,6 +1339,7 @@ class Metadata:
 
         return all_or_none_header
 
+
     def get_debugging_header(categories):
         """
         Specifies that the deployment result will contain the debug log output,
@@ -1264,6 +1359,7 @@ class Metadata:
         debugging_header = debugging_header_element(categories, None)
 
         return debugging_header
+
 
     def get_soap_headers(session_id, client_name, all_or_none, debug_categories):
         """
@@ -1296,6 +1392,7 @@ class Metadata:
             soap_headers['DebuggingHeader'] = Metadata.get_debugging_header(debug_categories)
 
         return soap_headers
+
 
     def get_metadata(full_name):
         """
@@ -1333,6 +1430,7 @@ class Metadata:
 
         return metadata
 
+
     def get_package_type_members(member_name, member_list):
         """
         This builds the list of members for a specific type. For example this
@@ -1356,6 +1454,7 @@ class Metadata:
 
         return package_type_members
 
+
     def get_client_service(metadata_url):
         """
         This method builds the client service for the Metadata API
@@ -1369,6 +1468,7 @@ class Metadata:
         soap_client_service = Util.get_soap_client_service(METADATA_WSDL_FILE, METADATA_SERVICE_BINDING, metadata_url)
 
         return soap_client_service
+
 
     def get_package(**kwargs):
         """
@@ -1463,6 +1563,7 @@ class Metadata:
         )
 
         return this_package
+
 
     def get_deploy_options(**kwargs):
         """
@@ -1588,6 +1689,7 @@ class Metadata:
 
         return deploy_options
 
+
     def get_retrieve_request(**kwargs):
         """
         This is the package of data needed to retrieve metadata
@@ -1637,11 +1739,13 @@ class Metadata:
 
         return this_retrieve_request
 
+
     def get_list_metadata_query(folder, metadata_type):
         list_metadata_query_type = client.get_type('ns0:ListMetadataQuery')
         metadata_query = list_metadata_query_type(folder, metadata_type)
 
         return metadata_query
+
 
     def retrieve(retrieve_request, session_id, metadata_url, client_name):
         """
@@ -1662,6 +1766,7 @@ class Metadata:
         this_retrieve = client_service.retrieve(retrieve_request, _soapheaders=soap_headers)
 
         return this_retrieve
+
 
     def check_retrieve_status(async_process_id, include_zip, session_id, metadata_url, client_name):
         """
@@ -1695,6 +1800,7 @@ class Metadata:
 
         return this_retrieve_status
 
+
     def cancel_deploy(deploy_id, session_id, metadata_url, client_name):
         """
         This method cancels the deploy
@@ -1715,6 +1821,7 @@ class Metadata:
         cancel_deploy_result = client_service.cancelDeploy(deploy_id, _soapheaders=soap_headers)
 
         return cancel_deploy_result
+
 
     def check_deploy_status(deploy_id, include_details, session_id, metadata_url, client_name):
         """
@@ -1737,6 +1844,7 @@ class Metadata:
         check_deploy_result = client_service.checkDeployStatus(deploy_id, include_details, _soapheaders=soap_headers)
 
         return check_deploy_result
+
 
     def create_metadata(metadata_list, session_id, metadata_url, client_name, all_or_none):
         """
@@ -1770,6 +1878,7 @@ class Metadata:
         create_metadata_result = client_service.createMetadata(metadata_list, _soapheaders=soap_headers)
 
         return create_metadata_result
+
 
     def delete_metadata(metadata_type, full_names, session_id, metadata_url, client_name, all_or_none):
         """
@@ -1805,6 +1914,7 @@ class Metadata:
 
         return delete_metadata_result
 
+
     def deploy(zip_file, deploy_options, session_id, metadata_url, client_name, debug_categories):
         """
         Uses file representations of components to create, update, or delete those
@@ -1832,6 +1942,7 @@ class Metadata:
 
         return deploy_result
 
+
     def deploy_recent_validation(validation_id, session_id, metadata_url, client_name, debug_categories):
         soap_headers = Metadata.get_soap_headers(session_id, client_name, None, debug_categories)
 
@@ -1839,6 +1950,7 @@ class Metadata:
         deploy_validation_result = client_service.deployRecentValidation(validation_id, _soapheaders=soap_headers)
 
         return deploy_validation_result
+
 
     def describe_metadata(as_of_version, session_id, metadata_url, client_name):
         soap_headers = Metadata.get_soap_headers(session_id, client_name, None, None)
@@ -1848,6 +1960,7 @@ class Metadata:
 
         return describe_metadata_result
 
+
     def describe_value_type(value_type, session_id, metadata_url):
         soap_headers = Metadata.get_soap_headers(session_id, None, None, None)
 
@@ -1855,6 +1968,7 @@ class Metadata:
         describe_value_type = client_service.describeValueType(value_type, _soapheaders=soap_headers)
 
         return describe_value_type
+
 
     def list_metadata(list_metadata_query, as_of_version, session_id, metadata_url, client_name):
         soap_headers = Metadata.get_soap_headers(session_id, client_name, None, None)
@@ -1864,6 +1978,7 @@ class Metadata:
 
         return list_metadata_result
 
+
     def read_metadata(metadata_type, full_names, session_id, metadata_url, client_name):
         soap_headers = Metadata.get_soap_headers(session_id, client_name, None, None)
 
@@ -1871,6 +1986,7 @@ class Metadata:
         read_metadata_result = client_service.readMetadata(metadata_type, full_names, _soapheaders=soap_headers)
 
         return read_metadata_result
+
 
     def rename_metadata(metadata_type, old_full_name, new_full_name, session_id, metadata_url, client_name):
         soap_headers = Metadata.get_soap_headers(session_id, client_name, None, None)
@@ -1880,6 +1996,7 @@ class Metadata:
 
         return rename_metadata_result
 
+
     def update_metadata(metadata_list, session_id, metadata_url, client_name, all_or_none):
         soap_headers = Metadata.get_soap_headers(session_id, client_name, all_or_none, None)
 
@@ -1887,6 +2004,7 @@ class Metadata:
         update_metadata_result = client_service.updateMetadata(metadata_list, _soapheaders=soap_headers)
 
         return update_metadata_result
+
 
     def upsert_metadata(metadata_list, session_id, metadata_url, client_name, all_or_none):
         soap_headers = Metadata.get_soap_headers(session_id, client_name, all_or_none, None)
