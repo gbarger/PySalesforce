@@ -939,6 +939,7 @@ class Bulk:
     is faster and will use fewer of your API calls.
     API details here: https://developer.salesforce.com/docs/atlas.en-us.api_asynch.meta/api_asynch/asynch_api_intro.htm
     examples here: https://trailhead-salesforce-com.firelayers.net/en/api_basics/api_basics_bulk
+    Considerations here: https://developer.salesforce.com/docs/atlas.en-us.salesforce_app_limits_cheatsheet.meta/salesforce_app_limits_cheatsheet/salesforce_app_limits_platform_bulkapi.htm
     """
     base_bulk_uri = '/services/async/' + API_VERSION
     batch_uri = '/job/'
@@ -1306,6 +1307,14 @@ class Bulk:
             query_result_list.extend(query_result)
 
         return query_result_list
+
+
+class Bulk2:
+    """
+    https://developer.salesforce.com/docs/atlas.en-us.api_bulk_v2.meta/api_bulk_v2/introduction_bulk_api_2.htm
+    """
+    def __new__():
+        print("this is just a placeholder for the Bulk API 2.0")
 
 
 class Metadata:
