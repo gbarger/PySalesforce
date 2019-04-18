@@ -730,7 +730,7 @@ class Standard:
 
 
     @staticmethod
-    def create_sobject_row(object, record_json, access_token, instance_url):
+    def create_sobject_row(object, record_json, run_assignment_rules, access_token, instance_url):
         """
         Creates the provided record in the recordJson param
 
@@ -754,6 +754,9 @@ class Standard:
         post_row_uri = '/sobjects/' + object + '/'
         header_details = Util.get_standard_header(access_token)
 
+        if run_assignment_rules:
+            header_details["Sforce-Auto-Assign"] = "true"
+
         data_body_json = json.dumps(record_json, indent=4, separators=(',', ': '))
 
         response = webservice.Tools.post_http_response(instance_url + Standard.base_standard_uri + 'v' + API_VERSION + post_row_uri, data_body_json, header_details)
@@ -768,39 +771,79 @@ class Standard:
 
 
     @staticmethod
-    def create_sobject_rows(object, records_json, access_token, instance_url):
+    def create_sobject_rows(records, all_or_none, run_assignment_rules, access_token, instance_url):
         """
-        Creates the provided records in the records_json param
+        Creates a list of up to 200 records.
+        documentation: https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/resources_composite_sobjects_collections.htm
 
         Args:
-            object (str): The API name of the object.
             records_json (object): The JSON describing the records you want to
                                    insert on the given object. Each object needs
                                    to contain an attributes field that contains
-                                   the "type" which is the object name, and a
-                                   "referenceId" field which is a unique key for
-                                   each record being inserted. This key is used
-                                   in the response to show a result for each
-                                   record being inserted.
-            access_key (str): This is the access_key value received from the
-                              login response
+                                   the "type" which is the object name.
+                                   example:
+                                       [{
+                                          "attributes" : {"type" : "Account"},
+                                          "Name" : "example.com",
+                                          "BillingCity" : "San Francisco"
+                                       }, {
+                                          "attributes" : {"type" : "Contact"},
+                                          "LastName" : "Johnson",
+                                          "FirstName" : "Erica"
+                                       }]
+            all_or_none (bool): Indicates whether to roll back the entire request
+                                when the update of any object fails (true) or to
+                                continue with the independent update of other
+                                objects in the request. The default is false.
+            run_assignment_rules (bool): If true this will add the assginment 
+                                         rule header to the request.
+            access_token (str): This is the access_token value received from the
+                                login response
             instance_url (str): This is the instance_url value received from the
                                 login response
+
+        Returns:
+            dict: Returns a response object that should have a success or failure
+                 for each item in the request in the same order.
+                 example:
+                [
+                   {
+                      "success" : false,
+                      "errors" : [
+                         {
+                            "statusCode" : "DUPLICATES_DETECTED",
+                            "message" : "Use one of these records?",
+                            "fields" : [ ]
+                         }
+                      ]
+                   },
+                   {
+                      "success" : false,
+                      "errors" : [
+                         {
+                            "statusCode" : "ALL_OR_NONE_OPERATION_ROLLED_BACK",
+                            "message" : "Record rolled back because not all records were valid and the request was using AllOrNone header",
+                            "fields" : [ ]
+                         }
+                      ]
+                   }
+                ]
         """
-        post_row_uri = '/composite/tree/' + object + '/'
+        post_rows_uri = '/composite/sobjects'
         header_details = Util.get_standard_header(access_token)
 
-        data_body_json = json.dumps(records_json, indent=4, separators=(',', ': '))
+        if run_assignment_rules:
+            header_details["Sforce-Auto-Assign"] = "true"
 
-        response = webservice.Tools.post_http_response(instance_url + Standard.base_standard_uri + 'v' + API_VERSION + post_row_uri, data_body_json, header_details)
-        responseText = ""
+        request_body = {}
+        request_body["allOrNone"] = all_or_none
+        request_body["records"] = records
 
-        if response.status_code is 204:
-            responseText = "Update Successful"
-        else:
-            responseText = response.text
+        data_body_json = json.dumps(request_body, indent=4, separators=(',', ': '))
 
-        return responseText
+        response = webservice.Tools.post_http_response(instance_url + Standard.base_standard_uri + 'v' + API_VERSION + post_rows_uri, data_body_json, header_details)
+
+        return json.loads(response.text)
 
 
     @staticmethod
@@ -858,11 +901,21 @@ class Standard:
             records_json (object): The JSON describing the records you want to
                                    insert on the given object. Each object needs
                                    to contain an attributes field that contains
-                                   the "type" which is the object name, and a
-                                   "referenceId" field which is a unique key for
-                                   each record being inserted. This key is used
+                                   the "type" which is the object name, and an
+                                   "id" field which is the record id for
+                                   each record being updated. This key is used
                                    in the response to show a result for each
-                                   record being inserted.
+                                   record being updated.
+                                   example:
+                                       [{
+                                          "attributes" : {"type" : "Account", "id" : "001xx000003DGb2AAG"},
+                                          "Name" : "example.com",
+                                          "BillingCity" : "San Francisco"
+                                       }, {
+                                          "attributes" : {"type" : "Contact", "id": "003xx000004TmiQAAS"},
+                                          "LastName" : "Johnson",
+                                          "FirstName" : "Erica"
+                                       }]
             all_or_none (bool): Indicates whether to roll back the entire request
                                 when the update of any object fails (true) or to
                                 continue with the independent update of other
@@ -875,10 +928,21 @@ class Standard:
                                 login response
 
         Returns:
-            str: This only returns 'Update Successful' if the update worked, or
-                 returns an error message if the update wasn't successful. The
-                 response isn't more detailed because Salesforce returns no
-                 text, only a response code of 204
+            dict: Returns a response object that should have a success or failure
+                  for each item in the request in the same order.
+                example:
+                [
+                   {
+                      "id" : "001xx000003DGb2AAG",
+                      "success" : true,
+                      "errors" : [ ]
+                   },
+                   {
+                      "id" : "003xx000004TmiQAAS",
+                      "success" : true,
+                      "errors" : [ ]
+                   }
+                ]
         """
         patch_rows_uri = '/composite/sobjects'
         header_details = Util.get_standard_header(access_token)
@@ -893,14 +957,69 @@ class Standard:
         data_body_json = json.dumps(request_body, indent=4, separators=(',', ': '))
 
         response = webservice.Tools.patch_http_response(instance_url + Standard.base_standard_uri + 'v' + API_VERSION + patch_rows_uri, data_body_json, header_details)
-        response_text = ""
+        
+        return json.loads(response.text)
 
-        if response.status_code is 204:
-            response_text = "Updates Successful"
+
+    @staticmethod
+    def delete_sobject_rows(record_ids, all_or_none, access_token, instance_url):
+        """
+        Deletes a list of up to 200 records.
+        documentation: https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/resources_composite_sobjects_collections.htm
+
+        Args:
+            record_ids (list): List of record Ids to be deleted.
+            all_or_none (bool): Indicates whether to roll back the entire request
+                                when the update of any object fails (true) or to
+                                continue with the independent update of other
+                                objects in the request. The default is false.
+            access_token (str): This is the access_token value received from the
+                                login response
+            instance_url (str): This is the instance_url value received from the
+                                login response
+
+        Returns:
+            dict: The result in order of the Id delete list requested.
+                example:
+                [
+                   {
+                      "id" : "001RM000003oLruYAE",
+                      "success" : false,
+                      "errors" : [
+                         {
+                            "statusCode" : "ALL_OR_NONE_OPERATION_ROLLED_BACK",
+                            "message" : "Record rolled back because not all records were valid and the request was using AllOrNone header",
+                            "fields" : [ ]
+                         }
+                      ]
+                   },
+                   {
+                      "success" : false,
+                      "errors" : [
+                         {
+                            "statusCode" : "MALFORMED_ID",
+                            "message" : "malformed id 001RM000003oLrB000",
+                            "fields" : [ ]
+                         }
+                      ]
+                   }
+                ]
+        """
+        delete_rows_uri = '/composite/sobjects'
+        header_details = Util.get_standard_header(access_token)
+
+        delete_params = "?ids=" + ",".join(record_ids)
+
+        if all_or_none:
+            delete_params += "&allOrNone=true"
         else:
-            response_text = response.text
+            delete_params += "&allOrNone=false"
 
-        return response_text
+        data_body_json = json.dumps(request_body, indent=4, separators=(',', ': '))
+
+        response = webservice.Tools.delete_http_response(instance_url + Standard.base_standard_uri + 'v' + API_VERSION + delete_rows_uri + delete_params, None, header_details)
+        
+        return json.loads(response.text)
 
 
     @staticmethod
