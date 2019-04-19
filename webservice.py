@@ -63,6 +63,23 @@ class Tools:
         return response
 
 
+    def put_http_response(URL, data_body, header_details):
+        """
+        This returns the response from an HTTP PUT request
+
+        Args:
+            URL (str): The full URL to call
+            data_body (str): The body to send for the PUT
+            header_details (dict): Object containing the headers for the request
+
+        Returns:
+            dict: Returns the result of the HTTP PUT request.
+        """
+        response = Tools.http_request(requestType='PUT', URL=URL, data_body=data_body, header_details=header_details)
+
+        return response
+
+
     def post_http_response(URL, data_body, header_details):
         """
         This returns the response from an HTTP POST request
