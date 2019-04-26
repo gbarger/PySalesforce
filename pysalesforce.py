@@ -1473,7 +1473,7 @@ class Bulk2:
         uri_params = []
         uri_param_string = ""
 
-        if isPkChunkingEnabled:
+        if is_pk_chunking_enabled:
             uri_params.append("isPkChunkingEnabled=true")
 
         if job_type:
