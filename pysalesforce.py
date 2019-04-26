@@ -1435,7 +1435,7 @@ class Bulk2:
 
     https://developer.salesforce.com/docs/atlas.en-us.api_bulk_v2.meta/api_bulk_v2/introduction_bulk_api_2.htm
     """
-    base_bulk2_uri = '/services/data/' + API_VERSION + '/jobs/ingest'
+    base_bulk2_uri = '/services/data/v' + API_VERSION + '/jobs/ingest'
 
 
     @staticmethod
