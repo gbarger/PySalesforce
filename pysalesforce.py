@@ -9,8 +9,8 @@ Todo:
     * maybe implement kwargs for some of the methods instead of having so many arguments in the signature
     * implement delete in webservice so I can implement SObject Rows REST API for record deletes
     * Figure out what's wrong with Tooling.completions
-    * Work on Metadata API
     * Possibly pull current version from https://yourInstance.salesforce.com/services/data/ - ? Maybe not because of deprecation breaking methods
+    * Implement Bulk API 2.0: https://developer.salesforce.com/docs/atlas.en-us.api_bulk_v2.meta/api_bulk_v2/introduction_bulk_api_2.htm
 """
 
 import json
@@ -21,12 +21,14 @@ import sys
 import os
 from zeep import Client, xsd, ns
 
-API_VERSION = '39.0'
+API_VERSION = '45.0'
 METADATA_WSDL_FILE = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'WSDL', 'metadata.wsdl')
 METADATA_SANDBOX_WSDL_FILE = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'WSDL', 'metadata_sandbox.wsdl')
+
 METADATA_SERVICE_BINDING = '{http://soap.sforce.com/2006/04/metadata}MetadataBinding'
 PARTNER_WSDL_FILE = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'WSDL', 'partner.wsdl')
 PARTNER_SANDBOX_WSDL_FILE = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'WSDL', 'partner_sandbox.wsdl')
+
 
 class Util:
     """
@@ -34,6 +36,7 @@ class Util:
     within the classes.
     """
 
+    @staticmethod
     def get_standard_header(access_token):
         """
         This method will be used to generated headers. The documentation shows
@@ -50,9 +53,10 @@ class Util:
             object: Returns a header that has the required values for the
                     standard API.
         """
-        object_header = {"Authorization": "Bearer " + access_token,"Content-Type": "application/json"}
+        object_header = {"Authorization": "Bearer " + access_token, "Content-Type": "application/json"}
         return object_header
 
+    @staticmethod
     def get_bulk_header(access_token):
         """
         This method builds the header for bulk requests using the access_token
@@ -70,10 +74,12 @@ class Util:
         """
         bulk_header = Util.get_standard_header(access_token)
         bulk_header['X-SFDC-Session'] = access_token
-        #bulkHeader['Content-Encoding'] = 'gzip'
+        # bulkHeader['Content-Encoding'] = 'gzip'
         return bulk_header
 
-    def get_bulk_job_body(object_api_name, operation_type, assignment_rule_id=None, concurrency_mode=None, external_id_field_name=None, number_retries=None, job_state=None):
+    @staticmethod
+    def get_bulk_job_body(object_api_name, operation_type, assignment_rule_id=None, concurrency_mode=None,
+                          external_id_field_name=None, number_retries=None, job_state=None):
         """
         This method will be used to generate the bulk job body that is then used
         to send operation batches to Salesforce for processing.
@@ -156,6 +162,7 @@ class Util:
 
         return bulk_job_body
 
+    @staticmethod
     def chunk(list, n):
         """
         This generator breaks up a list into a list of lists that contains n
@@ -172,6 +179,7 @@ class Util:
         for i in range(0, len(list), n):
             yield list[i:i + n]
 
+    @staticmethod
     def get_soap_client(wsdl_file):
         """
         Pass the wsdl and generate the soap client for the given WSDL
@@ -186,6 +194,7 @@ class Util:
         soap_client = Client(wsdl_file)
         return soap_client
 
+    @staticmethod
     def get_soap_client_service(wsdl_file, service_binding, endpoint_url):
         """
         This method takes the given arguments and creates the soap client service.
@@ -204,11 +213,13 @@ class Util:
 
         return soap_client_service
 
+
 class Authentication:
     """
     The Authentication class is used to log in and out of Salesforce
     """
 
+    @staticmethod
     def get_oauth_login(login_username, login_password, login_client_id, login_client_secret, is_production):
         """
         this function logs into Salesforce using the oAuth 2.0 password grant type,
@@ -242,7 +253,8 @@ class Authentication:
         else:
             base_oauth_url = 'https://test.salesforce.com/services/oauth2/token'
 
-        login_body_data = {'grant_type':'password','client_id':login_client_id,'client_secret':login_client_secret,'username':login_username, 'password':login_password}
+        login_body_data = {'grant_type': 'password', 'client_id': login_client_id, 'client_secret': login_client_secret,
+                           'username': login_username, 'password': login_password}
 
         response = webservice.Tools.post_http_response(base_oauth_url, login_body_data, '')
 
@@ -253,6 +265,7 @@ class Authentication:
 
         return json_response
 
+    @staticmethod
     def get_oauth_logout(auth_token, is_production):
         """
         this function calls the correct endpoint for the oauth logout by providing
@@ -273,7 +286,8 @@ class Authentication:
         else:
             logout_url = 'https://test.salesforce.com/services/oauth2/revoke'
 
-        logout_body_data = {'host':logout_url,'Content-Type':'application/x-www-form-urlencoded','token':auth_token}
+        logout_body_data = {'host': logout_url, 'Content-Type': 'application/x-www-form-urlencoded',
+                            'token': auth_token}
 
         response = webservice.Tools.post_http_response(logout_url, logout_body_data, '')
 
@@ -281,10 +295,11 @@ class Authentication:
         if response.status_code == 200:
             success = True
 
-        json_response = {'success':success,'status_code':response.status_code}
+        json_response = {'success': success, 'status_code': response.status_code}
 
         return json_response
 
+    @staticmethod
     def get_login_scope_header(org_id, portal_id):
         """
         Only use this for authenticating as a self-service user
@@ -306,6 +321,7 @@ class Authentication:
 
         return login_scope_header
 
+    @staticmethod
     def get_login_call_options(client_name, default_ns):
         """
         This creates the call options for the SOAP login.
@@ -331,6 +347,7 @@ class Authentication:
 
         return call_options
 
+    @staticmethod
     def get_soap_headers(org_id, portal_id, client_name, default_ns):
         """
         This method builds the headers for soap calls. Leave org_id and
@@ -363,6 +380,7 @@ class Authentication:
 
         return soap_headers
 
+    @staticmethod
     def get_soap_login(login_username, login_password, org_id, portal_id, client_name, default_ns, is_production):
         """
         This method logs into Salesforce with SOAP given the provided details.
@@ -398,7 +416,7 @@ class Authentication:
         """
         wsdl_file = PARTNER_WSDL_FILE
 
-        if not(is_production):
+        if not (is_production):
             wsdl_file = PARTNER_SANDBOX_WSDL_FILE
 
         client = Util.get_soap_client(wsdl_file)
@@ -407,12 +425,14 @@ class Authentication:
 
         return login_result
 
+
 class Tooling:
     """
     The purpose of this class is to expose the Salesforce Tooling API methods
     """
     base_tooling_uri = '/services/data/v' + API_VERSION + '/tooling'
 
+    @staticmethod
     def completions(completions_type, access_token, instance_url):
         """
         Retrieves available code completions of the referenced type for Apex
@@ -433,11 +453,13 @@ class Tooling:
         header_details = Util.get_standard_header(access_token)
         url_encoded_type = urllib.parse.quote(completions_type)
 
-        response = webservice.Tools.get_http_response(instance_url + Tooling.base_tooling_uri + completions_uri + url_encoded_type, header_details)
+        response = webservice.Tools.get_http_response(
+            instance_url + Tooling.base_tooling_uri + completions_uri + url_encoded_type, header_details)
         json_response = json.loads(response.text)
 
         return json_response
 
+    @staticmethod
     def execute_anonymous(code_string, access_token, instance_url):
         """
         This function executes anonymous apex, and returns a json response
@@ -462,11 +484,13 @@ class Tooling:
         header_details = Util.get_standard_header(access_token)
         url_encoded_code = urllib.parse.quote(code_string)
 
-        response = webservice.Tools.get_http_response(instance_url + Tooling.base_tooling_uri + execute_anonymous_uri + url_encoded_code, header_details)
+        response = webservice.Tools.get_http_response(
+            instance_url + Tooling.base_tooling_uri + execute_anonymous_uri + url_encoded_code, header_details)
         json_response = json.loads(response.text)
 
         return json_response
 
+    @staticmethod
     def query(query_string, access_token, instance_url):
         """
         Executes a query against an object and returns data that matches the
@@ -493,11 +517,13 @@ class Tooling:
         header_details = Util.get_standard_header(access_token)
         url_encoded_query = urllib.parse.quote(query_string)
 
-        response = webservice.Tools.get_http_response(instance_url + Tooling.base_tooling_uri + query_uri + url_encoded_query, header_details)
+        response = webservice.Tools.get_http_response(
+            instance_url + Tooling.base_tooling_uri + query_uri + url_encoded_query, header_details)
         json_response = json.loads(response.text)
 
         return json_response
 
+    @staticmethod
     def run_tests_asynchronous_list(class_ids, suite_ids, max_failed_tests, test_level, access_token, instance_url):
         """
         This method runs the tests provided with the class Ids or suite Ids, then
@@ -555,11 +581,13 @@ class Tooling:
 
         json_data_body = json.dumps(data_body, indent=4, separators=(',', ': '))
 
-        response = webservice.Tools.post_http_response(instance_url + Tooling.base_tooling_uri + test_async_uri, json_data_body, header_details)
+        response = webservice.Tools.post_http_response(instance_url + Tooling.base_tooling_uri + test_async_uri,
+                                                       json_data_body, header_details)
         json_response = json.loads(response.text)
 
         return json_response
 
+    @staticmethod
     def run_tests_asynchronous_json(test_array, access_token, instance_url):
         """
         This method runs specified tests in the test_array with more control than
@@ -593,10 +621,12 @@ class Tooling:
         data_body = {'tests': test_array}
         json_data_body = json.dumps(data_body, indent=4, separators=(',', ': '))
 
-        response = webservice.Tools.post_http_response(instance_url + Tooling.base_tooling_uri + test_async_uri, json_data_body, header_details)
+        response = webservice.Tools.post_http_response(instance_url + Tooling.base_tooling_uri + test_async_uri,
+                                                       json_data_body, header_details)
         json_response = json.loads(response.text)
 
         return json_response
+
 
 class Standard:
     """
@@ -608,6 +638,7 @@ class Standard:
     """
     base_standard_uri = '/services/data/'
 
+    @staticmethod
     def versions(access_token, instance_url):
         """
         Lists summary information about each Salesforce version currently available,
@@ -629,6 +660,7 @@ class Standard:
 
         return json_response
 
+    @staticmethod
     def resources_by_version(version_num_string, access_token, instance_url):
         """
         This method returns the available resources (API services) available for
@@ -648,11 +680,13 @@ class Standard:
         """
         header_details = Util.get_standard_header(access_token)
 
-        response = webservice.Tools.get_http_response(instance_url + Standard.base_standard_uri + 'v' + version_num_string + '/', header_details)
+        response = webservice.Tools.get_http_response(
+            instance_url + Standard.base_standard_uri + 'v' + version_num_string + '/', header_details)
         json_response = json.loads(response.text)
 
         return json_response
 
+    @staticmethod
     def get_sobject_row(object, record_id, field_list_string, access_token, instance_url):
         """
         Provides the details requested for the specified record. In practice, if you
@@ -681,12 +715,14 @@ class Standard:
         if field_list_string != None:
             get_row_uri = get_row_uri + '?fields=' + field_list_string
 
-        response = webservice.Tools.get_http_response(instance_url + Standard.base_standard_uri + 'v' + API_VERSION + get_row_uri, header_details)
+        response = webservice.Tools.get_http_response(
+            instance_url + Standard.base_standard_uri + 'v' + API_VERSION + get_row_uri, header_details)
         json_response = json.loads(response.text)
 
         return json_response
 
-    def create_sobject_row(object, record_json, access_token, instance_url):
+    @staticmethod
+    def create_sobject_row(object, record_json, run_assignment_rules, access_token, instance_url):
         """
         Creates the provided record in the recordJson param
 
@@ -710,9 +746,14 @@ class Standard:
         post_row_uri = '/sobjects/' + object + '/'
         header_details = Util.get_standard_header(access_token)
 
+        if run_assignment_rules:
+            header_details["Sforce-Auto-Assign"] = "true"
+
         data_body_json = json.dumps(record_json, indent=4, separators=(',', ': '))
 
-        response = webservice.Tools.post_http_response(instance_url + Standard.base_standard_uri + 'v' + API_VERSION + post_row_uri, data_body_json, header_details)
+        response = webservice.Tools.post_http_response(
+            instance_url + Standard.base_standard_uri + 'v' + API_VERSION + post_row_uri, data_body_json,
+            header_details)
         response_text = ""
 
         if response.status_code is 204:
@@ -722,40 +763,84 @@ class Standard:
 
         return response_text
 
-    def create_sobject_rows(object, records_json, access_token, instance_url):
+    @staticmethod
+    def create_sobject_rows(records, all_or_none, run_assignment_rules, access_token, instance_url):
         """
-        Creates the provided records in the records_json param
+        Creates a list of up to 200 records.
+        documentation: https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/resources_composite_sobjects_collections.htm
 
         Args:
-            object (str): The API name of the object.
             records_json (object): The JSON describing the records you want to
                                    insert on the given object. Each object needs
                                    to contain an attributes field that contains
-                                   the "type" which is the object name, and a
-                                   "referenceId" field which is a unique key for
-                                   each record being inserted. This key is used
-                                   in the response to show a result for each
-                                   record being inserted.
-            access_key (str): This is the access_key value received from the
-                              login response
+                                   the "type" which is the object name.
+                                   example:
+                                       [{
+                                          "attributes" : {"type" : "Account"},
+                                          "Name" : "example.com",
+                                          "BillingCity" : "San Francisco"
+                                       }, {
+                                          "attributes" : {"type" : "Contact"},
+                                          "LastName" : "Johnson",
+                                          "FirstName" : "Erica"
+                                       }]
+            all_or_none (bool): Indicates whether to roll back the entire request
+                                when the update of any object fails (true) or to
+                                continue with the independent update of other
+                                objects in the request. The default is false.
+            run_assignment_rules (bool): If true this will add the assginment 
+                                         rule header to the request.
+            access_token (str): This is the access_token value received from the
+                                login response
             instance_url (str): This is the instance_url value received from the
                                 login response
+
+        Returns:
+            dict: Returns a response object that should have a success or failure
+                 for each item in the request in the same order.
+                 example:
+                [
+                   {
+                      "success" : false,
+                      "errors" : [
+                         {
+                            "statusCode" : "DUPLICATES_DETECTED",
+                            "message" : "Use one of these records?",
+                            "fields" : [ ]
+                         }
+                      ]
+                   },
+                   {
+                      "success" : false,
+                      "errors" : [
+                         {
+                            "statusCode" : "ALL_OR_NONE_OPERATION_ROLLED_BACK",
+                            "message" : "Record rolled back because not all records were valid and the request was using AllOrNone header",
+                            "fields" : [ ]
+                         }
+                      ]
+                   }
+                ]
         """
-        post_row_uri = '/composite/tree/' + object + '/'
+        post_rows_uri = '/composite/sobjects'
         header_details = Util.get_standard_header(access_token)
 
-        data_body_json = json.dumps(records_json, indent=4, separators=(',', ': '))
+        if run_assignment_rules:
+            header_details["Sforce-Auto-Assign"] = "true"
 
-        response = webservice.Tools.post_http_response(instance_url + Standard.base_standard_uri + 'v' + API_VERSION + post_row_uri, data_body_json, header_details)
-        responseText = ""
+        request_body = {}
+        request_body["allOrNone"] = all_or_none
+        request_body["records"] = records
 
-        if response.status_code is 204:
-            responseText = "Update Successful"
-        else:
-            responseText = response.text
+        data_body_json = json.dumps(request_body, indent=4, separators=(',', ': '))
 
-        return responseText
+        response = webservice.Tools.post_http_response(
+            instance_url + Standard.base_standard_uri + 'v' + API_VERSION + post_rows_uri, data_body_json,
+            header_details)
 
+        return json.loads(response.text)
+
+    @staticmethod
     def update_sobject_row(object, record_id, record_json, access_token, instance_url):
         """
         Updates a specific record with the data in the record_json param
@@ -789,7 +874,9 @@ class Standard:
 
         data_body_json = json.dumps(record_json, indent=4, separators=(',', ': '))
 
-        response = webservice.Tools.patch_http_response(instance_url + Standard.base_standard_uri + 'v' + API_VERSION + patch_row_uri, data_body_json, header_details)
+        response = webservice.Tools.patch_http_response(
+            instance_url + Standard.base_standard_uri + 'v' + API_VERSION + patch_row_uri, data_body_json,
+            header_details)
         response_text = ""
 
         if response.status_code is 204:
@@ -799,6 +886,140 @@ class Standard:
 
         return response_text
 
+    @staticmethod
+    def update_sobject_rows(records, all_or_none, run_assignment_rules, access_token, instance_url):
+        """
+        Updates a list of up to 200 records.
+        documentation: https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/resources_composite_sobjects_collections.htm
+
+        Args:
+            records_json (object): The JSON describing the records you want to
+                                   insert on the given object. Each object needs
+                                   to contain an attributes field that contains
+                                   the "type" which is the object name, and an
+                                   "id" field which is the record id for
+                                   each record being updated. This key is used
+                                   in the response to show a result for each
+                                   record being updated.
+                                   example:
+                                       [{
+                                          "attributes" : {"type" : "Account", "id" : "001xx000003DGb2AAG"},
+                                          "Name" : "example.com",
+                                          "BillingCity" : "San Francisco"
+                                       }, {
+                                          "attributes" : {"type" : "Contact", "id": "003xx000004TmiQAAS"},
+                                          "LastName" : "Johnson",
+                                          "FirstName" : "Erica"
+                                       }]
+            all_or_none (bool): Indicates whether to roll back the entire request
+                                when the update of any object fails (true) or to
+                                continue with the independent update of other
+                                objects in the request. The default is false.
+            run_assignment_rules (bool): If true this will add the assginment 
+                                         rule header to the request.
+            access_token (str): This is the access_token value received from the
+                                login response
+            instance_url (str): This is the instance_url value received from the
+                                login response
+
+        Returns:
+            dict: Returns a response object that should have a success or failure
+                  for each item in the request in the same order.
+                example:
+                [
+                   {
+                      "id" : "001xx000003DGb2AAG",
+                      "success" : true,
+                      "errors" : [ ]
+                   },
+                   {
+                      "id" : "003xx000004TmiQAAS",
+                      "success" : true,
+                      "errors" : [ ]
+                   }
+                ]
+        """
+        patch_rows_uri = '/composite/sobjects'
+        header_details = Util.get_standard_header(access_token)
+
+        if run_assignment_rules:
+            header_details["Sforce-Auto-Assign"] = "true"
+
+        request_body = {}
+        request_body["allOrNone"] = all_or_none
+        request_body["records"] = records
+
+        data_body_json = json.dumps(request_body, indent=4, separators=(',', ': '))
+
+        response = webservice.Tools.patch_http_response(
+            instance_url + Standard.base_standard_uri + 'v' + API_VERSION + patch_rows_uri, data_body_json,
+            header_details)
+
+        return json.loads(response.text)
+
+    @staticmethod
+    def delete_sobject_rows(record_ids, all_or_none, access_token, instance_url):
+        """
+        Deletes a list of up to 200 records.
+        documentation: https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/resources_composite_sobjects_collections.htm
+
+        Args:
+            record_ids (list): List of record Ids to be deleted.
+            all_or_none (bool): Indicates whether to roll back the entire request
+                                when the update of any object fails (true) or to
+                                continue with the independent update of other
+                                objects in the request. The default is false.
+            access_token (str): This is the access_token value received from the
+                                login response
+            instance_url (str): This is the instance_url value received from the
+                                login response
+
+        Returns:
+            dict: The result in order of the Id delete list requested.
+                example:
+                [
+                   {
+                      "id" : "001RM000003oLruYAE",
+                      "success" : false,
+                      "errors" : [
+                         {
+                            "statusCode" : "ALL_OR_NONE_OPERATION_ROLLED_BACK",
+                            "message" : "Record rolled back because not all records were valid and the request was using AllOrNone header",
+                            "fields" : [ ]
+                         }
+                      ]
+                   },
+                   {
+                      "success" : false,
+                      "errors" : [
+                         {
+                            "statusCode" : "MALFORMED_ID",
+                            "message" : "malformed id 001RM000003oLrB000",
+                            "fields" : [ ]
+                         }
+                      ]
+                   }
+                ]
+        """
+        delete_rows_uri = '/composite/sobjects'
+        header_details = Util.get_standard_header(access_token)
+
+        delete_params = "?ids=" + ",".join(record_ids)
+
+        if all_or_none:
+            delete_params += "&allOrNone=true"
+        else:
+            delete_params += "&allOrNone=false"
+
+        data_body_json = json.dumps(request_body, indent=4, separators=(',', ': '))
+
+        response = webservice.Tools.delete_http_response(
+            instance_url + Standard.base_standard_uri + 'v' + API_VERSION + delete_rows_uri + delete_params, None,
+            header_details)
+
+        return json.loads(response.text)
+
+    @staticmethod
     def query(query_string, access_token, instance_url):
         """
         Executes the specified SOQL query. If the query results are too large,
@@ -821,10 +1042,13 @@ class Standard:
         header_details = Util.get_standard_header(access_token)
         url_encoded_query = urllib.parse.quote(query_string)
 
-        response = webservice.Tools.get_http_response(instance_url + Standard.base_standard_uri + 'v' + API_VERSION + query_uri + url_encoded_query, header_details)
+        response = webservice.Tools.get_http_response(
+            instance_url + Standard.base_standard_uri + 'v' + API_VERSION + query_uri + url_encoded_query,
+            header_details)
         json_response = json.loads(response.text)
 
         return json_response
+
 
 class Bulk:
     """
@@ -833,10 +1057,12 @@ class Bulk:
     is faster and will use fewer of your API calls.
     API details here: https://developer.salesforce.com/docs/atlas.en-us.api_asynch.meta/api_asynch/asynch_api_intro.htm
     examples here: https://trailhead-salesforce-com.firelayers.net/en/api_basics/api_basics_bulk
+    Considerations here: https://developer.salesforce.com/docs/atlas.en-us.salesforce_app_limits_cheatsheet.meta/salesforce_app_limits_cheatsheet/salesforce_app_limits_platform_bulkapi.htm
     """
     base_bulk_uri = '/services/async/' + API_VERSION
     batch_uri = '/job/'
 
+    @staticmethod
     def get_job_status(job_id, polling_wait, access_token, instance_url):
         """
         This method is used for printing job status
@@ -859,18 +1085,23 @@ class Bulk:
 
         print("Status for job: {}".format(job_id))
         while True:
-            response = webservice.Tools.get_http_response(instance_url + Bulk.base_bulk_uri + Bulk.batch_uri + '/' + job_id, header_details)
+            response = webservice.Tools.get_http_response(
+                instance_url + Bulk.base_bulk_uri + Bulk.batch_uri + '/' + job_id, header_details)
             json_response = json.loads(response.text)
 
-            print("batches completed/total: {}/{}".format(json_response['numberBatchesCompleted'], json_response['numberBatchesTotal']))
+            print("Batches completed/failed/total: {}/{}/{}".format(json_response['numberBatchesCompleted'],
+                                                                    json_response['numberBatchesFailed'],
+                                                                    json_response['numberBatchesTotal']))
 
-            if json_response['numberBatchesCompleted'] == json_response['numberBatchesTotal']:
+            total_jobs_run = json_response['numberBatchesCompleted'] + json_response['numberBatchesFailed']
+            if total_jobs_run == json_response['numberBatchesTotal']:
                 break
             else:
                 time.sleep(polling_wait)
 
         return json_response
 
+    @staticmethod
     def get_batch_result(job_id, batch_id, access_token, instance_url):
         """
         This method will retrieve the results of a batch operation.
@@ -890,11 +1121,14 @@ class Bulk:
         """
         header_details = Util.get_bulk_header(access_token)
 
-        response = webservice.Tools.get_http_response(instance_url + Bulk.base_bulk_uri + Bulk.batch_uri + '/' + job_id + '/batch/' + batch_id + '/result', header_details)
+        response = webservice.Tools.get_http_response(
+            instance_url + Bulk.base_bulk_uri + Bulk.batch_uri + '/' + job_id + '/batch/' + batch_id + '/result',
+            header_details)
         json_response = json.loads(response.text)
 
         return json_response
 
+    @staticmethod
     def get_query_result(job_id, batch_id, query_result_id, access_token, instance_url):
         """
         This method will retrieve the results of a batch operation.
@@ -916,12 +1150,16 @@ class Bulk:
         """
         header_details = Util.get_bulk_header(access_token)
 
-        response = webservice.Tools.get_http_response(instance_url + Bulk.base_bulk_uri + Bulk.batch_uri + '/' + job_id + '/batch/' + batch_id + '/result' + '/' + query_result_id, header_details)
+        response = webservice.Tools.get_http_response(
+            instance_url + Bulk.base_bulk_uri + Bulk.batch_uri + '/' + job_id + '/batch/' + batch_id + '/result' + '/' + query_result_id,
+            header_details)
         json_response = json.loads(response.text)
 
         return json_response
 
-    def perform_bulk_operation(object_api_name, records, batch_size, operation_type, polling_wait, external_id_field_name, access_token, instance_url):
+    @staticmethod
+    def perform_bulk_operation(object_api_name, records, batch_size, operation_type, polling_wait,
+                               external_id_field_name, access_token, instance_url, concurrency_mode=None):
         """
         This method updates a list of records provided as an object.
 
@@ -947,6 +1185,21 @@ class Bulk:
                                 login response
             instance_url (str): This is the instance_url value received from the
                                 login response
+            concurrency_mode (str): Can't update after creation. The concurrency
+                                    mode for the job. The valid values are:
+                                    Parallel: Process batches in parallel mode.
+                                              This is the default value.
+                                    Serial: Process batches in serial mode.
+                                            Processing in parallel can cause
+                                            database contention. When this is
+                                            severe, the job may fail. If
+                                            you're experiencing this issue,
+                                            submit the job with serial
+                                            concurrency mode. This guarantees
+                                            that batches are processed one at
+                                            a time. Note that using this
+                                            option may significantly increase
+                                            the processing time for a job.
 
         Returns:
             object: Returns an object containing the status for each record that
@@ -956,9 +1209,10 @@ class Bulk:
         body_details = {}
 
         if external_id_field_name != None:
-            body_details = Util.get_bulk_job_body(object_api_name, operation_type, None, None, external_id_field_name)
+            body_details = Util.get_bulk_job_body(object_api_name, operation_type, None, concurrency_mode,
+                                                  external_id_field_name)
         else:
-            body_details = Util.get_bulk_job_body(object_api_name, operation_type, None, None)
+            body_details = Util.get_bulk_job_body(object_api_name, operation_type, None, concurrency_mode)
 
         chunked_records_list = Util.chunk(records, batch_size)
         batch_ids = []
@@ -966,14 +1220,17 @@ class Bulk:
 
         # create the bulk job
         create_job_json_body = json.dumps(body_details, indent=4, separators=(',', ': '))
-        job_create_response = webservice.Tools.post_http_response(instance_url + Bulk.base_bulk_uri + Bulk.batch_uri, create_job_json_body, header_details)
+        job_create_response = webservice.Tools.post_http_response(instance_url + Bulk.base_bulk_uri + Bulk.batch_uri,
+                                                                  create_job_json_body, header_details)
         json_job_create_response = json.loads(job_create_response.text)
         job_id = json_job_create_response['id']
 
         # loop through the record batches, and add them to the processing queue
         for record_chunk in chunked_records_list:
             records_json = json.dumps(record_chunk, indent=4, separators=(',', ': '))
-            job_batch_response = webservice.Tools.post_http_response(instance_url + Bulk.base_bulk_uri + Bulk.batch_uri + '/' + job_id + '/batch', records_json, header_details)
+            job_batch_response = webservice.Tools.post_http_response(
+                instance_url + Bulk.base_bulk_uri + Bulk.batch_uri + '/' + job_id + '/batch', records_json,
+                header_details)
             json_job_batch_response = json.loads(job_batch_response.text)
             batch_id = json_job_batch_response['id']
             batch_ids.append(batch_id)
@@ -981,7 +1238,8 @@ class Bulk:
         # close the bulk job
         close_body = {'state': 'Closed'}
         json_close_body = json.dumps(close_body, indent=4, separators=(',', ': '))
-        close_response = webservice.Tools.post_http_response(instance_url + Bulk.base_bulk_uri + Bulk.batch_uri + '/' + job_id, json_close_body, header_details)
+        close_response = webservice.Tools.post_http_response(
+            instance_url + Bulk.base_bulk_uri + Bulk.batch_uri + '/' + job_id, json_close_body, header_details)
         json_close_response = json.loads(close_response.text)
 
         # set default job check polling to 5 seconds
@@ -998,7 +1256,9 @@ class Bulk:
 
         return results_list
 
-    def insert_sobject_rows(object_api_name, records, batch_size, polling_wait, access_token, instance_url):
+    @staticmethod
+    def insert_sobject_rows(object_api_name, records, batch_size, polling_wait, access_token, instance_url,
+                            concurrency_mode=None):
         """
         This method inserts a list of records provided as an object.
 
@@ -1017,16 +1277,33 @@ class Bulk:
                                 login response
             instance_url (str): This is the instance_url value received from the
                                login response
-
+            concurrency_mode (str): Can't update after creation. The concurrency
+                                    mode for the job. The valid values are:
+                                    Parallel: Process batches in parallel mode.
+                                              This is the default value.
+                                    Serial: Process batches in serial mode.
+                                            Processing in parallel can cause
+                                            database contention. When this is
+                                            severe, the job may fail. If
+                                            you're experiencing this issue,
+                                            submit the job with serial
+                                            concurrency mode. This guarantees
+                                            that batches are processed one at
+                                            a time. Note that using this
+                                            option may significantly increase
+                                            the processing time for a job.
         Returns:
             object: Returns an object containing the status for each record that
                     was put into the batch
         """
-        result = Bulk.perform_bulk_operation(object_api_name, records, batch_size, 'insert', polling_wait, None, access_token, instance_url)
+        result = Bulk.perform_bulk_operation(object_api_name, records, batch_size, 'insert', polling_wait, None,
+                                             access_token, instance_url, concurrency_mode)
 
         return result
 
-    def update_sobject_rows(object_api_name, records, batch_size, polling_wait, access_token, instance_url):
+    @staticmethod
+    def update_sobject_rows(object_api_name, records, batch_size, polling_wait, access_token, instance_url,
+                            concurrency_mode=None):
         """
         This method updates a list of records provided as an object.
 
@@ -1045,16 +1322,33 @@ class Bulk:
                                 login response
             instance_url (str): This is the instance_url value received from the
                                 login response
-
+            concurrency_mode (str): Can't update after creation. The concurrency
+                                    mode for the job. The valid values are:
+                                    Parallel: Process batches in parallel mode.
+                                              This is the default value.
+                                    Serial: Process batches in serial mode.
+                                            Processing in parallel can cause
+                                            database contention. When this is
+                                            severe, the job may fail. If
+                                            you're experiencing this issue,
+                                            submit the job with serial
+                                            concurrency mode. This guarantees
+                                            that batches are processed one at
+                                            a time. Note that using this
+                                            option may significantly increase
+                                            the processing time for a job.
         Returns:
             object: Returns an object containing the status for each record that
                     was put into the batch
         """
-        result = Bulk.perform_bulk_operation(object_api_name, records, batch_size, 'update', polling_wait, None, access_token, instance_url)
+        result = Bulk.perform_bulk_operation(object_api_name, records, batch_size, 'update', polling_wait, None,
+                                             access_token, instance_url, concurrency_mode)
 
         return result
 
-    def upsert_sobject_rows(object_api_name, records, batch_size, polling_wait, access_token, instance_url, external_id_field_name='Id'):
+    @staticmethod
+    def upsert_sobject_rows(object_api_name, records, batch_size, polling_wait, access_token, instance_url,
+                            external_id_field_name='Id', concurrency_mode=None):
         """
         This method upserts a list of records provided as an object.
 
@@ -1078,16 +1372,33 @@ class Bulk:
                                           will be inserted or updated. This is
                                           required for upserts, but will default
                                           to the record Id field
-
+            concurrency_mode (str): Can't update after creation. The concurrency
+                                    mode for the job. The valid values are:
+                                    Parallel: Process batches in parallel mode.
+                                              This is the default value.
+                                    Serial: Process batches in serial mode.
+                                            Processing in parallel can cause
+                                            database contention. When this is
+                                            severe, the job may fail. If
+                                            you're experiencing this issue,
+                                            submit the job with serial
+                                            concurrency mode. This guarantees
+                                            that batches are processed one at
+                                            a time. Note that using this
+                                            option may significantly increase
+                                            the processing time for a job.
         Returns:
             @return               Returns an object containing the status for each
                                   record that was put into the batch
         """
-        result = Bulk.perform_bulk_operation(object_api_name, records, batch_size, 'upsert', polling_wait, external_id_field_name, access_token, instance_url)
+        result = Bulk.perform_bulk_operation(object_api_name, records, batch_size, 'upsert', polling_wait,
+                                             external_id_field_name, access_token, instance_url, concurrency_mode)
 
         return result
 
-    def delete_sobject_rows(object_api_name, records, hard_delete, batch_size, polling_wait, access_token, instance_url):
+    @staticmethod
+    def delete_sobject_rows(object_api_name, records, hard_delete, batch_size, polling_wait, access_token,
+                            instance_url):
         """
         This method upserts a list of records provided as an object.
 
@@ -1121,10 +1432,12 @@ class Bulk:
         if hard_delete:
             delete_type = 'hardDelete'
 
-        result = Bulk.perform_bulk_operation(object_api_name, records, batch_size, delete_type, polling_wait, None, access_token, instance_url)
+        result = Bulk.perform_bulk_operation(object_api_name, records, batch_size, delete_type, polling_wait, None,
+                                             access_token, instance_url)
 
         return result
 
+    @staticmethod
     def query_sobject_rows(object_api_name, query, query_all, access_token, instance_url):
         """
         This returns the result for a bulk query operations.
@@ -1154,12 +1467,14 @@ class Bulk:
         # create the bulk job
         job_body_details = Util.get_bulk_job_body(object_api_name, query_type, None, None)
         create_job_json_body = json.dumps(job_body_details, indent=4, separators=(',', ': '))
-        job_create_response = webservice.Tools.post_http_response(instance_url + Bulk.base_bulk_uri + Bulk.batch_uri, create_job_json_body, header_details)
+        job_create_response = webservice.Tools.post_http_response(instance_url + Bulk.base_bulk_uri + Bulk.batch_uri,
+                                                                  create_job_json_body, header_details)
         json_job_create_response = json.loads(job_create_response.text)
         job_id = json_job_create_response['id']
 
         # create the query request batch
-        job_batch_response = webservice.Tools.post_http_response(instance_url + Bulk.base_bulk_uri + Bulk.batch_uri + '/' + job_id + '/batch', query, header_details)
+        job_batch_response = webservice.Tools.post_http_response(
+            instance_url + Bulk.base_bulk_uri + Bulk.batch_uri + '/' + job_id + '/batch', query, header_details)
         json_job_batch_response = json.loads(job_batch_response.text)
         batch_id = json_job_batch_response['id']
         print("\nbatch_id: {}\n".format(batch_id))
@@ -1167,7 +1482,8 @@ class Bulk:
         # close the bulk job
         close_body = {'state': 'Closed'}
         json_close_body = json.dumps(close_body, indent=4, separators=(',', ': '))
-        close_response = webservice.Tools.post_http_response(instance_url + Bulk.base_bulk_uri + Bulk.batch_uri + '/' + job_id, json_close_body, header_details)
+        close_response = webservice.Tools.post_http_response(
+            instance_url + Bulk.base_bulk_uri + Bulk.batch_uri + '/' + job_id, json_close_body, header_details)
         json_close_response = json.loads(close_response.text)
 
         # check job status until the job completes
@@ -1183,6 +1499,324 @@ class Bulk:
 
         return query_result_list
 
+
+class Bulk2:
+    """
+    Bulk API 2.0 provides a simple interface for quickly loading large amounts 
+    of data into your Salesforce org. Currently csv is the only supported format.
+
+    https://developer.salesforce.com/docs/atlas.en-us.api_bulk_v2.meta/api_bulk_v2/introduction_bulk_api_2.htm
+    """
+    base_bulk2_uri = '/services/data/v' + API_VERSION + '/jobs/ingest'
+
+    @staticmethod
+    def get_job_list(is_pk_chunking_enabled, job_type, query_locator, access_token, instance_url):
+        """
+        Retrieves all jobs in the org.
+
+        Args:
+            is_pk_chunking_enabled (bool): If set to true, filters jobs with PK 
+                                           chunking enabled.
+            job_type (str): Filters jobs based on job type. Valid values include:
+                            BigObjectIngest—BigObjects job
+                            Classic—Bulk API 1.0 job
+                            V2Ingest—Bulk API 2.0 job
+            query_locator (int): Use queryLocator with a locator value to get a 
+                                 specific set of job results. Get All Jobs returns 
+                                 up to 1000 result rows per request, along with 
+                                 a nextRecordsUrl value that contains the locator 
+                                 value used to get the next set of results.
+
+        Returns:
+            dict: Object containing a list of every job and the details of the
+                  jobs.
+                  done (bool): Indicates whether there are more jobs to get. If 
+                               false, use the nextRecordsUrl value to retrieve 
+                               the next group of jobs.
+                  records (dict): The same details of the job that can be 
+                                  retrieved with the get_job_info.
+                  nextRecordsUrl (str): A URL that contains a query locator used 
+                                        to get the next set of results in a 
+                                        subsequent request if done isn’t true.
+        """
+        header_details = Util.get_standard_header(access_token)
+
+        uri_params = []
+        uri_param_string = ""
+
+        if is_pk_chunking_enabled:
+            uri_params.append("isPkChunkingEnabled=true")
+
+        if job_type:
+            uri_params.append("jobType=" + job_type)
+
+        if query_locator:
+            uri_params.append("queryLocator=" + str(query_locator))
+
+        if uri_params:
+            uri_param_string = "?" + "&".join(uri_params)
+
+        response = webservice.Tools.get_http_response(instance_url + Bulk2.base_bulk2_uri + uri_param_string,
+                                                      header_details)
+
+    @staticmethod
+    def create_job(object_name, operation, external_id_field_name, column_delimiter, content_type, line_ending,
+                   access_token, instance_url):
+        """
+        Creates a job, which represents a bulk operation (and associated data) 
+        that is sent to Salesforce for asynchronous processing. Provide job data 
+        via an Upload Job Data request, or as part of a multipart create job 
+        request.
+
+        Args:
+            object_name (str): Required. The object type for the data being 
+                               processed. Use only a single object type per job.
+            operation (str): Required. The processing operation for the job. 
+                             Valid values are:
+                                insert
+                                delete
+                                update
+                                upsert
+            external_id_field_name (str): Required for upsert operations. The 
+                                          external ID field in the object being 
+                                          updated. Only needed for upsert 
+                                          operations. Field values must also 
+                                          exist in CSV job data.
+            column_delimiter (str): Optional. The column delimiter used for CSV 
+                                    job data. The default value is COMMA. Valid 
+                                    values are:
+                                        BACKQUOTE—backquote character (`)
+                                        CARET—caret character (^)
+                                        COMMA—comma character (,) which is the 
+                                            default delimiter
+                                        PIPE—pipe character (|)
+                                        SEMICOLON—semicolon character (;)
+                                        TAB—tab character
+            content_type (str): Optional. The content type for the job. The only 
+                                valid value (and the default) is CSV.
+            line_ending (str): Optional. The line ending used for CSV job data, 
+                               marking the end of a data row. The default is LF. 
+                               Valid values are:
+                                    LF—linefeed character
+                                    CRLF—carriage return character followed by a 
+                                        linefeed character
+            access_token (str): This is the access_token value received from the
+                                login response
+            instance_url (str): This is the instance_url value received from the
+                                login response
+
+        Returns:
+            dict: Returns data about the job. The "id" field provides the job Id
+                  necessary for the remaining calls. Create job response details:
+                  https://developer.salesforce.com/docs/atlas.en-us.api_bulk_v2.meta/api_bulk_v2/create_job.htm
+        """
+        header_details = Util.get_standard_header(access_token)
+        header_details["Content-Type"] = "application/json; charset=UTF-8"
+        header_details["Accept"] = "application/json"
+
+        post_body = {}
+        post_body["object"] = object_name
+        post_body["operation"] = operation
+
+        if external_id_field_name:
+            post_body["externalIdFieldName"] = external_id_field_name
+
+        if column_delimiter:
+            post_body["columnDelimiter"] = column_delimiter
+
+        if content_type:
+            post_body["contentType"] = content_type
+
+        if line_ending:
+            post_body["lineEnding"] = line_ending
+
+        json_post_body_data = json.dumps(post_body, indent=4, separators=(',', ': '))
+        response = webservice.Tools.post_http_response(instance_url + Bulk2.base_bulk2_uri, json_post_body_data,
+                                                       header_details)
+        json_response = json.loads(response.text)
+
+        return json_response
+
+    @staticmethod
+    def upload_csv_batch(data_set, job_id, access_token, instance_url):
+        """
+        Uploads data for a job using CSV data you provide.
+
+        Args:
+            data_set (str): This is a base64 encoded csv set.
+            job_id (str): This is the job id from the Bulk2.create_job response.
+            access_token (str): This is the access_token value received from the
+                                login response
+            instance_url (str): This is the instance_url value received from the
+                                login response.
+
+        Returns:
+            int: Returns the status code. If the upload was successful, the 
+                 response code should be 201.
+        """
+        header_details = Util.get_standard_header(access_token)
+        header_details["Content-Type"] = "text/csv"
+        header_details["Accept"] = "application/json"
+
+        response = webservice.Tools.put_http_response(instance_url + Bulk2.base_bulk2_uri + '/' + job_id + '/batches',
+                                                      data_set, header_details)
+
+        return response.status_code
+
+    @staticmethod
+    def change_job_state(job_state, job_id, access_token, instance_url):
+        """
+        Closes or aborts a job. If you close a job, Salesforce queues the job 
+        and uploaded data for processing, and you can’t add any additional job 
+        data. If you abort a job, the job does not get queued or processed.
+
+        Args:
+            job_state (str): The state to update the job to. Use UploadComplete 
+                             to close a job, or Aborted to abort a job.
+            job_id (str): The job id returned by Bulk2.create_job
+            access_token (str): This is the access_token value received from the
+                                login response
+            instance_url (str): This is the instance_url value received from the
+                                login response.
+
+        Returns:
+            dict: Returns the current job state details.
+        """
+        header_details = Util.get_standard_header(access_token)
+
+        request_body = {"state": job_state}
+
+        json_request_body = json.dumps(request_body, indent=4, separators=(',', ': '))
+        response = webservice.Tools.patch_http_response(instance_url + Bulk2.base_bulk2_uri + '/' + job_id,
+                                                        json_request_body, header_details)
+        json_response = json.loads(response.text)
+
+        return json_response
+
+    @staticmethod
+    def delete_job(job_id, access_token, instance_url):
+        """
+        Deletes a job. To be deleted, a job must have a state of UploadComplete, 
+        JobComplete, Aborted, or Failed.
+
+        Args:
+            job_id (str): The job id returned by Bulk2.create_job
+            access_token (str): This is the access_token value received from the
+                                login response
+            instance_url (str): This is the instance_url value received from the
+                                login response.
+
+        Returns:
+            int: Returns the http status code. Should be 204 which indicates the 
+                 job was deleted successfully.
+        """
+        header_details = Util.get_standard_header(access_token)
+
+        response = webservice.Tools.delete_http_response(instance_url + Bulk2.base_bulk2_uri + '/' + job_id, None,
+                                                         header_details)
+
+        return response.status_code
+
+    @staticmethod
+    def get_job_info(job_id, access_token, instance_url):
+        """
+        Retrieves detailed information about a job.
+
+        Args:
+            job_id (str): The job id returned by Bulk2.create_job
+            access_token (str): This is the access_token value received from the
+                                login response
+            instance_url (str): This is the instance_url value received from the
+                                login response.
+
+        Returns:
+            dict: Returns details about the status of the given job. If the job
+                  succeeds, the status will be 'JobComplete' vs 'Failed' for 
+                  a failed job. More details here:
+                  https://developer.salesforce.com/docs/atlas.en-us.api_bulk_v2.meta/api_bulk_v2/get_job_info.htm
+        """
+        header_details = Util.get_standard_header(access_token)
+
+        response = webserivce.Tools.get_http_response(instance_url + Bulk2.base_bulk2_uri + '/' + job_id,
+                                                      header_details)
+        json_response = json.loads(response.text)
+
+        return json_response
+
+    @staticmethod
+    def get_success_results(job_id, access_token, instance_url):
+        """
+        Retrieves a list of successfully processed records for a completed job.
+
+        Args:
+            job_id (str): The job id returned by Bulk2.create_job
+            access_token (str): This is the access_token value received from the
+                                login response
+            instance_url (str): This is the instance_url value received from the
+                                login response.
+
+        Returns:
+            str: Returns a CSV with 2 columns at the start, then all the fields
+                 that were originally sent.
+                 sf__Created (bool): Indicates if the record was created.
+                 sf__Id (str): ID of the record that was successfully processed.
+        """
+        header_details = Util.get_standard_header(access_token)
+
+        response = webserivce.Tools.get_http_response(
+            instance_url + Bulk2.base_bulk2_uri + '/' + job_id + '/successfulResults/', header_details)
+
+        return response.text
+
+    @staticmethod
+    def get_failed_results(job_id, access_token, instance_url):
+        """
+        Retrieves a list of failed records for a completed job.
+
+        Args:
+            job_id (str): The job id returned by Bulk2.create_job
+            access_token (str): This is the access_token value received from the
+                                login response
+            instance_url (str): This is the instance_url value received from the
+                                login response.
+
+        Returns:
+            str: Returns a CSV with 2 columns at the start, then all the fields
+                 that were originally sent.
+                 sf__Error (str): Error code and message, if applicable.
+                 sf__Id (str): ID of the record that had an error during 
+                               processing, if applicable.
+        """
+        header_details = Util.get_standard_header(access_token)
+
+        response = webserivce.Tools.get_http_response(
+            instance_url + Bulk2.base_bulk2_uri + '/' + job_id + '/failedResults/', header_details)
+
+        return response.text
+
+    @staticmethod
+    def get_unprocessed_results(job_id, access_token, instance_url):
+        """
+        Retrieves a list of unprocessed records for a completed job.
+
+        Args:
+            job_id (str): The job id returned by Bulk2.create_job
+            access_token (str): This is the access_token value received from the
+                                login response
+            instance_url (str): This is the instance_url value received from the
+                                login response.
+
+        Returns:
+            str: Returns a CSV with all the fields that were originally supplied.
+        """
+        header_details = Util.get_standard_header(access_token)
+
+        response = webserivce.Tools.get_http_response(
+            instance_url + Bulk2.base_bulk2_uri + '/' + job_id + '/unprocessedrecords/', header_details)
+
+        return response.text
+
+
 class Metadata:
     """
     Use Metadata API to retrieve, deploy, create, update or delete customization
@@ -1191,6 +1825,7 @@ class Metadata:
     building tools that can manage the metadata model, not the data itself.
     """
 
+    @staticmethod
     def get_session_header(session_id):
         """
         Used to get the session header for the given session_id
@@ -1208,6 +1843,7 @@ class Metadata:
 
         return session_header
 
+    @staticmethod
     def get_call_options(client_name):
         """
         This returns the call options for the soap header
@@ -1224,6 +1860,7 @@ class Metadata:
 
         return call_options
 
+    @staticmethod
     def get_all_or_none_header(all_or_none):
         """
         Indicates whether to roll back all metadata changes when some of the
@@ -1246,6 +1883,7 @@ class Metadata:
 
         return all_or_none_header
 
+    @staticmethod
     def get_debugging_header(categories):
         """
         Specifies that the deployment result will contain the debug log output,
@@ -1266,6 +1904,7 @@ class Metadata:
 
         return debugging_header
 
+    @staticmethod
     def get_soap_headers(session_id, client_name, all_or_none, debug_categories):
         """
         This builds the session header for the Metadata requests
@@ -1298,6 +1937,7 @@ class Metadata:
 
         return soap_headers
 
+    @staticmethod
     def get_metadata(full_name):
         """
         This is the base class for all metadata types. You cannot edit this
@@ -1334,6 +1974,7 @@ class Metadata:
 
         return metadata
 
+    @staticmethod
     def get_package_type_members(member_name, member_list):
         """
         This builds the list of members for a specific type. For example this
@@ -1357,6 +1998,7 @@ class Metadata:
 
         return package_type_members
 
+    @staticmethod
     def get_client_service(metadata_url):
         """
         This method builds the client service for the Metadata API
@@ -1371,6 +2013,7 @@ class Metadata:
 
         return soap_client_service
 
+    @staticmethod
     def get_package(**kwargs):
         """
         Specifies which metadata components to retrieve as part of a retrieve()
@@ -1465,6 +2108,7 @@ class Metadata:
 
         return this_package
 
+    @staticmethod
     def get_deploy_options(**kwargs):
         """
         The options that can be set for deploying a metadata package
@@ -1589,6 +2233,7 @@ class Metadata:
 
         return deploy_options
 
+    @staticmethod
     def get_retrieve_request(**kwargs):
         """
         This is the package of data needed to retrieve metadata
@@ -1638,12 +2283,14 @@ class Metadata:
 
         return this_retrieve_request
 
+    @staticmethod
     def get_list_metadata_query(folder, metadata_type):
         list_metadata_query_type = client.get_type('ns0:ListMetadataQuery')
         metadata_query = list_metadata_query_type(folder, metadata_type)
 
         return metadata_query
 
+    @staticmethod
     def retrieve(retrieve_request, session_id, metadata_url, client_name):
         """
         This returns the async result of a retrieve request that can then be
@@ -1664,6 +2311,7 @@ class Metadata:
 
         return this_retrieve
 
+    @staticmethod
     def check_retrieve_status(async_process_id, include_zip, session_id, metadata_url, client_name):
         """
         This checks the status of the retrieve request. You can have the response
@@ -1692,10 +2340,12 @@ class Metadata:
         soap_headers = Metadata.get_soap_headers(session_id, client_name, None, None)
 
         client_service = Metadata.get_client_service(metadata_url)
-        this_retrieve_status = client_service.checkRetrieveStatus(async_process_id, include_zip, _soapheaders=soap_headers)
+        this_retrieve_status = client_service.checkRetrieveStatus(async_process_id, include_zip,
+                                                                  _soapheaders=soap_headers)
 
         return this_retrieve_status
 
+    @staticmethod
     def cancel_deploy(deploy_id, session_id, metadata_url, client_name):
         """
         This method cancels the deploy
@@ -1717,6 +2367,7 @@ class Metadata:
 
         return cancel_deploy_result
 
+    @staticmethod
     def check_deploy_status(deploy_id, include_details, session_id, metadata_url, client_name):
         """
         This method checks the status of the requested deploy
@@ -1739,6 +2390,7 @@ class Metadata:
 
         return check_deploy_result
 
+    @staticmethod
     def create_metadata(metadata_list, session_id, metadata_url, client_name, all_or_none):
         """
         Adds one or more new metadata components to your organization synchronously.
@@ -1772,6 +2424,7 @@ class Metadata:
 
         return create_metadata_result
 
+    @staticmethod
     def delete_metadata(metadata_type, full_names, session_id, metadata_url, client_name, all_or_none):
         """
         Deletes one or more metadata components from your organization synchronously.
@@ -1806,6 +2459,7 @@ class Metadata:
 
         return delete_metadata_result
 
+    @staticmethod
     def deploy(zip_file, deploy_options, session_id, metadata_url, client_name, debug_categories):
         """
         Uses file representations of components to create, update, or delete those
@@ -1833,6 +2487,7 @@ class Metadata:
 
         return deploy_result
 
+    @staticmethod
     def deploy_recent_validation(validation_id, session_id, metadata_url, client_name, debug_categories):
         soap_headers = Metadata.get_soap_headers(session_id, client_name, None, debug_categories)
 
@@ -1841,6 +2496,7 @@ class Metadata:
 
         return deploy_validation_result
 
+    @staticmethod
     def describe_metadata(as_of_version, session_id, metadata_url, client_name):
         soap_headers = Metadata.get_soap_headers(session_id, client_name, None, None)
 
@@ -1849,6 +2505,7 @@ class Metadata:
 
         return describe_metadata_result
 
+    @staticmethod
     def describe_value_type(value_type, session_id, metadata_url):
         soap_headers = Metadata.get_soap_headers(session_id, None, None, None)
 
@@ -1857,14 +2514,17 @@ class Metadata:
 
         return describe_value_type
 
+    @staticmethod
     def list_metadata(list_metadata_query, as_of_version, session_id, metadata_url, client_name):
         soap_headers = Metadata.get_soap_headers(session_id, client_name, None, None)
 
         client_service = Metadata.get_client_service(metadata_url)
-        list_metadata_result = client_service.listMetadata(list_metadata_query, as_of_version, _soapheaders=soap_headers)
+        list_metadata_result = client_service.listMetadata(list_metadata_query, as_of_version,
+                                                           _soapheaders=soap_headers)
 
         return list_metadata_result
 
+    @staticmethod
     def read_metadata(metadata_type, full_names, session_id, metadata_url, client_name):
         soap_headers = Metadata.get_soap_headers(session_id, client_name, None, None)
 
@@ -1873,14 +2533,17 @@ class Metadata:
 
         return read_metadata_result
 
+    @staticmethod
     def rename_metadata(metadata_type, old_full_name, new_full_name, session_id, metadata_url, client_name):
         soap_headers = Metadata.get_soap_headers(session_id, client_name, None, None)
 
         client_service = Metadata.get_client_service(metadata_url)
-        rename_metadata_result = client_service.renameMetadata(metadata_type, old_full_name, new_full_name, _soapheaders=soap_headers)
+        rename_metadata_result = client_service.renameMetadata(metadata_type, old_full_name, new_full_name,
+                                                               _soapheaders=soap_headers)
 
         return rename_metadata_result
 
+    @staticmethod
     def update_metadata(metadata_list, session_id, metadata_url, client_name, all_or_none):
         soap_headers = Metadata.get_soap_headers(session_id, client_name, all_or_none, None)
 
@@ -1889,6 +2552,7 @@ class Metadata:
 
         return update_metadata_result
 
+    @staticmethod
     def upsert_metadata(metadata_list, session_id, metadata_url, client_name, all_or_none):
         soap_headers = Metadata.get_soap_headers(session_id, client_name, all_or_none, None)
 

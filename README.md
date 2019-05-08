@@ -15,6 +15,7 @@ As I continue to update this library, I'll be adding reference links to the Sale
 - [Streaming API](https://developer.salesforce.com/page/Streaming_API)
 - [REST API](https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/intro_what_is_rest_api.htm)
 - [Bulk API](https://developer.salesforce.com/docs/atlas.en-us.api_asynch.meta/api_asynch/asynch_api_intro.htm)
+- [Bulk 2.0 API](https://developer.salesforce.com/docs/atlas.en-us.api_bulk_v2.meta/api_bulk_v2/introduction_bulk_api_2.htm)
 - [Chatter REST API](https://developer.salesforce.com/page/Chatter_API)
 - [Bulk API Trailhead Example](https://trailhead-salesforce-com.firelayers.net/en/api_basics/api_basics_bulk)
 
