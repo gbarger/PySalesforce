@@ -18,14 +18,16 @@ import webservice
 import urllib
 import time
 import sys
+import os
 from zeep import Client, xsd, ns
 
 API_VERSION = '45.0'
-METADATA_WSDL_FILE = './WSDL/metadata.wsdl'
-METADATA_SANDBOX_WSDL_FILE = './WSDL/metadata_sandbox.wsdl'
+METADATA_WSDL_FILE = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'WSDL', 'metadata.wsdl')
+METADATA_SANDBOX_WSDL_FILE = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'WSDL', 'metadata_sandbox.wsdl')
+
 METADATA_SERVICE_BINDING = '{http://soap.sforce.com/2006/04/metadata}MetadataBinding'
-PARTNER_WSDL_FILE = './WSDL/partner.wsdl'
-PARTNER_SANDBOX_WSDL_FILE = './WSDL/partner_sandbox.wsdl'
+PARTNER_WSDL_FILE = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'WSDL', 'partner.wsdl')
+PARTNER_SANDBOX_WSDL_FILE = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'WSDL', 'partner_sandbox.wsdl')
 
 
 class Util:
