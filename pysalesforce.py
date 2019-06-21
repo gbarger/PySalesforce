@@ -1011,8 +1011,6 @@ class Standard:
         else:
             delete_params += "&allOrNone=false"
 
-        data_body_json = json.dumps(request_body, indent=4, separators=(',', ': '))
-
         response = webservice.Tools.delete_http_response(
             instance_url + Standard.base_standard_uri + 'v' + API_VERSION + delete_rows_uri + delete_params, None,
             header_details)
