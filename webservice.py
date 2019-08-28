@@ -6,7 +6,7 @@ import ssl
 from urllib3.poolmanager import PoolManager
 
 class Tools:
-
+    default_timeout = None
 
     def http_request(**kwargs):
         """
@@ -34,7 +34,7 @@ class Tools:
             prepReq = req.prepare()
             session = requests.Session()
             session.mount('https://', SslHttpAdapter())
-            response = session.send(prepReq)
+            response = session.send(prepReq, timeout=Tools.default_timeout)
         except:
             errors = ""
 
@@ -42,7 +42,6 @@ class Tools:
                 errors += " " + repr(e)
 
             print("Errors with response from {}: {}".format(str(URL), errors))
-            sys.exit(68) # code: host name unknown
 
         return response
 
