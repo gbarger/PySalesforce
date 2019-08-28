@@ -1764,7 +1764,7 @@ class Bulk2:
         processed_total = 0
         finished_statuses = ['JobComplete', 'Aborted', 'Failed']
         while True:
-            json_response = get_job_info(job_id, access_token, instance_url)
+            json_response = Bulk2.get_job_info(job_id, access_token, instance_url)
 
             print("Job state/failed/total: {}/{}/{}".format(json_response['state'],
                                                             json_response['numberRecordsFailed'],
