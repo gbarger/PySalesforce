@@ -788,7 +788,7 @@ class Standard:
                                 when the update of any object fails (true) or to
                                 continue with the independent update of other
                                 objects in the request. The default is false.
-            run_assignment_rules (bool): If true this will add the assginment 
+            run_assignment_rules (bool): If true this will add the assginment
                                          rule header to the request.
             access_token (str): This is the access_token value received from the
                                 login response
@@ -915,7 +915,7 @@ class Standard:
                                 when the update of any object fails (true) or to
                                 continue with the independent update of other
                                 objects in the request. The default is false.
-            run_assignment_rules (bool): If true this will add the assginment 
+            run_assignment_rules (bool): If true this will add the assginment
                                          rule header to the request.
             access_token (str): This is the access_token value received from the
                                 login response
@@ -1500,7 +1500,7 @@ class Bulk:
 
 class Bulk2:
     """
-    Bulk API 2.0 provides a simple interface for quickly loading large amounts 
+    Bulk API 2.0 provides a simple interface for quickly loading large amounts
     of data into your Salesforce org. Currently csv is the only supported format.
 
     https://developer.salesforce.com/docs/atlas.en-us.api_bulk_v2.meta/api_bulk_v2/introduction_bulk_api_2.htm
@@ -1513,28 +1513,28 @@ class Bulk2:
         Retrieves all jobs in the org.
 
         Args:
-            is_pk_chunking_enabled (bool): If set to true, filters jobs with PK 
+            is_pk_chunking_enabled (bool): If set to true, filters jobs with PK
                                            chunking enabled.
             job_type (str): Filters jobs based on job type. Valid values include:
                             BigObjectIngest—BigObjects job
                             Classic—Bulk API 1.0 job
                             V2Ingest—Bulk API 2.0 job
-            query_locator (int): Use queryLocator with a locator value to get a 
-                                 specific set of job results. Get All Jobs returns 
-                                 up to 1000 result rows per request, along with 
-                                 a nextRecordsUrl value that contains the locator 
+            query_locator (int): Use queryLocator with a locator value to get a
+                                 specific set of job results. Get All Jobs returns
+                                 up to 1000 result rows per request, along with
+                                 a nextRecordsUrl value that contains the locator
                                  value used to get the next set of results.
 
         Returns:
             dict: Object containing a list of every job and the details of the
                   jobs.
-                  done (bool): Indicates whether there are more jobs to get. If 
-                               false, use the nextRecordsUrl value to retrieve 
+                  done (bool): Indicates whether there are more jobs to get. If
+                               false, use the nextRecordsUrl value to retrieve
                                the next group of jobs.
-                  records (dict): The same details of the job that can be 
+                  records (dict): The same details of the job that can be
                                   retrieved with the get_job_info.
-                  nextRecordsUrl (str): A URL that contains a query locator used 
-                                        to get the next set of results in a 
+                  nextRecordsUrl (str): A URL that contains a query locator used
+                                        to get the next set of results in a
                                         subsequent request if done isn’t true.
         """
         header_details = Util.get_standard_header(access_token)
@@ -1561,42 +1561,42 @@ class Bulk2:
     def create_job(object_name, operation, external_id_field_name, column_delimiter, content_type, line_ending,
                    access_token, instance_url):
         """
-        Creates a job, which represents a bulk operation (and associated data) 
-        that is sent to Salesforce for asynchronous processing. Provide job data 
-        via an Upload Job Data request, or as part of a multipart create job 
+        Creates a job, which represents a bulk operation (and associated data)
+        that is sent to Salesforce for asynchronous processing. Provide job data
+        via an Upload Job Data request, or as part of a multipart create job
         request.
 
         Args:
-            object_name (str): Required. The object type for the data being 
+            object_name (str): Required. The object type for the data being
                                processed. Use only a single object type per job.
-            operation (str): Required. The processing operation for the job. 
+            operation (str): Required. The processing operation for the job.
                              Valid values are:
                                 insert
                                 delete
                                 update
                                 upsert
-            external_id_field_name (str): Required for upsert operations. The 
-                                          external ID field in the object being 
-                                          updated. Only needed for upsert 
-                                          operations. Field values must also 
+            external_id_field_name (str): Required for upsert operations. The
+                                          external ID field in the object being
+                                          updated. Only needed for upsert
+                                          operations. Field values must also
                                           exist in CSV job data.
-            column_delimiter (str): Optional. The column delimiter used for CSV 
-                                    job data. The default value is COMMA. Valid 
+            column_delimiter (str): Optional. The column delimiter used for CSV
+                                    job data. The default value is COMMA. Valid
                                     values are:
                                         BACKQUOTE—backquote character (`)
                                         CARET—caret character (^)
-                                        COMMA—comma character (,) which is the 
+                                        COMMA—comma character (,) which is the
                                             default delimiter
                                         PIPE—pipe character (|)
                                         SEMICOLON—semicolon character (;)
                                         TAB—tab character
-            content_type (str): Optional. The content type for the job. The only 
+            content_type (str): Optional. The content type for the job. The only
                                 valid value (and the default) is CSV.
-            line_ending (str): Optional. The line ending used for CSV job data, 
-                               marking the end of a data row. The default is LF. 
+            line_ending (str): Optional. The line ending used for CSV job data,
+                               marking the end of a data row. The default is LF.
                                Valid values are:
                                     LF—linefeed character
-                                    CRLF—carriage return character followed by a 
+                                    CRLF—carriage return character followed by a
                                         linefeed character
             access_token (str): This is the access_token value received from the
                                 login response
@@ -1649,7 +1649,7 @@ class Bulk2:
                                 login response.
 
         Returns:
-            int: Returns the status code. If the upload was successful, the 
+            int: Returns the status code. If the upload was successful, the
                  response code should be 201.
         """
         header_details = Util.get_standard_header(access_token)
@@ -1664,12 +1664,12 @@ class Bulk2:
     @staticmethod
     def change_job_state(job_state, job_id, access_token, instance_url):
         """
-        Closes or aborts a job. If you close a job, Salesforce queues the job 
-        and uploaded data for processing, and you can’t add any additional job 
+        Closes or aborts a job. If you close a job, Salesforce queues the job
+        and uploaded data for processing, and you can’t add any additional job
         data. If you abort a job, the job does not get queued or processed.
 
         Args:
-            job_state (str): The state to update the job to. Use UploadComplete 
+            job_state (str): The state to update the job to. Use UploadComplete
                              to close a job, or Aborted to abort a job.
             job_id (str): The job id returned by Bulk2.create_job
             access_token (str): This is the access_token value received from the
@@ -1694,7 +1694,7 @@ class Bulk2:
     @staticmethod
     def delete_job(job_id, access_token, instance_url):
         """
-        Deletes a job. To be deleted, a job must have a state of UploadComplete, 
+        Deletes a job. To be deleted, a job must have a state of UploadComplete,
         JobComplete, Aborted, or Failed.
 
         Args:
@@ -1705,7 +1705,7 @@ class Bulk2:
                                 login response.
 
         Returns:
-            int: Returns the http status code. Should be 204 which indicates the 
+            int: Returns the http status code. Should be 204 which indicates the
                  job was deleted successfully.
         """
         header_details = Util.get_standard_header(access_token)
@@ -1729,15 +1729,55 @@ class Bulk2:
 
         Returns:
             dict: Returns details about the status of the given job. If the job
-                  succeeds, the status will be 'JobComplete' vs 'Failed' for 
+                  succeeds, the status will be 'JobComplete' vs 'Failed' for
                   a failed job. More details here:
                   https://developer.salesforce.com/docs/atlas.en-us.api_bulk_v2.meta/api_bulk_v2/get_job_info.htm
         """
         header_details = Util.get_standard_header(access_token)
 
-        response = webserivce.Tools.get_http_response(instance_url + Bulk2.base_bulk2_uri + '/' + job_id,
+        response = webservice.Tools.get_http_response(instance_url + Bulk2.base_bulk2_uri + '/' + job_id,
                                                       header_details)
         json_response = json.loads(response.text)
+
+        return json_response
+    
+    @staticmethod
+    def get_job_status(job_id, polling_wait, access_token, instance_url):
+        """
+        This method is used for printing job status
+
+        Args:
+            job_id (str): The job id returned when creating a batch job
+            polling_wait (int): This is the number of seconds
+            access_token (str): This is the access_token value received from the
+                                login response
+            instance_url (str): This is the instance_url value received from the
+                                login response
+
+        Returns:
+            objects: Prints the status of the bulk job and polls for an update
+                     ever polling_wait seconds until the numberBatchesQueued = 0,
+                     then it will break out and just returns the final job status
+                     response.
+        """
+        print("Status for job: {}".format(job_id))
+        processed_total = 0
+        finished_statuses = ['JobComplete', 'Aborted', 'Failed']
+        while True:
+            json_response = Bulk2.get_job_info(job_id, access_token, instance_url)
+
+            print("Job state/failed/total: {}/{}/{}".format(json_response['state'],
+                                                            json_response['numberRecordsFailed'],
+                                                            json_response['numberRecordsProcessed']))
+
+            if json_response['state'] in finished_statuses:
+                #Bulk v2 will set status to Failed even while the job is processing if it encounters a record
+                #failure, checking to see if records processes has not moved since the last poll
+                if processed_total == json_response['numberRecordsProcessed']:
+                    break
+
+            processed_total = json_response['numberRecordsProcessed']
+            time.sleep(polling_wait)
 
         return json_response
 
@@ -1761,7 +1801,7 @@ class Bulk2:
         """
         header_details = Util.get_standard_header(access_token)
 
-        response = webserivce.Tools.get_http_response(
+        response = webservice.Tools.get_http_response(
             instance_url + Bulk2.base_bulk2_uri + '/' + job_id + '/successfulResults/', header_details)
 
         return response.text
@@ -1782,12 +1822,12 @@ class Bulk2:
             str: Returns a CSV with 2 columns at the start, then all the fields
                  that were originally sent.
                  sf__Error (str): Error code and message, if applicable.
-                 sf__Id (str): ID of the record that had an error during 
+                 sf__Id (str): ID of the record that had an error during
                                processing, if applicable.
         """
         header_details = Util.get_standard_header(access_token)
 
-        response = webserivce.Tools.get_http_response(
+        response = webservice.Tools.get_http_response(
             instance_url + Bulk2.base_bulk2_uri + '/' + job_id + '/failedResults/', header_details)
 
         return response.text
@@ -1809,7 +1849,7 @@ class Bulk2:
         """
         header_details = Util.get_standard_header(access_token)
 
-        response = webserivce.Tools.get_http_response(
+        response = webservice.Tools.get_http_response(
             instance_url + Bulk2.base_bulk2_uri + '/' + job_id + '/unprocessedrecords/', header_details)
 
         return response.text
