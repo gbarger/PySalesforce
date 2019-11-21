@@ -748,6 +748,8 @@ class Standard:
 
         if run_assignment_rules:
             header_details["Sforce-Auto-Assign"] = "true"
+        else:
+            header_details["Sforce-Auto-Assign"] = "false"
 
         data_body_json = json.dumps(record_json, indent=4, separators=(',', ': '))
 
@@ -827,6 +829,8 @@ class Standard:
 
         if run_assignment_rules:
             header_details["Sforce-Auto-Assign"] = "true"
+        else:
+            header_details["Sforce-Auto-Assign"] = "false"
 
         request_body = {}
         request_body["allOrNone"] = all_or_none
@@ -944,6 +948,8 @@ class Standard:
 
         if run_assignment_rules:
             header_details["Sforce-Auto-Assign"] = "true"
+        else:
+            header_details["Sforce-Auto-Assign"] = "false"
 
         request_body = {}
         request_body["allOrNone"] = all_or_none

@@ -32,9 +32,9 @@ class Tools:
         try:
             req = requests.Request(requestType, URL, data=data_body, headers=header_details)
             prepReq = req.prepare()
-            session = requests.Session()
-            session.mount('https://', SslHttpAdapter())
-            response = session.send(prepReq, timeout=Tools.default_timeout)
+            with requests.Session() as session:
+                session.mount('https://', SslHttpAdapter())
+                response = session.send(prepReq, timeout=Tools.default_timeout)
         except:
             errors = ""
 
