@@ -2,15 +2,6 @@
 
 """
 This package creates methods to easily call the various Salseforce APIs.
-
-Todo:
-    * update picklist tool to grab object without needing to do that separately
-    * refactor to clean up and reduce code for bulk query
-    * maybe implement kwargs for some of the methods instead of having so many arguments in the signature
-    * implement delete in webservice so I can implement SObject Rows REST API for record deletes
-    * Figure out what's wrong with Tooling.completions
-    * Possibly pull current version from https://yourInstance.salesforce.com/services/data/ - ? Maybe not because of deprecation breaking methods
-    * Implement Bulk API 2.0: https://developer.salesforce.com/docs/atlas.en-us.api_bulk_v2.meta/api_bulk_v2/introduction_bulk_api_2.htm
 """
 
 import json
