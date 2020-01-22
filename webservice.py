@@ -35,14 +35,12 @@ class Tools:
             with requests.Session() as session:
                 session.mount('https://', SslHttpAdapter())
                 response = session.send(prepReq, timeout=Tools.default_timeout)
-        except:
-            errors = ""
-
-            for e in sys.exc_info():
-                errors += " " + repr(e)
-
-            print("Errors with response from {}: {}".format(str(URL), errors))
-
+                response.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            # e.response.json won't be visible if exception is just raised
+            if e.response is not None:
+                print("Errors with response from {}: {}" .format(str(URL), str(e.response.json())))
+            raise
         return response
 
 

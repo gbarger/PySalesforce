@@ -1044,6 +1044,33 @@ class Standard:
 
         return json_response
 
+    @staticmethod
+    def get_next_query_batch(next_record_url, access_token, instance_url):
+        """
+        Does a GET on the url passed. If the query results are still too large,
+        the response contains the first batch of results and a query identifier
+        in the nextRecordsUrl field of the response. The identifier can be used
+        in an additional request to retrieve the next batch.
+
+        Args:
+            next_record_url (str): The url of the next record
+            access_token (str)   : This is the access_token value received from the
+                                   login response
+            instance_url (str)   : This is the instance_url value received from the
+                                   login response
+
+        Returns:
+            object: returns the query results, if they are too large, then it
+                    will also return a nextRecordsUrl to get more records.
+        """
+        header_details = Util.get_standard_header(access_token)
+
+        response = webservice.Tools.get_http_response(instance_url + next_record_url,
+            header_details)
+
+        json_response = json.loads(response.text)
+
+        return json_response
 
 class Bulk:
     """
