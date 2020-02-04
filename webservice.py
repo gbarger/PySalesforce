@@ -39,7 +39,8 @@ class Tools:
         except requests.exceptions.HTTPError as e:
             # e.response.json won't be visible if exception is just raised
             if e.response is not None:
-                print("Errors with response from {}: {}" .format(str(URL), str(e.response.json())))
+                new_error_str = '{} response: {}' .format(str(e), str(e.response.json()))
+                raise type(e)(new_error_str).with_traceback(sys.exc_info()[2])
             raise
         return response
 
