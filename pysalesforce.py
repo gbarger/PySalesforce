@@ -1128,7 +1128,6 @@ class Standard:
 
         header_details = Util.get_standard_header(access_token)
         
-
         response = webservice.Tools.get_http_response(
             instance_url + Standard.base_standard_uri + 'v' + API_VERSION + get_updated_uri, 
             header_details)
