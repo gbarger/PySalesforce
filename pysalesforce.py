@@ -678,7 +678,7 @@ class Standard:
         return json_response
 
     @staticmethod
-    def get_sobject_row(object, record_id, field_list_string, access_token, instance_url):
+    def get_sobject_row(object_name, record_id, field_list_string, access_token, instance_url):
         """
         Provides the details requested for the specified record. In practice, if you
         provide an explicit list of fields, it will be just like a query for that
@@ -687,7 +687,7 @@ class Standard:
         returned if you leave the fields empty isn't explained in the API documentation
 
         Args:
-            object (str): The API name of the object.
+            object_name (str): The API name of the object.
             record_id (str): The record Id you're trying to retrieve
             field_list_string (str): List of comma separated values for fields
                                      to retrieve
@@ -697,10 +697,10 @@ class Standard:
                                 login response
 
         Returns:
-            object: returns the record with the explicit field list, or all (or
-                    a lot) of the fields if the field_list_string is None.
+            dict: returns the record with the explicit field list, or all (or
+                a lot) of the fields if the field_list_string is None.
         """
-        get_row_uri = '/sobjects/' + object + '/' + record_id
+        get_row_uri = '/sobjects/' + object_name + '/' + record_id
         header_details = Util.get_standard_header(access_token)
 
         if field_list_string != None:
@@ -713,28 +713,28 @@ class Standard:
         return json_response
 
     @staticmethod
-    def create_sobject_row(object, record_json, run_assignment_rules, access_token, instance_url):
+    def create_sobject_row(object_name, record_json, run_assignment_rules, access_token, instance_url):
         """
         Creates the provided record in the recordJson param
 
         Args:
-            object (str): The API name of the object.
-            record_json (object): The JSON describing the fields you want to
-                                  update on the given object. You should pass in
-                                  a python object and it will be converted to a
-                                  json string to send the request. This object
-                                  is just the key value paris for the record
-                                  update. e.g.:
-                                      {
-                                          'BillingCity': 'Bellevue',
-                                          'BillingState': 'WA'
-                                      }
+            object_name (str): The API name of the object.
+            record_json (dict): The JSON describing the fields you want to
+                                update on the given object. You should pass in
+                                a python object and it will be converted to a
+                                json string to send the request. This object
+                                is just the key value paris for the record
+                                update. e.g.:
+                                    {
+                                        'BillingCity': 'Bellevue',
+                                        'BillingState': 'WA'
+                                    }
             instance_url (str): This is the instance_url value received from the
                                 login response
         Returns:
-            object: returns the text from the creation response
+            dict: returns the text from the creation response
         """
-        post_row_uri = '/sobjects/' + object + '/'
+        post_row_uri = '/sobjects/' + object_name + '/'
         header_details = Util.get_standard_header(access_token)
 
         if run_assignment_rules:
@@ -836,23 +836,23 @@ class Standard:
         return json.loads(response.text)
 
     @staticmethod
-    def update_sobject_row(object, record_id, record_json, access_token, instance_url):
+    def update_sobject_row(object_name, record_id, record_json, access_token, instance_url):
         """
         Updates a specific record with the data in the record_json param
 
         Args:
-            object (str): The API name of the object.
+            object_name (str): The API name of the object.
             record_id (str): The record Id you're trying to update
-            record_json (object): The JSON describing the fields you want to
-                                  update on the given object. You should pass in
-                                  a python object and it will be converted to a
-                                  json string to send the request. This object
-                                  is just the key value paris for the record
-                                  update. e.g.:
-                                      {
-                                          'BillingCity': 'Bellevue',
-                                          'BillingState': 'WA'
-                                      }
+            record_json (dict): The JSON describing the fields you want to
+                                update on the given object. You should pass in
+                                a python object and it will be converted to a
+                                json string to send the request. This object
+                                is just the key value paris for the record
+                                update. e.g.:
+                                    {
+                                        'BillingCity': 'Bellevue',
+                                        'BillingState': 'WA'
+                                    }
             access_token (str): This is the access_token value received from the
                                 login response
             instance_url (str): This is the instance_url value received from the
@@ -864,7 +864,7 @@ class Standard:
                  response isn't more detailed because Salesforce returns no
                  text, only a response code of 204
         """
-        patch_row_uri = '/sobjects/' + object + '/' + record_id
+        patch_row_uri = '/sobjects/' + object_name + '/' + record_id
         header_details = Util.get_standard_header(access_token)
 
         data_body_json = json.dumps(record_json, indent=4, separators=(',', ': '))
@@ -1071,6 +1071,71 @@ class Standard:
         json_response = json.loads(response.text)
 
         return json_response
+
+    @staticmethod
+    def get_updated(object_name, start_date_time, end_date_time, access_token, instance_url):
+        """
+        Retrieves the list of individual records that have been updated (added 
+        or changed) within the given timespan for the specified object. SObject 
+        Get Updated is available in API version 29.0 and later.
+
+        This resource is commonly used in data replication applications. Note 
+        the following considerations:
+            * Results are returned for no more than 30 days previous to the day 
+              the call is executed.
+            * Your client application can replicate any objects to which it has 
+              sufficient permissions. For example, to replicate all data for 
+              your organization, your client application must be logged in with 
+              “View All Data” access rights to the specified object. Similarly, 
+              the objects must be within your sharing rules.
+            * There is a limit of 600,000 IDs returned from this resource. If 
+              more than 600,000 IDs would be returned, EXCEEDED_ID_LIMIT is 
+              returned. You can correct the error by choosing start and end 
+              dates that are closer together.
+
+        Args:
+            object_name (str): The name of the object to get updated records for.
+
+            startDateTime (datetime): Starting date/time (Coordinated Universal 
+                Time (UTC) time zone—not local— timezone) of the timespan for 
+                which to retrieve the data. The API ignores the seconds portion 
+                of the specified dateTime value (for example, 12:30:15 is 
+                interpreted as 12:30:00 UTC).
+
+            start_date_time (datetime): Ending date/time (Coordinated Universal 
+                Time (UTC) time zone—not local— timezone) of the timespan for 
+                which to retrieve the data. The API ignores the seconds portion 
+                of the specified dateTime value (for example, 12:35:15 is 
+                interpreted as 12:35:00 UTC).
+
+            access_token (str): This is the access_token value received from the
+                                login response
+
+            instance_url (str): This is the instance_url value received from the
+                                login response
+
+        Returns:
+            dict: Returns a dictionary containing the record Ids that were 
+                updated and the latest record updated in that window.
+                {
+                    'ids': ['<id 1>', ..., '<id N>'], 
+                    'latestDateCovered': '2020-03-13T12:00:00.000+0000'
+                }
+        """
+        get_updated_uri = '/sobjects/' + object_name + '/updated/?start=' + \
+            urllib.parse.quote(start_date_time.strftime('%Y-%m-%dT%H:%M:%SZ')) + '&end=' + \
+            urllib.parse.quote(end_date_time.strftime('%Y-%m-%dT%H:%M:%SZ'))
+
+        header_details = Util.get_standard_header(access_token)
+        
+
+        response = webservice.Tools.get_http_response(
+            instance_url + Standard.base_standard_uri + 'v' + API_VERSION + get_updated_uri, 
+            header_details)
+        json_response = json.loads(response.text)
+
+        return json_response
+
 
 class Bulk:
     """
