@@ -8,6 +8,7 @@ from urllib3.poolmanager import PoolManager
 class Tools:
     default_timeout = None
 
+    @staticmethod
     def http_request(**kwargs):
         """
         This method is the generic method used for creating HTTP requests.
@@ -44,7 +45,7 @@ class Tools:
             raise
         return response
 
-
+    @staticmethod
     def get_http_response(URL, header_details):
         """
         This returns the response from an HTTP GET request
@@ -60,7 +61,7 @@ class Tools:
 
         return response
 
-
+    @staticmethod
     def put_http_response(URL, data_body, header_details):
         """
         This returns the response from an HTTP PUT request
@@ -77,7 +78,7 @@ class Tools:
 
         return response
 
-
+    @staticmethod
     def post_http_response(URL, data_body, header_details):
         """
         This returns the response from an HTTP POST request
@@ -94,7 +95,7 @@ class Tools:
 
         return response
 
-
+    @staticmethod
     def patch_http_response(URL, data_body, header_details):
         """
         This returns the response from an HTTP POST request
@@ -111,7 +112,7 @@ class Tools:
 
         return response
 
-
+    @staticmethod
     def delete_http_response(URL, data_body, header_details):
         """
         This returns the response from an HTTP DELETE request
