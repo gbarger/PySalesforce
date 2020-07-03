@@ -836,23 +836,26 @@ class Standard:
         return json.loads(response.text)
 
     @staticmethod
-    def update_sobject_row(object_name, record_id, record_json, access_token, instance_url):
+    def update_sobject_row(object_name, record_id, record_json, run_assignment_rules, access_token, instance_url):
         """
         Updates a specific record with the data in the record_json param
 
         Args:
             object_name (str): The API name of the object.
             record_id (str): The record Id you're trying to update
+
             record_json (dict): The JSON describing the fields you want to
-                                update on the given object. You should pass in
-                                a python object and it will be converted to a
-                                json string to send the request. This object
-                                is just the key value paris for the record
-                                update. e.g.:
-                                    {
-                                        'BillingCity': 'Bellevue',
-                                        'BillingState': 'WA'
-                                    }
+                                  update on the given object. You should pass in
+                                  a python object and it will be converted to a
+                                  json string to send the request. This object
+                                  is just the key value paris for the record
+                                  update. e.g.:
+                                      {
+                                          'BillingCity': 'Bellevue',
+                                          'BillingState': 'WA'
+                                      }
+            run_assignment_rules (bool): If true this will add the assginment
+                                         rule header to the request.
             access_token (str): This is the access_token value received from the
                                 login response
             instance_url (str): This is the instance_url value received from the
@@ -866,6 +869,7 @@ class Standard:
         """
         patch_row_uri = '/sobjects/' + object_name + '/' + record_id
         header_details = Util.get_standard_header(access_token)
+        header_details["Sforce-Auto-Assign"] = "true" if run_assignment_rules else "false"
 
         data_body_json = json.dumps(record_json, indent=4, separators=(',', ': '))
 
@@ -1039,6 +1043,90 @@ class Standard:
 
         response = webservice.Tools.get_http_response(
             instance_url + Standard.base_standard_uri + 'v' + API_VERSION + query_uri + url_encoded_query,
+            header_details)
+        json_response = json.loads(response.text)
+
+        return json_response
+
+    @staticmethod
+    def reset_users_password(user_id, access_token, instance_url):
+        """
+        Resets a users' password.
+
+        Args:
+            user_id (str):      The user id of the user who's password should be reset
+            access_token (str): This is the access_token value received from the
+                                login response
+            instance_url (str): This is the instance_url value received from the
+                                login response
+
+        Returns:
+            object: returns information about the password reset
+        """
+        query_uri = f'/sobjects/User/{user_id}/password'
+        header_details = Util.get_standard_header(access_token)
+
+        response = webservice.Tools.delete_http_response(
+            instance_url + Standard.base_standard_uri + 'v' + API_VERSION + query_uri, None,
+            header_details)
+        json_response = json.loads(response.text)
+
+        return json_response
+
+    @staticmethod
+    def get_current_user_info(access_token, instance_url):
+        """
+        Gets information about the currently logged in user.
+
+        Args:
+            access_token (str): This is the access_token value received from the
+                                login response
+            instance_url (str): This is the instance_url value received from the
+                                login response
+
+        Returns:
+            object: returns information about the current user
+        """
+        query_uri = '/chatter/users/me'
+        header_details = Util.get_standard_header(access_token)
+
+        response = webservice.Tools.get_http_response(
+            instance_url + Standard.base_standard_uri + 'v' + API_VERSION + query_uri,
+            header_details)
+        json_response = json.loads(response.text)
+
+        return json_response
+
+    @staticmethod
+    def post_chatter_mention(text, mention_id, subject_id, access_token, instance_url):
+        """
+        Posts a chatter mention. E.g. @someone
+
+        Args:
+            text (str): The text to go after the mention
+            mention_id (str): The id of the user/group you want to mention
+            subject_id (str): The id of the object you want to attach the comment to
+            access_token (str): This is the access_token value received from the
+                                login response
+            instance_url (str): This is the instance_url value received from the
+                                login response
+
+        Returns:
+            object: returns the query results, if they are too large, then it
+                    will also return a nextRecordsUrl to get more records.
+        """
+        query_uri = '/chatter/feed-elements'
+        header_details = Util.get_standard_header(access_token)
+        request_body = {}
+        request_body['body'] = {}
+        request_body['body']["messageSegments"] = [{"type": "Mention", "id": mention_id}, {'type': 'Text', "text": text}]
+        request_body["feedElementType"] = "FeedItem"
+        request_body["subjectId"] = subject_id
+
+        data_body_json = json.dumps(request_body, indent=4, separators=(',', ': '))
+
+        response = webservice.Tools.post_http_response(
+            instance_url + Standard.base_standard_uri + 'v' + API_VERSION + query_uri, data_body_json,
             header_details)
         json_response = json.loads(response.text)
 
