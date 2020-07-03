@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setup(
-    name='pysalesforce',
+    name='pysalesforceutils',
     version='1.0',
     author='Glen Barger',
     author_email='gbarger@gmail.com',
@@ -14,7 +14,7 @@ setup(
     long_description_content_type="text/markdown",
     url='https://github.com/gbarger/PySalesforce',
     py_modules=[
-        'pysalesforce',
+        'pysalesforceutils',
         'webservice'],
     install_requires=[
         'boto3',
