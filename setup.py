@@ -17,7 +17,7 @@ setup(
         'pysalesforceutils',
         'webservice'],
     install_requires=[
-        'boto3',
-        'pymysql',
-        'requests'
+        'requests',
+        'urllib',
+        'zeep'
     ])
