@@ -1,0 +1,11 @@
+README.md
+pysalesforce.py
+setup.py
+webservice.py
+pysalesforce.egg-info/PKG-INFO
+pysalesforce.egg-info/SOURCES.txt
+pysalesforce.egg-info/dependency_links.txt
+pysalesforce.egg-info/requires.txt
+pysalesforce.egg-info/top_level.txt
+test/test_pysalesforce.py
+test/test_webservice.py
