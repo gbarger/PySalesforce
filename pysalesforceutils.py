@@ -12,7 +12,7 @@ import sys
 import os
 from zeep import Client, xsd, ns
 
-API_VERSION = '45.0'
+API_VERSION = '50.0'
 METADATA_WSDL_FILE = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'WSDL', 'metadata.wsdl')
 METADATA_SANDBOX_WSDL_FILE = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'WSDL', 'metadata_sandbox.wsdl')
 
@@ -1049,6 +1049,37 @@ class Standard:
         return json_response
 
     @staticmethod
+    def query_all(query_string, access_token, instance_url):
+        """
+        Executes the specified SOQL query. If the query results are too large,
+        the response contains the first batch of results and a query identifier
+        in the nextRecordsUrl field of the response. The identifier can be used
+        in an additional request to retrieve the next batch. The difference
+        between this and query is that query all can retrieve deleted records.
+
+        Args:
+            query_string (str): This query you'd like to run
+            access_token (str): This is the access_token value received from the
+                                login response
+            instance_url (str): This is the instance_url value received from the
+                                login response
+
+        Returns:
+            object: returns the query results, if they are too large, then it
+                    will also return a nextRecordsUrl to get more records.
+        """
+        query_uri = '/queryAll/?q='
+        header_details = Util.get_standard_header(access_token)
+        url_encoded_query = urllib.parse.quote(query_string)
+
+        response = webservice.Tools.get_http_response(
+            instance_url + Standard.base_standard_uri + 'v' + API_VERSION + query_uri + url_encoded_query,
+            header_details)
+        json_response = json.loads(response.text)
+
+        return json_response
+
+    @staticmethod
     def reset_users_password(user_id, access_token, instance_url):
         """
         Resets a users' password.
@@ -1218,6 +1249,136 @@ class Standard:
         
         response = webservice.Tools.get_http_response(
             instance_url + Standard.base_standard_uri + 'v' + API_VERSION + get_updated_uri, 
+            header_details)
+        json_response = json.loads(response.text)
+
+        return json_response
+
+    @staticmethod
+    def graph_composite_request(request_body, access_token, instance_url):
+        """
+        https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/resources_composite_graph_introduction.htm#!
+
+        Composite graphs provide an enhanced way to perform composite requests,
+        which execute a series of REST API requests in a single call.
+          * Regular composite requests allow you to execute a series of REST API
+            requests in a single call. And you can use the output of one request
+            as the input to a subsequent request.
+          * Composite graphs extend this by allowing you to assemble a more
+            complicated and complete series of related objects and records.
+          * Composite graphs also enable you to ensure that the steps in a given
+            set of operations are either all completed or all not completed.
+            This avoids requiring you to check for a mix of successful and
+            unsuccessful results.
+          * Regular composite requests have a limit of 25 subrequests. Composite
+            graphs increase this limit to 500. This gives a single API call much
+            greater power.
+
+        Args:
+            request_body (dict): The request body contains a list of graphs.
+                Each graph must have a graphId, and a composite request. The
+                composite requests are then built just like the original
+                composite requests. An example request looks like this:
+                {
+                   "graphs": [{
+                      "graphId": "graph1",
+                      "compositeRequest": [{
+                            "body": {
+                               "name": "Cloudy Consulting"
+                            },
+                            "method": "POST",
+                            "referenceId": "reference_id_account_1",
+                            "url": "/services/data/v50.0/sobjects/Account/"
+                         },
+                         {
+                            "body": {
+                               "FirstName": "Nellie",
+                               "LastName": "Cashman",
+                               "AccountId": "@{reference_id_account_1.id}"
+                            },
+                            "method": "POST",
+                            "referenceId": "reference_id_contact_1",
+                            "url": "/services/data/v50.0/sobjects/Contact/"
+                         }
+                      ]
+                   }]
+                }
+
+            access_token (str): This is the access_token value received from the
+                                login response
+
+            instance_url (str): This is the instance_url value received from the
+                                login response
+
+        Returns:
+            dict: The dict returns an object containing a list of the graphs and
+                the results.
+                {
+                    "graphs": [
+                        {
+                            "graphId": "graph1",
+                            "graphResponse": {
+                                "compositeResponse": {
+                                    <response from the composite request>
+                                }
+                            }
+                        }
+                    ]
+                }
+
+            output_records = salesforce_records["graphs"][0]["graphResponse"]["compositeResponse"]
+        """
+        graph_uri = '/composite/graph'
+
+        header_details = Util.get_standard_header(access_token)
+
+        data_body_json = json.dumps(request_body, indent=4, separators=(',', ': '))
+
+        response = webservice.Tools.post_http_response(
+            instance_url + Standard.base_standard_uri + 'v' + API_VERSION + graph_uri, data_body_json,
+            header_details)
+        json_response = json.loads(response.text)
+
+        return json_response
+
+
+    @staticmethod
+    def get_object_describe(object_name, modified_since_date, access_token_instance_url):
+        """
+        Completely describes the individual metadata at all levels for the
+        specified object. For example, this can be used to retrieve the fields,
+        URLs, and child relationships for the Account object.
+
+        The If-Modified-Since header param should be provided as GMT time if it
+        is provided. If the object metadata has not changed since the provided
+        date, a 304 Not Modified status code is returned, with no response body.
+
+        Args:
+            object_name (str): The name of the object to get the describe
+                details for.
+
+            modified_since_date (datetime): If None, this header will not be
+                used. If provided, it will converted to appropriate format for
+                the header and time should be in GMT.
+
+            access_token (str): This is the access_token value received from the
+                login response
+
+            instance_url (str): This is the instance_url value received from the
+                login response
+        Returns:
+
+        """
+        describe_uri = '/sobjects/SObjectName/describe/'
+
+        header_details = Util.get_standard_header(access_token)
+
+        if modified_since_date:
+            modified_since_date = modified_since_date.strftime('%a, %-d %b %Y %H:%M:%S GMT')
+            header_details["If-Modified-Since"] = modified_since_date
+
+        response = webservice.Tools.get_http_response(
+            instance_url + Standard.base_standard_uri + 'v' + API_VERSION + describe_uri,
             header_details)
         json_response = json.loads(response.text)
 
