@@ -1343,7 +1343,7 @@ class Standard:
 
 
     @staticmethod
-    def get_object_describe(object_name, modified_since_date, access_token_instance_url):
+    def get_object_describe(object_name, modified_since_date, access_token, instance_url):
         """
         Completely describes the individual metadata at all levels for the
         specified object. For example, this can be used to retrieve the fields,
@@ -1367,9 +1367,10 @@ class Standard:
             instance_url (str): This is the instance_url value received from the
                 login response
         Returns:
-
+            dict: Returns a dictionary with the metadata description of the 
+                given object.
         """
-        describe_uri = '/sobjects/SObjectName/describe/'
+        describe_uri = "/sobjects/{}/describe/".format(object_name)
 
         header_details = Util.get_standard_header(access_token)
 
@@ -1398,9 +1399,10 @@ class Bulk:
     batch_uri = '/job/'
 
     @staticmethod
-    def get_job_status(job_id, polling_wait, access_token, instance_url):
+    def get_job_status(job_id, polling_wait, verbose, access_token, instance_url):
         """
-        This method is used for printing job status
+        This method is used for printing job status. If verbose = False, it will
+        ignore the print statements.
 
         Args:
             job_id (str): The job id returned when creating a batch job
@@ -1418,15 +1420,18 @@ class Bulk:
         """
         header_details = Util.get_bulk_header(access_token)
 
-        print("Status for job: {}".format(job_id))
+        if verbose:
+            print("Status for job: {}".format(job_id))
+
         while True:
             response = webservice.Tools.get_http_response(
                 instance_url + Bulk.base_bulk_uri + Bulk.batch_uri + '/' + job_id, header_details)
             json_response = json.loads(response.text)
 
-            print("Batches completed/failed/total: {}/{}/{}".format(json_response['numberBatchesCompleted'],
-                                                                    json_response['numberBatchesFailed'],
-                                                                    json_response['numberBatchesTotal']))
+            if verbose:
+                print("Batches completed/failed/total: {}/{}/{}".format(json_response['numberBatchesCompleted'],
+                                                                        json_response['numberBatchesFailed'],
+                                                                        json_response['numberBatchesTotal']))
 
             total_jobs_run = json_response['numberBatchesCompleted'] + json_response['numberBatchesFailed']
             if total_jobs_run == json_response['numberBatchesTotal']:
@@ -1494,7 +1499,8 @@ class Bulk:
 
     @staticmethod
     def perform_bulk_operation(object_api_name, records, batch_size, operation_type, polling_wait,
-                               external_id_field_name, access_token, instance_url, concurrency_mode=None):
+                               external_id_field_name, access_token, instance_url, concurrency_mode=None,
+                               verbose=True):
         """
         This method updates a list of records provided as an object.
 
@@ -1582,7 +1588,7 @@ class Bulk:
             polling_wait = 5
 
         # check job status until the job completes
-        Bulk.get_job_status(job_id, polling_wait, access_token, instance_url)
+        Bulk.get_job_status(job_id, polling_wait, verbose, access_token, instance_url)
 
         # populate the results_list by appending the results of each batch
         for this_batch_id in batch_ids:
@@ -1773,7 +1779,7 @@ class Bulk:
         return result
 
     @staticmethod
-    def query_sobject_rows(object_api_name, query, query_all, access_token, instance_url):
+    def query_sobject_rows(object_api_name, query, query_all, access_token, instance_url, verbose=True):
         """
         This returns the result for a bulk query operations.
 
@@ -1812,7 +1818,6 @@ class Bulk:
             instance_url + Bulk.base_bulk_uri + Bulk.batch_uri + '/' + job_id + '/batch', query, header_details)
         json_job_batch_response = json.loads(job_batch_response.text)
         batch_id = json_job_batch_response['id']
-        print("\nbatch_id: {}\n".format(batch_id))
 
         # close the bulk job
         close_body = {'state': 'Closed'}
@@ -1822,7 +1827,7 @@ class Bulk:
         json_close_response = json.loads(close_response.text)
 
         # check job status until the job completes
-        Bulk.get_job_status(job_id, 5, access_token, instance_url)
+        Bulk.get_job_status(job_id, 5, verbose, access_token, instance_url)
 
         # get results
         batch_results = Bulk.get_batch_result(job_id, batch_id, access_token, instance_url)
@@ -2079,9 +2084,10 @@ class Bulk2:
         return json_response
     
     @staticmethod
-    def get_job_status(job_id, polling_wait, access_token, instance_url):
+    def get_job_status(job_id, polling_wait, verbose, access_token, instance_url):
         """
-        This method is used for printing job status
+        This method is used for printing job status. If verbose is False it will
+        still wait but ignore the print statements.
 
         Args:
             job_id (str): The job id returned when creating a batch job
@@ -2097,15 +2103,18 @@ class Bulk2:
                      then it will break out and just returns the final job status
                      response.
         """
-        print("Status for job: {}".format(job_id))
+        if verbose:
+            print("Status for job: {}".format(job_id))
+
         processed_total = 0
         finished_statuses = ['JobComplete', 'Aborted', 'Failed']
         while True:
             json_response = Bulk2.get_job_info(job_id, access_token, instance_url)
 
-            print("Job state/failed/total: {}/{}/{}".format(json_response['state'],
-                                                            json_response['numberRecordsFailed'],
-                                                            json_response['numberRecordsProcessed']))
+            if verbose:
+                print("Job state/failed/total: {}/{}/{}".format(json_response['state'],
+                                                                json_response['numberRecordsFailed'],
+                                                                json_response['numberRecordsProcessed']))
 
             if json_response['state'] in finished_statuses:
                 #Bulk v2 will set status to Failed even while the job is processing if it encounters a record
