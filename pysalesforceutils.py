@@ -774,7 +774,7 @@ class Standard:
         """
         post_row_uri = '/sobjects/'+ object_name + '/'
         header_details = {"Authorization": "Bearer " + access_token}
-        mimetype = MimeTypes().guess_type(file)[0] or 'application/octet-stream'
+        mimetype = MimeTypes().guess_type(file.name)[0] or 'application/octet-stream'
 
         object_to_blob_map = {
             "Attachment": {"BlobField": "Body",
@@ -795,7 +795,7 @@ class Standard:
 
         multipart_files = {
             'entity_'+object_name: (None, json.dumps(record_json), 'application/json'),
-            object_fields['BlobField']: (record_json[object_fields['FileNameField']], open(file, 'rb'), mimetype)
+            object_fields['BlobField']: (record_json[object_fields['FileNameField']], file, mimetype)
         }
 
         response = webservice.Tools.post_http_response(
