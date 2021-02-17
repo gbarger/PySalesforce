@@ -27,11 +27,14 @@ class Tools:
         URL = kwargs.get('URL')
         header_details = kwargs.get('header_details', None)
         data_body = kwargs.get('data_body', None)
+        files = None
+        if 'files' in kwargs:
+            files = kwargs.get('files', None)
 
         response = ""
 
         try:
-            req = requests.Request(requestType, URL, data=data_body, headers=header_details)
+            req = requests.Request(requestType, URL, data=data_body, headers=header_details, files=files)
             prepReq = req.prepare()
             with requests.Session() as session:
                 session.mount('https://', SslHttpAdapter())
@@ -79,7 +82,7 @@ class Tools:
         return response
 
     @staticmethod
-    def post_http_response(URL, data_body, header_details):
+    def post_http_response(URL, data_body, header_details, files=None):
         """
         This returns the response from an HTTP POST request
 
@@ -87,11 +90,13 @@ class Tools:
             URL (str): The full URL to call
             data_body (str): The body to send for the POST
             header_details (dict): Object containing the headers for the request
+            files: attached files/Multipart message
 
         Returns:
             dict: Returns the result of the HTTP POST request.
         """
-        response = Tools.http_request(requestType='POST', URL=URL, data_body=data_body, header_details=header_details)
+        response = Tools.http_request(requestType='POST', URL=URL, data_body=data_body, header_details=header_details,
+                                      files=files)
 
         return response
 
