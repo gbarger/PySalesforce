@@ -777,14 +777,25 @@ class Standard:
         mimetype = MimeTypes().guess_type(file)[0] or 'application/octet-stream'
 
         object_to_blob_map = {
-            "Attachment": "Body",
-            "ContentVersion": "VersionData",
-            "Document": "Body"
+            "Attachment": {"BlobField": "Body",
+                           "FileNameField": "Name",
+                           "ParentField": "ParentId"
+                           },
+            "ContentVersion": {"BlobField": "VersionData",
+                               "FileNameField": "PathOnClient",
+                               "ParentField": "FirstPublishLocationId"
+                               },
+            "Document": {"BlobField": "Body",
+                         "NameField": "Name",
+                         "ParentField": "ParentId"
+                         },
         }
+
+        object_fields = object_to_blob_map[object_name]
 
         multipart_files = {
             'entity_'+object_name: (None, json.dumps(record_json), 'application/json'),
-            object_to_blob_map[object_name]: (record_json['Name'], open(file, 'rb'), mimetype)
+            object_fields['BlobField']: (record_json[object_fields['FileNameField']], open(file, 'rb'), mimetype)
         }
 
         response = webservice.Tools.post_http_response(
@@ -1333,9 +1344,9 @@ class Standard:
             urllib.parse.quote(end_date_time.strftime('%Y-%m-%dT%H:%M:%SZ'))
 
         header_details = Util.get_standard_header(access_token)
-        
+
         response = webservice.Tools.get_http_response(
-            instance_url + Standard.base_standard_uri + 'v' + API_VERSION + get_updated_uri, 
+            instance_url + Standard.base_standard_uri + 'v' + API_VERSION + get_updated_uri,
             header_details)
         json_response = json.loads(response.text)
 
@@ -1396,9 +1407,9 @@ class Standard:
             urllib.parse.quote(end_date_time.strftime('%Y-%m-%dT%H:%M:%SZ'))
 
         header_details = Util.get_standard_header(access_token)
-        
+
         response = webservice.Tools.get_http_response(
-            instance_url + Standard.base_standard_uri + 'v' + API_VERSION + get_updated_uri, 
+            instance_url + Standard.base_standard_uri + 'v' + API_VERSION + get_updated_uri,
             header_details)
         json_response = json.loads(response.text)
 
@@ -2232,7 +2243,7 @@ class Bulk2:
         json_response = json.loads(response.text)
 
         return json_response
-    
+
     @staticmethod
     def get_job_status(job_id, polling_wait, verbose, access_token, instance_url):
         """
