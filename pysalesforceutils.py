@@ -776,9 +776,15 @@ class Standard:
         header_details = {"Authorization": "Bearer " + access_token}
         mimetype = MimeTypes().guess_type(file)[0] or 'application/octet-stream'
 
+        object_to_blob_map = {
+            "Attachment": "Body",
+            "ContentVersion": "VersionData",
+            "Document": "Body"
+        }
+
         multipart_files = {
-            'entity_attachment': (None, json.dumps(record_json), 'application/json'),
-            'Body': (record_json['Name'], open(file, 'rb'), mimetype)
+            'entity_'+object_name: (None, json.dumps(record_json), 'application/json'),
+            object_to_blob_map[object_name]: (record_json['Name'], open(file, 'rb'), mimetype)
         }
 
         response = webservice.Tools.post_http_response(
