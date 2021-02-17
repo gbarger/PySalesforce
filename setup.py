@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='pysalesforceutils',
-    version='1.0.4',
+    version='1.0.5',
     author='Glen Barger',
     author_email='gbarger@gmail.com',
     description='Python module to wrap the Salesforce APIs',
