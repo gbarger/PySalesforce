@@ -776,7 +776,7 @@ class Standard:
         """
         post_row_uri = '/sobjects/'+ object_name + '/'
         header_details = {"Authorization": "Bearer " + access_token}
-        mimetype = MimeTypes().guess_type(file.name)[0] or 'application/octet-stream'
+        mimetype = MimeTypes().guess_type(os.path.basename(file.name))[0] or 'application/octet-stream'
 
         object_to_blob_map = {
             "Attachment": {"BlobField": "Body",
