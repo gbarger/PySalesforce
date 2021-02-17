@@ -786,7 +786,7 @@ class Standard:
                                "ParentField": "FirstPublishLocationId"
                                },
             "Document": {"BlobField": "Body",
-                         "NameField": "Name",
+                         "FileNameField": "Name",
                          "ParentField": "ParentId"
                          },
         }
