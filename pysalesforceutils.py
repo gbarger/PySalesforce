@@ -10,6 +10,7 @@ import urllib
 import time
 import sys
 import os
+from mimetypes import MimeTypes
 from zeep import Client, xsd, ns
 
 API_VERSION = '50.0'
@@ -711,6 +712,86 @@ class Standard:
         json_response = json.loads(response.text)
 
         return json_response
+
+    @staticmethod
+    def get_sobject_blob(object_name, record_id, access_token, instance_url):
+        """
+        Provides the details requested for the specified record blob field. This will retrieve the
+        BLOB field for Attachments/ContentVersion/Document.  Example call:
+            response = Standard.get_sobject_blob('Attachment', 'attachmentId', access_token, instance_url)
+            with open('test.jpg', 'wb') as new_file:
+                for chunk in response.iter_content(chunk_size=1024):
+                    new_file.write(chunk)
+
+        Args:
+            object_name (str): The API name of the object.
+            record_id (str): The record Id of the Attachment you're trying to retrieve
+            access_token (str): This is the access_token value received from the
+                                login response
+            instance_url (str): This is the instance_url value received from the
+                                login response
+
+        Returns:
+            object: returns the record with the explicit field list, or all (or
+                    a lot) of the fields if the field_list_string is None.
+        """
+        object_to_blob_map = {
+            "Attachment": "Body",
+            "ContentVersion": "VersionData",
+            "Document": "Body"
+        }
+
+        get_row_uri = '/sobjects/' + object_name + '/' + record_id + '/' + object_to_blob_map[object_name]
+        header_details = Util.get_standard_header(access_token)
+
+        response = webservice.Tools.get_http_response(
+            instance_url + Standard.base_standard_uri + 'v' + API_VERSION + get_row_uri, header_details)
+
+        return response
+
+    @staticmethod
+    def create_sobject_blob_record(object_name, record_json, file, access_token, instance_url):
+        """
+        Creates the provided record in the recordJson param and binary multipart message
+
+        Args:
+            object_name (str): The API name of the object.
+            record_json (object): The JSON describing the fields you want to
+                                  update on the given object. You should pass in
+                                  a python object and it will be converted to a
+                                  json string to send the request. This object
+                                  is just the key value paris for the record
+                                  update. e.g.:
+                                      {
+                                          'BillingCity': 'Bellevue',
+                                          'BillingState': 'WA'
+                                      }
+            file (str): file location and name to build multipart message
+            instance_url (str): This is the instance_url value received from the
+                                login response
+        Returns:
+            object: returns the text from the creation response
+        """
+        post_row_uri = '/sobjects/'+ object_name + '/'
+        header_details = {"Authorization": "Bearer " + access_token}
+        mimetype = MimeTypes().guess_type(file)[0] or 'application/octet-stream'
+
+        multipart_files = {
+            'entity_attachment': (None, json.dumps(record_json), 'application/json'),
+            'Body': (record_json['Name'], open(file, 'rb'), mimetype)
+        }
+
+        response = webservice.Tools.post_http_response(
+            instance_url + Standard.base_standard_uri + 'v' + API_VERSION + post_row_uri, None,
+            header_details, multipart_files)
+        response_text = ""
+
+        if response.status_code is 204:
+            response_text = "Update Successful"
+        else:
+            response_text = response.text
+
+        return response_text
 
     @staticmethod
     def create_sobject_row(object_name, record_json, run_assignment_rules, access_token, instance_url):
