@@ -766,7 +766,9 @@ class Standard:
                                           'BillingCity': 'Bellevue',
                                           'BillingState': 'WA'
                                       }
-            file (str): file location and name to build multipart message
+            file (str): file object
+            access_token (str): This is the access_token value received from the
+                                login response
             instance_url (str): This is the instance_url value received from the
                                 login response
         Returns:
