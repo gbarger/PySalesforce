@@ -1355,6 +1355,74 @@ class Standard:
         return json_response
 
     @staticmethod
+    def retrieve(object_name, ids, fields, access_token, instance_url):
+        """
+        Use a GET or POST request with sObject Collections to retrieve one or
+        more records of the same object type. A list of sObjects that represents
+        the individual records of the specified type is returned. The number of
+        sObjects returned matches the number of IDs passed in the request.
+
+        You can specify approximately 800 IDs before the URL length causes the
+        HTTP 414 error URI too long. To retrieve more records than the URL
+        length can accommodate, use a POST request to retrieve up to 2,000
+        records of the same object type. If you use POST, the IDs and fields of
+        the records to retrieve are specified in the request body.
+
+        Args:
+            object_name (str): The name of the object to get updated records for.
+
+            ids (list): A list of one or more IDs of the objects to return. All
+                IDs must belong to the same object type.
+
+            fields (list): A list of fields to include in the response. The
+                field names you specify must be valid, and you must have
+                read-level permissions to each field.
+
+            access_token (str): This is the access_token value received from the
+                login response
+
+            instance_url (str): This is the instance_url value received from the
+                login response
+
+        Returns:
+            list: A list of dicts with the Salesforce records: Example:
+            [
+                {
+                    "attributes" : {
+                        "type" : "Account",
+                        "url" : "/services/data/v51.0/sobjects/Account/001xx000003DGb1AAG"
+                    },
+                    "Id" : "001xx000003DGb1AAG",
+                    "Name" : "Acme"
+                },
+                {
+                    "attributes" : {
+                         "type" : "Account",
+                        "url" : "/services/data/v51.0/sobjects/Account/001xx000003DGb0AAG"
+                    },
+                    "Id" : "001xx000003DGb0AAG",
+                    "Name" : "Global Media"
+                },
+                None
+            ]
+        """
+        retrieve_uri = '/composite/sobjects/' + object_name
+        header_details = Util.get_standard_header(access_token)
+
+        request_body = {}
+        request_body['ids'] = ids
+        request_body['fields'] = fields
+
+        data_body_json = json.dumps(request_body, indent=4, separators=(',', ': '))
+
+        response = webservice.Tools.post_http_response(
+            instance_url + Standard.base_standard_uri + 'v' + API_VERSION + retrieve_uri, data_body_json,
+            header_details)
+        json_response = json.loads(response.text)
+
+        return json_response
+
+    @staticmethod
     def get_deleted(object_name, start_date_time, end_date_time, access_token, instance_url):
         """
         Retrieves the list of individual records that have been deleted within 
@@ -1404,14 +1472,14 @@ class Standard:
                     'latestDateCovered': '2020-03-13T12:00:00.000+0000'
                 }
         """
-        get_updated_uri = '/sobjects/' + object_name + '/deleted/?start=' + \
+        get_deleted_uri = '/sobjects/' + object_name + '/deleted/?start=' + \
             urllib.parse.quote(start_date_time.strftime('%Y-%m-%dT%H:%M:%SZ')) + '&end=' + \
             urllib.parse.quote(end_date_time.strftime('%Y-%m-%dT%H:%M:%SZ'))
 
         header_details = Util.get_standard_header(access_token)
 
         response = webservice.Tools.get_http_response(
-            instance_url + Standard.base_standard_uri + 'v' + API_VERSION + get_updated_uri,
+            instance_url + Standard.base_standard_uri + 'v' + API_VERSION + get_deleted_uri, 
             header_details)
         json_response = json.loads(response.text)
 
