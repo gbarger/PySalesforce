@@ -1059,6 +1059,87 @@ class Standard:
         return json.loads(response.text)
 
     @staticmethod
+    def upsert_sobject_rows(object_api_name, records, access_token, instance_url, all_or_none=False, run_assignment_rules=False, external_id_field_name='Id'):
+        """
+        Upserts a list of up to 200 records.
+        documentation: https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/resources_composite_sobjects_collections_upsert.htm
+
+        Args:
+            object_api_name (str): The API Name of the object being updated
+            records (object): The JSON describing the records you want to
+                              insert on the given object. Each object needs
+                              to contain an attributes field that contains
+                              the "type" which is the object name, and an
+                              "id" field which is the record id for
+                              each record being updated. This key is used
+                              in the response to show a result for each
+                              record being updated.
+                              example:
+                                       [{
+                                          "attributes" : {"type" : "Account", "id" : "001xx000003DGb2AAG"},
+                                          "Name" : "example.com",
+                                          "BillingCity" : "San Francisco"
+                                       }, {
+                                          "attributes" : {"type" : "Contact", "id": "003xx000004TmiQAAS"},
+                                          "LastName" : "Johnson",
+                                          "FirstName" : "Erica"
+                                       }]
+            access_token (str): This is the access_token value received from the
+                                login response
+            instance_url (str): This is the instance_url value received from the
+                                login response
+            all_or_none (bool): Indicates whether to roll back the entire request
+                                when the update of any object fails (true) or to
+                                continue with the independent update of other
+                                objects in the request. The default is false.
+            run_assignment_rules (bool): If true this will add the assginment
+                                         rule header to the request.
+            external_id_field_name (str): This is the external Id field that is
+                                          used to determine whether this record
+                                          will be inserted or updated. This is
+                                          required for upserts, but will default
+                                          to the record Id field
+
+        Returns:
+            list: A list of the response from each of the upsert requests in the
+                  request list.
+                  [
+                      {
+                          "id": "001xx0000004GxDAAU",
+                          "success": true,
+                          "errors": [],
+                          "created": true
+                      },
+                      {
+                          "id": "001xx0000004GxEAAU",
+                          "success": true,
+                          "errors": [],
+                          "created": false
+                      }
+                  ]
+        """
+        # /composite/sobjects/SobjectName/ExternalIdFieldName
+        post_rows_uri = "/composite/sobjects/" + object_api_name + "/" + external_id_field_name
+        header_details = Util.get_standard_header(access_token)
+
+        if run_assignment_rules:
+            header_details["Sforce-Auto-Assign"] = "true"
+        else:
+            header_details["Sforce-Auto-Assign"] = "false"
+
+        request_body = {}
+        request_body["allOrNone"] = all_or_none
+        request_body["records"] = records
+
+        data_body_json = json.dumps(request_body, indent=4, separators=(',', ': '))
+
+        response = webservice.Tools.post_http_response(
+            instance_url + Standard.base_standard_uri + 'v' + API_VERSION + post_rows_uri, data_body_json,
+            header_details)
+
+        return json.loads(response.text)
+
+    @staticmethod
     def delete_sobject_rows(record_ids, all_or_none, access_token, instance_url):
         """
         Deletes a list of up to 200 records.
