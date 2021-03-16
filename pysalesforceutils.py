@@ -1119,7 +1119,7 @@ class Standard:
                   ]
         """
         # /composite/sobjects/SobjectName/ExternalIdFieldName
-        post_rows_uri = "/composite/sobjects/" + object_api_name + "/" + external_id_field_name
+        patch_rows_uri = "/composite/sobjects/" + object_api_name + "/" + external_id_field_name
         header_details = Util.get_standard_header(access_token)
 
         if run_assignment_rules:
@@ -1133,8 +1133,8 @@ class Standard:
 
         data_body_json = json.dumps(request_body, indent=4, separators=(',', ': '))
 
-        response = webservice.Tools.post_http_response(
-            instance_url + Standard.base_standard_uri + 'v' + API_VERSION + post_rows_uri, data_body_json,
+        response = webservice.Tools.patch_http_response(
+            instance_url + Standard.base_standard_uri + 'v' + API_VERSION + patch_rows_uri, data_body_json,
             header_details)
 
         return json.loads(response.text)
