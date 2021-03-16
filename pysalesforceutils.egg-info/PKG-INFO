@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: pysalesforceutils
-Version: 1.0.7
+Version: 1.0.8
 Summary: Python module to wrap the Salesforce APIs
 Home-page: https://github.com/gbarger/PySalesforce
 Author: Glen Barger
