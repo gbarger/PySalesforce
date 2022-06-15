@@ -1037,11 +1037,13 @@ class Standard:
                                    record being updated.
                                    example:
                                        [{
-                                          "attributes" : {"type" : "Account", "id" : "001xx000003DGb2AAG"},
+                                          "attributes" : {"type" : "Account"},
+                                          "id" : "001xx000003DGb2AAG",
                                           "Name" : "example.com",
                                           "BillingCity" : "San Francisco"
                                        }, {
-                                          "attributes" : {"type" : "Contact", "id": "003xx000004TmiQAAS"},
+                                          "attributes" : {"type" : "Contact"},
+                                          "id": "003xx000004TmiQAAS",
                                           "LastName" : "Johnson",
                                           "FirstName" : "Erica"
                                        }]
