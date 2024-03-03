@@ -1,7 +1,13 @@
+LICENSE
+MANIFEST.in
 README.md
 pysalesforceutils.py
 setup.py
 webservice.py
+WSDL/metadata.wsdl
+WSDL/metadata_sandbox.wsdl
+WSDL/partner.wsdl
+WSDL/partner_sandbox.wsdl
 pysalesforceutils.egg-info/PKG-INFO
 pysalesforceutils.egg-info/SOURCES.txt
 pysalesforceutils.egg-info/dependency_links.txt
