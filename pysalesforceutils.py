@@ -1037,13 +1037,11 @@ class Standard:
                                    record being updated.
                                    example:
                                        [{
-                                          "attributes" : {"type" : "Account"},
-                                          "id" : "001xx000003DGb2AAG",
+                                          "attributes" : {"type" : "Account", "id" : "001xx000003DGb2AAG"},
                                           "Name" : "example.com",
                                           "BillingCity" : "San Francisco"
                                        }, {
-                                          "attributes" : {"type" : "Contact"},
-                                          "id": "003xx000004TmiQAAS",
+                                          "attributes" : {"type" : "Contact", "id": "003xx000004TmiQAAS"},
                                           "LastName" : "Johnson",
                                           "FirstName" : "Erica"
                                        }]
@@ -1292,6 +1290,38 @@ class Standard:
 
         response = webservice.Tools.get_http_response(
             instance_url + Standard.base_standard_uri + 'v' + API_VERSION + query_uri + url_encoded_query,
+            header_details)
+        json_response = json.loads(response.text)
+
+        return json_response
+    
+    @staticmethod
+    def search(search_string, access_token, instance_url):
+        """
+        Executes the specified SOSL search. If the search results are too large,
+        the response contains the first batch of results and a search identifier
+        in the nextRecordsUrl field of the response. The identifier can be used
+        in an additional request to retrieve the next batch. The difference
+        between this and search is that search all can retrieve deleted records.
+
+        Args:
+            search_string (str): This search you'd like to run
+            access_token (str): This is the access_token value received from the
+                                login response
+            instance_url (str): This is the instance_url value received from the
+                                login response
+
+        Returns:
+            object: returns the search results, if they are too large, then it
+                    will also return a nextRecordsUrl to get more records.
+
+        """
+        search_uri = '/search/?q='
+        header_details = Util.get_standard_header(access_token)
+        url_encoded_search = urllib.parse.quote(search_string)
+
+        response = webservice.Tools.get_http_response(
+            instance_url + Standard.base_standard_uri + 'v' + API_VERSION + search_uri + url_encoded_search,
             header_details)
         json_response = json.loads(response.text)
 
