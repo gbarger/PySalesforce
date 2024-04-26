@@ -1,1 +1,4 @@
-include WSDL/*.wsdl
+include WSDL/metadata_sandbox.wsdl
+include WSDL/metadata.wsdl
+include WSDL/partner_sandbox.wsdl
+include WSDL/partner.wsdl
