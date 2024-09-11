@@ -714,6 +714,42 @@ class Standard:
         return json_response
 
     @staticmethod
+    def get_sobject_row_by_external_id(object_name, record_id, field_list_string, access_token, instance_url, external_id_field_name):
+        """
+        Provides the details requested for the specified record. In practice, if you
+        provide an explicit list of fields, it will be just like a query for that
+        record, but if you leave the fields blank, this will return a lot if not
+        all fields. I'm not sure about that because the description of what is
+        returned if you leave the fields empty isn't explained in the API documentation
+
+        Args:
+            object_name (str): The API name of the object.
+            record_id (str): The record Id you're trying to retrieve
+            field_list_string (str): List of comma separated values for fields
+                                     to retrieve
+            access_token (str): This is the access_token value received from the
+                                login response
+            instance_url (str): This is the instance_url value received from the
+                                login response
+            external_id_field_name (str): The name of the external id field
+
+        Returns:
+            dict: returns the record with the explicit field list, or all (or
+                a lot) of the fields if the field_list_string is None.
+        """
+        get_row_uri = '/sobjects/' + object_name + '/' + external_id_field_name + '/' + record_id
+        header_details = Util.get_standard_header(access_token)
+
+        if field_list_string != None:
+            get_row_uri = get_row_uri + '?fields=' + field_list_string
+
+        response = webservice.Tools.get_http_response(
+            instance_url + Standard.base_standard_uri + 'v' + API_VERSION + get_row_uri, header_details)
+        json_response = json.loads(response.text)
+
+        return json_response
+
+    @staticmethod
     def get_sobject_blob(object_name, record_id, access_token, instance_url):
         """
         Provides the details requested for the specified record blob field. This will retrieve the
