@@ -731,6 +731,7 @@ class Standard:
                                 login response
             instance_url (str): This is the instance_url value received from the
                                 login response
+            external_id_field_name (str): The name of the external id field
 
         Returns:
             dict: returns the record with the explicit field list, or all (or
