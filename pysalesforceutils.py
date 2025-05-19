@@ -738,7 +738,8 @@ class Standard:
         object_to_blob_map = {
             "Attachment": "Body",
             "ContentVersion": "VersionData",
-            "Document": "Body"
+            "Document": "Body",
+            "ContentNote": "Content"
         }
 
         get_row_uri = '/sobjects/' + object_name + '/' + record_id + '/' + object_to_blob_map[object_name]
