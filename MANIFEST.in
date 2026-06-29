@@ -1,4 +1,4 @@
-include WSDL/metadata_sandbox.wsdl
-include WSDL/metadata.wsdl
-include WSDL/partner_sandbox.wsdl
-include WSDL/partner.wsdl
+include pysalesforceutils/WSDL/metadata_sandbox.wsdl
+include pysalesforceutils/WSDL/metadata.wsdl
+include pysalesforceutils/WSDL/partner_sandbox.wsdl
+include pysalesforceutils/WSDL/partner.wsdl
