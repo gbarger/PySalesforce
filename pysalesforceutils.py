@@ -11,7 +11,11 @@ import time
 import sys
 import os
 from mimetypes import MimeTypes
-from zeep import Client, xsd, ns
+
+try:
+    from zeep import Client
+except ImportError:
+    Client = None
 
 API_VERSION = '50.0'
 METADATA_WSDL_FILE = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'WSDL', 'metadata.wsdl')
@@ -183,6 +187,12 @@ class Util:
         Returns:
             Client: Returns the SOAP client.
         """
+        if Client is None:
+            raise ImportError(
+                "The 'zeep' library is required to use the Metadata or SOAP APIs. "
+                "Install it using `pip install zeep` or `pip install pysalesforce[metadata]`."
+            )
+
         soap_client = Client(wsdl_file)
         return soap_client
 
@@ -806,7 +816,7 @@ class Standard:
             header_details, multipart_files)
         response_text = ""
 
-        if response.status_code is 204:
+        if response.status_code == 204:
             response_text = "Update Successful"
         else:
             response_text = response.text
@@ -850,7 +860,7 @@ class Standard:
             header_details)
         response_text = ""
 
-        if response.status_code is 204:
+        if response.status_code == 204:
             response_text = "Update Successful"
         else:
             response_text = response.text
@@ -1014,7 +1024,7 @@ class Standard:
             header_details)
         response_text = ""
 
-        if response.status_code is 204:
+        if response.status_code == 204:
             response_text = "Update Successful"
         else:
             response_text = response.text
@@ -3049,6 +3059,7 @@ class Metadata:
 
     @staticmethod
     def get_list_metadata_query(folder, metadata_type):
+        client = Util.get_soap_client(METADATA_WSDL_FILE)
         list_metadata_query_type = client.get_type('ns0:ListMetadataQuery')
         metadata_query = list_metadata_query_type(folder, metadata_type)
 
