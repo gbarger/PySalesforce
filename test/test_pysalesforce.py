@@ -85,6 +85,13 @@ class TestUrlEncoding(MockedRequestTestCase):
 
 class TestStandard(MockedRequestTestCase):
 
+    def test_api_version_can_be_overridden_at_runtime(self):
+        with mock.patch.object(pysalesforceutils, 'API_VERSION', '60.0'):
+            Standard.query('SELECT Id FROM Account', TOKEN, INSTANCE)
+
+        self.assertEqual(self.requested_url(),
+                         INSTANCE + '/services/data/v60.0/query/?q=SELECT%20Id%20FROM%20Account')
+
     def test_get_sobject_rows_without_fields(self):
         Standard.get_sobject_rows('Account', '001A,001B', None, TOKEN, INSTANCE)
 
@@ -109,7 +116,7 @@ class TestBulkPolling(MockedRequestTestCase):
 
     def setUp(self):
         super().setUp()
-        patcher = mock.patch('pysalesforceutils.time.sleep')
+        patcher = mock.patch('time.sleep')
         self.sleep = patcher.start()
         self.addCleanup(patcher.stop)
 
