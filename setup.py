@@ -5,20 +5,19 @@ with open("README.md", "r") as fh:
 
 setup(
     name='pysalesforceutils',
-    version='1.1.0',
+    version='1.1.1',
     author='Glen Barger',
     author_email='gbarger@gmail.com',
     description='Python module to wrap the Salesforce APIs',
     long_description=long_description,
     long_description_content_type="text/markdown",
     url='https://github.com/gbarger/PySalesforce',
-    packages=find_packages(),
+    packages=find_packages(exclude=['test', 'test.*']),
     package_data={
         'pysalesforceutils': ['WSDL/*.wsdl'],
     },
     install_requires=[
         'requests',
-        'urllib3',
     ],
     extras_require={
         'soap': ['zeep'],

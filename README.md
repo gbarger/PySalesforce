@@ -4,7 +4,7 @@ The purpose of this project is to replicate the Salesforce REST APIs in a Python
 
 ## Usage
 *******
-The authentication method used in PySalesforce.Authentication.getOAuthLogin uses the Salesforce OAuth Password flow. You can choose to build and use your own authentication method, but if you want to use the OAuth flow, you'll need to create a connected app in Salesforce. YOu can do this from Setup->Create->Apps, then scroll down to the bottom and click the New button for Connected Apps. THE Callback URL is irrelavent, so you can put in anything you want. Make sure the Selected Scope OAuth Scopes = Full Access. After setting it up you'll receive a Consumer Key and Consumer Secret, which are the loginClientId and loginClientSecret parameters in the getOAuthLogin method respectively.
+The authentication method used in pysalesforceutils.Authentication.get_oauth_login uses the Salesforce OAuth Password flow. You can choose to build and use your own authentication method, but if you want to use the OAuth flow, you'll need to create a connected app in Salesforce. You can do this from Setup->Create->Apps, then scroll down to the bottom and click the New button for Connected Apps. The Callback URL is irrelevant, so you can put in anything you want. For the Selected OAuth Scopes, only grant what you need. "Manage user data via APIs (api)" is enough for the methods in this library, so avoid Full Access. After setting it up you'll receive a Consumer Key and Consumer Secret, which are the login_client_id and login_client_secret parameters in the get_oauth_login method respectively.
 
 ## Salesforce Documentation
 ***************
@@ -25,7 +25,7 @@ I had issues with OS X not being able to connect to any sandbox environments. Th
 
 You can run this test to check if your machine is up to date with SSL. Make sure it can run TLS 1.1 or 1.2
 ---
-import WebService
-response = WebService.Tools.getHTResponse("https://www.howsmyssl.com/a/check", {})
+from pysalesforceutils import webservice
+response = webservice.Tools.get_http_response("https://www.howsmyssl.com/a/check", {})
 print(response.text)
 ---

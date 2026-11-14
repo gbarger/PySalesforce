@@ -16,7 +16,7 @@ try:
 except ImportError:
     Client = None
 
-API_VERSION = '50.0'
+API_VERSION = '67.0'
 METADATA_WSDL_FILE = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'WSDL', 'metadata.wsdl')
 METADATA_SANDBOX_WSDL_FILE = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'WSDL', 'metadata_sandbox.wsdl')
 
