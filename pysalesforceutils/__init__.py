@@ -6,7 +6,7 @@ This package creates methods to easily call the various Salseforce APIs.
 
 import json
 from . import webservice
-import urllib
+import urllib.parse
 import time
 import os
 from mimetypes import MimeTypes
@@ -200,7 +200,7 @@ class Util:
         if Client is None:
             raise ImportError(
                 "The 'zeep' library is required to use the Metadata or SOAP APIs. "
-                "Install it using `pip install zeep` or `pip install pysalesforce[metadata]`."
+                "Install it using `pip install zeep` or `pip install pysalesforceutils[soap]`."
             )
 
         soap_client = Client(wsdl_file)
@@ -379,7 +379,6 @@ class Authentication:
         Returns:
             object: Returns the SOAP headers needed to log in
         """
-        client = Util.get_soap_client(PARTNER_WSDL_FILE)
         soap_headers = {}
 
         if org_id != None or portal_id != None:
@@ -904,8 +903,10 @@ class Standard:
         get_row_uri = '/composite/sobjects/' + _quote_path(object_name)
         header_details = Util.get_standard_header(access_token)
 
-        get_rows_uri = get_row_uri + '?ids=' + urllib.parse.quote(record_id_list_string, safe=',') + \
-            '&fields=' + urllib.parse.quote(field_list_string, safe=',')
+        get_rows_uri = get_row_uri + '?ids=' + urllib.parse.quote(record_id_list_string, safe=',')
+
+        if field_list_string != None:
+            get_rows_uri = get_rows_uri + '&fields=' + urllib.parse.quote(field_list_string, safe=',')
 
         response = webservice.Tools.get_http_response(
             instance_url + Standard.base_standard_uri + 'v' + API_VERSION + get_rows_uri, header_details)
@@ -1769,19 +1770,25 @@ class Standard:
                 login response
         Returns:
             dict: Returns a dictionary with the metadata description of the
-                given object.
+                given object. Returns None if modified_since_date was
+                provided and the object has not changed since then.
         """
         describe_uri = "/sobjects/{}/describe/".format(_quote_path(object_name))
 
         header_details = Util.get_standard_header(access_token)
 
         if modified_since_date:
-            modified_since_date = modified_since_date.strftime('%a, %-d %b %Y %H:%M:%S GMT')
+            modified_since_date = modified_since_date.strftime('%a, %d %b %Y %H:%M:%S GMT')
             header_details["If-Modified-Since"] = modified_since_date
 
         response = webservice.Tools.get_http_response(
             instance_url + Standard.base_standard_uri + 'v' + API_VERSION + describe_uri,
             header_details)
+
+        # 304 Not Modified has no response body
+        if response.status_code == 304:
+            return None
+
         json_response = json.loads(response.text)
 
         return json_response
@@ -1826,7 +1833,7 @@ class Bulk:
 
         while True:
             response = webservice.Tools.get_http_response(
-                instance_url + Bulk.base_bulk_uri + Bulk.batch_uri + '/' + _quote_path(job_id), header_details)
+                instance_url + Bulk.base_bulk_uri + Bulk.batch_uri + _quote_path(job_id), header_details)
             json_response = json.loads(response.text)
 
             if verbose:
@@ -1836,6 +1843,9 @@ class Bulk:
 
             total_jobs_run = json_response['numberBatchesCompleted'] + json_response['numberBatchesFailed']
             if total_jobs_run == json_response['numberBatchesTotal']:
+                break
+            elif json_response.get('state') in ('Aborted', 'Failed'):
+                # the remaining batches will never be processed
                 break
             else:
                 time.sleep(polling_wait)
@@ -1863,7 +1873,7 @@ class Bulk:
         header_details = Util.get_bulk_header(access_token)
 
         response = webservice.Tools.get_http_response(
-            instance_url + Bulk.base_bulk_uri + Bulk.batch_uri + '/' + _quote_path(job_id) + '/batch/' +
+            instance_url + Bulk.base_bulk_uri + Bulk.batch_uri + _quote_path(job_id) + '/batch/' +
             _quote_path(batch_id) + '/result',
             header_details)
         json_response = json.loads(response.text)
@@ -1893,7 +1903,7 @@ class Bulk:
         header_details = Util.get_bulk_header(access_token)
 
         response = webservice.Tools.get_http_response(
-            instance_url + Bulk.base_bulk_uri + Bulk.batch_uri + '/' + _quote_path(job_id) + '/batch/' +
+            instance_url + Bulk.base_bulk_uri + Bulk.batch_uri + _quote_path(job_id) + '/batch/' +
             _quote_path(batch_id) + '/result' + '/' + _quote_path(query_result_id),
             header_details)
         json_response = json.loads(response.text)
@@ -1973,7 +1983,7 @@ class Bulk:
         for record_chunk in chunked_records_list:
             records_json = json.dumps(record_chunk, indent=4, separators=(',', ': '))
             job_batch_response = webservice.Tools.post_http_response(
-                instance_url + Bulk.base_bulk_uri + Bulk.batch_uri + '/' + job_id + '/batch', records_json,
+                instance_url + Bulk.base_bulk_uri + Bulk.batch_uri + job_id + '/batch', records_json,
                 header_details)
             json_job_batch_response = json.loads(job_batch_response.text)
             batch_id = json_job_batch_response['id']
@@ -1983,7 +1993,7 @@ class Bulk:
         close_body = {'state': 'Closed'}
         json_close_body = json.dumps(close_body, indent=4, separators=(',', ': '))
         close_response = webservice.Tools.post_http_response(
-            instance_url + Bulk.base_bulk_uri + Bulk.batch_uri + '/' + job_id, json_close_body, header_details)
+            instance_url + Bulk.base_bulk_uri + Bulk.batch_uri + job_id, json_close_body, header_details)
         json_close_response = json.loads(close_response.text)
 
         # set default job check polling to 5 seconds
@@ -2218,7 +2228,7 @@ class Bulk:
 
         # create the query request batch
         job_batch_response = webservice.Tools.post_http_response(
-            instance_url + Bulk.base_bulk_uri + Bulk.batch_uri + '/' + job_id + '/batch', query, header_details)
+            instance_url + Bulk.base_bulk_uri + Bulk.batch_uri + job_id + '/batch', query, header_details)
         json_job_batch_response = json.loads(job_batch_response.text)
         batch_id = json_job_batch_response['id']
 
@@ -2226,7 +2236,7 @@ class Bulk:
         close_body = {'state': 'Closed'}
         json_close_body = json.dumps(close_body, indent=4, separators=(',', ': '))
         close_response = webservice.Tools.post_http_response(
-            instance_url + Bulk.base_bulk_uri + Bulk.batch_uri + '/' + job_id, json_close_body, header_details)
+            instance_url + Bulk.base_bulk_uri + Bulk.batch_uri + job_id, json_close_body, header_details)
         json_close_response = json.loads(close_response.text)
 
         # check job status until the job completes
@@ -2301,6 +2311,9 @@ class Bulk2:
 
         response = webservice.Tools.get_http_response(instance_url + Bulk2.base_bulk2_uri + uri_param_string,
                                                       header_details)
+        json_response = json.loads(response.text)
+
+        return json_response
 
     @staticmethod
     def create_job(object_name, operation, external_id_field_name, column_delimiter, content_type, line_ending,
@@ -2522,7 +2535,7 @@ class Bulk2:
             if json_response['state'] in finished_statuses:
                 #Bulk v2 will set status to Failed even while the job is processing if it encounters a record
                 #failure, checking to see if records processes has not moved since the last poll
-                if processed_total == json_response['numberRecordsProcessed']:
+                if json_response['state'] != 'Failed' or processed_total == json_response['numberRecordsProcessed']:
                     break
 
             processed_total = json_response['numberRecordsProcessed']
