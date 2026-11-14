@@ -23,6 +23,21 @@ class MockedRequestTestCase(unittest.TestCase):
     def requested_url(self):
         return self.http_request.call_args.kwargs['URL']
 
+    def assert_request(self, method, url, body=None, headers=None):
+        kwargs = self.http_request.call_args.kwargs
+
+        self.assertEqual(kwargs['requestType'], method)
+        self.assertEqual(kwargs['URL'], url)
+
+        if body is None:
+            self.assertIsNone(kwargs.get('data_body'))
+        else:
+            self.assertEqual(json.loads(kwargs['data_body']), body)
+
+        expected_headers = {'Authorization': 'Bearer token', 'Content-Type': 'application/json'}
+        expected_headers.update(headers or {})
+        self.assertEqual(kwargs['header_details'], expected_headers)
+
 
 class TestUrlEncoding(MockedRequestTestCase):
     """
@@ -129,6 +144,131 @@ class TestTooling(MockedRequestTestCase):
 
         self.assertEqual(self.requested_url(),
                          INSTANCE + '/services/data/v60.0/tooling/query/?q=SELECT%20Id%20FROM%20ApexClass')
+
+
+class TestStandardRequests(MockedRequestTestCase):
+    """
+    Checks the HTTP method, URL, headers and body each Standard method sends.
+    """
+    RECORDS = [{'attributes': {'type': 'Account'}, 'Name': 'Acme'}]
+
+    def test_get_sobject_row(self):
+        self.http_request.return_value.text = '{"Id": "001A"}'
+
+        result = Standard.get_sobject_row('Account', '001A', 'Id,Name', TOKEN, INSTANCE)
+
+        self.assertEqual(result, {'Id': '001A'})
+        self.assert_request('GET', BASE + '/sobjects/Account/001A?fields=Id,Name')
+
+    def test_get_sobject_rows(self):
+        Standard.get_sobject_rows('Account', '001A,001B', 'Id,Name', TOKEN, INSTANCE)
+
+        self.assert_request('GET', BASE + '/composite/sobjects/Account?ids=001A,001B&fields=Id,Name')
+
+    def test_get_sobject_blob_returns_the_response(self):
+        result = Standard.get_sobject_blob('Attachment', '00PA', TOKEN, INSTANCE)
+
+        self.assertIs(result, self.http_request.return_value)
+        self.assert_request('GET', BASE + '/sobjects/Attachment/00PA/Body')
+
+    def test_create_sobject_row(self):
+        self.http_request.return_value.text = '{"id": "001A"}'
+
+        result = Standard.create_sobject_row('Account', {'Name': 'Acme'}, True, TOKEN, INSTANCE)
+
+        self.assertEqual(result, '{"id": "001A"}')
+        self.assert_request('POST', BASE + '/sobjects/Account/', {'Name': 'Acme'}, {'Sforce-Auto-Assign': 'true'})
+
+    def test_update_sobject_row(self):
+        self.http_request.return_value.status_code = 204
+
+        result = Standard.update_sobject_row('Account', '001A', {'Name': 'Acme'}, False, TOKEN, INSTANCE)
+
+        self.assertEqual(result, 'Update Successful')
+        self.assert_request('PATCH', BASE + '/sobjects/Account/001A', {'Name': 'Acme'},
+                            {'Sforce-Auto-Assign': 'false'})
+
+    def test_create_sobject_rows(self):
+        self.http_request.return_value.text = '[{"success": true}]'
+
+        result = Standard.create_sobject_rows(self.RECORDS, True, True, TOKEN, INSTANCE)
+
+        self.assertEqual(result, [{'success': True}])
+        self.assert_request('POST', BASE + '/composite/sobjects', {'allOrNone': True, 'records': self.RECORDS},
+                            {'Sforce-Auto-Assign': 'true'})
+
+    def test_update_sobject_rows(self):
+        Standard.update_sobject_rows(self.RECORDS, False, False, TOKEN, INSTANCE)
+
+        self.assert_request('PATCH', BASE + '/composite/sobjects', {'allOrNone': False, 'records': self.RECORDS},
+                            {'Sforce-Auto-Assign': 'false'})
+
+    def test_upsert_sobject_rows(self):
+        Standard.upsert_sobject_rows('Account', self.RECORDS, TOKEN, INSTANCE, external_id_field_name='Ext__c')
+
+        self.assert_request('PATCH', BASE + '/composite/sobjects/Account/Ext__c',
+                            {'allOrNone': False, 'records': self.RECORDS}, {'Sforce-Auto-Assign': 'false'})
+
+    def test_delete_sobject_rows(self):
+        Standard.delete_sobject_rows(['001A', '001B'], True, TOKEN, INSTANCE)
+
+        self.assert_request('DELETE', BASE + '/composite/sobjects?ids=001A,001B&allOrNone=true')
+
+    def test_query_methods(self):
+        cases = [(Standard.query, '/query/?q='), (Standard.query_all, '/queryAll/?q='),
+                 (Standard.search, '/search/?q=')]
+
+        for method, uri in cases:
+            with self.subTest(uri=uri):
+                method('SELECT Id FROM Account', TOKEN, INSTANCE)
+
+                self.assert_request('GET', BASE + uri + 'SELECT%20Id%20FROM%20Account')
+
+    def test_reset_users_password(self):
+        Standard.reset_users_password('005A', TOKEN, INSTANCE)
+
+        self.assert_request('DELETE', BASE + '/sobjects/User/005A/password')
+
+    def test_get_current_user_info(self):
+        Standard.get_current_user_info(TOKEN, INSTANCE)
+
+        self.assert_request('GET', BASE + '/chatter/users/me')
+
+    def test_post_chatter_mention(self):
+        Standard.post_chatter_mention('hello', '005A', '001A', TOKEN, INSTANCE)
+
+        self.assert_request('POST', BASE + '/chatter/feed-elements', {
+            'body': {'messageSegments': [{'type': 'Mention', 'id': '005A'}, {'type': 'Text', 'text': 'hello'}]},
+            'feedElementType': 'FeedItem',
+            'subjectId': '001A'})
+
+    def test_get_updated_and_deleted(self):
+        start = datetime.datetime(2020, 3, 13, 12, 0, 0)
+        end = datetime.datetime(2020, 3, 14, 12, 0, 0)
+        params = '?start=2020-03-13T12%3A00%3A00Z&end=2020-03-14T12%3A00%3A00Z'
+
+        Standard.get_updated('Account', start, end, TOKEN, INSTANCE)
+        self.assert_request('GET', BASE + '/sobjects/Account/updated/' + params)
+
+        Standard.get_deleted('Account', start, end, TOKEN, INSTANCE)
+        self.assert_request('GET', BASE + '/sobjects/Account/deleted/' + params)
+
+    def test_retrieve(self):
+        Standard.retrieve('Account', ['001A'], ['Id', 'Name'], TOKEN, INSTANCE)
+
+        self.assert_request('POST', BASE + '/composite/sobjects/Account', {'ids': ['001A'], 'fields': ['Id', 'Name']})
+
+    def test_graph_composite_request(self):
+        request_body = {'graphs': [{'graphId': 'graph1', 'compositeRequest': []}]}
+
+        Standard.graph_composite_request(request_body, TOKEN, INSTANCE)
+
+        self.assert_request('POST', BASE + '/composite/graph', request_body)
+
+    def test_get_object_describe(self):
+        Standard.get_object_describe('Account', None, TOKEN, INSTANCE)
+
+        self.assert_request('GET', BASE + '/sobjects/Account/describe/')
 
 
 class TestStandard(MockedRequestTestCase):

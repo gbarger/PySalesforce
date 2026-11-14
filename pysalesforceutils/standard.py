@@ -11,7 +11,7 @@ from mimetypes import MimeTypes
 
 import pysalesforceutils
 from . import webservice
-from .util import Util, _quote_path
+from .util import Util, _quote_path, _rest_json, _rest_request
 
 
 class Standard:
@@ -96,14 +96,11 @@ class Standard:
                 a lot) of the fields if the field_list_string is None.
         """
         get_row_uri = '/sobjects/' + _quote_path(object_name) + '/' + _quote_path(record_id)
-        header_details = Util.get_standard_header(access_token)
 
         if field_list_string != None:
             get_row_uri = get_row_uri + '?fields=' + urllib.parse.quote(field_list_string, safe=',')
 
-        response = webservice.Tools.get_http_response(
-            instance_url + Standard.base_standard_uri + 'v' + pysalesforceutils.API_VERSION + get_row_uri, header_details)
-        json_response = json.loads(response.text)
+        json_response = _rest_json('GET', get_row_uri, access_token, instance_url)
 
         return json_response
 
@@ -137,10 +134,8 @@ class Standard:
         }
 
         get_row_uri = '/sobjects/' + _quote_path(object_name) + '/' + _quote_path(record_id) + '/' + object_to_blob_map[object_name]
-        header_details = Util.get_standard_header(access_token)
 
-        response = webservice.Tools.get_http_response(
-            instance_url + Standard.base_standard_uri + 'v' + pysalesforceutils.API_VERSION + get_row_uri, header_details)
+        response = _rest_request('GET', get_row_uri, access_token, instance_url)
 
         return response
 
@@ -230,18 +225,9 @@ class Standard:
             dict: returns the text from the creation response
         """
         post_row_uri = '/sobjects/' + _quote_path(object_name) + '/'
-        header_details = Util.get_standard_header(access_token)
+        headers = {"Sforce-Auto-Assign": "true" if run_assignment_rules else "false"}
 
-        if run_assignment_rules:
-            header_details["Sforce-Auto-Assign"] = "true"
-        else:
-            header_details["Sforce-Auto-Assign"] = "false"
-
-        data_body_json = json.dumps(record_json, indent=4, separators=(',', ': '))
-
-        response = webservice.Tools.post_http_response(
-            instance_url + Standard.base_standard_uri + 'v' + pysalesforceutils.API_VERSION + post_row_uri, data_body_json,
-            header_details)
+        response = _rest_request('POST', post_row_uri, access_token, instance_url, record_json, headers)
         response_text = ""
 
         if response.status_code == 204:
@@ -276,16 +262,13 @@ class Standard:
         """
 
         get_row_uri = '/composite/sobjects/' + _quote_path(object_name)
-        header_details = Util.get_standard_header(access_token)
 
         get_rows_uri = get_row_uri + '?ids=' + urllib.parse.quote(record_id_list_string, safe=',')
 
         if field_list_string != None:
             get_rows_uri = get_rows_uri + '&fields=' + urllib.parse.quote(field_list_string, safe=',')
 
-        response = webservice.Tools.get_http_response(
-            instance_url + Standard.base_standard_uri + 'v' + pysalesforceutils.API_VERSION + get_rows_uri, header_details)
-        json_response = json.loads(response.text)
+        json_response = _rest_json('GET', get_rows_uri, access_token, instance_url)
 
         return json_response
 
@@ -349,24 +332,13 @@ class Standard:
                 ]
         """
         post_rows_uri = '/composite/sobjects'
-        header_details = Util.get_standard_header(access_token)
-
-        if run_assignment_rules:
-            header_details["Sforce-Auto-Assign"] = "true"
-        else:
-            header_details["Sforce-Auto-Assign"] = "false"
+        headers = {"Sforce-Auto-Assign": "true" if run_assignment_rules else "false"}
 
         request_body = {}
         request_body["allOrNone"] = all_or_none
         request_body["records"] = records
 
-        data_body_json = json.dumps(request_body, indent=4, separators=(',', ': '))
-
-        response = webservice.Tools.post_http_response(
-            instance_url + Standard.base_standard_uri + 'v' + pysalesforceutils.API_VERSION + post_rows_uri, data_body_json,
-            header_details)
-
-        return json.loads(response.text)
+        return _rest_json('POST', post_rows_uri, access_token, instance_url, request_body, headers)
 
     @staticmethod
     def update_sobject_row(object_name, record_id, record_json, run_assignment_rules, access_token, instance_url):
@@ -401,14 +373,9 @@ class Standard:
                  text, only a response code of 204
         """
         patch_row_uri = '/sobjects/' + _quote_path(object_name) + '/' + _quote_path(record_id)
-        header_details = Util.get_standard_header(access_token)
-        header_details["Sforce-Auto-Assign"] = "true" if run_assignment_rules else "false"
+        headers = {"Sforce-Auto-Assign": "true" if run_assignment_rules else "false"}
 
-        data_body_json = json.dumps(record_json, indent=4, separators=(',', ': '))
-
-        response = webservice.Tools.patch_http_response(
-            instance_url + Standard.base_standard_uri + 'v' + pysalesforceutils.API_VERSION + patch_row_uri, data_body_json,
-            header_details)
+        response = _rest_request('PATCH', patch_row_uri, access_token, instance_url, record_json, headers)
         response_text = ""
 
         if response.status_code == 204:
@@ -472,24 +439,13 @@ class Standard:
                 ]
         """
         patch_rows_uri = '/composite/sobjects'
-        header_details = Util.get_standard_header(access_token)
-
-        if run_assignment_rules:
-            header_details["Sforce-Auto-Assign"] = "true"
-        else:
-            header_details["Sforce-Auto-Assign"] = "false"
+        headers = {"Sforce-Auto-Assign": "true" if run_assignment_rules else "false"}
 
         request_body = {}
         request_body["allOrNone"] = all_or_none
         request_body["records"] = records
 
-        data_body_json = json.dumps(request_body, indent=4, separators=(',', ': '))
-
-        response = webservice.Tools.patch_http_response(
-            instance_url + Standard.base_standard_uri + 'v' + pysalesforceutils.API_VERSION + patch_rows_uri, data_body_json,
-            header_details)
-
-        return json.loads(response.text)
+        return _rest_json('PATCH', patch_rows_uri, access_token, instance_url, request_body, headers)
 
     @staticmethod
     def upsert_sobject_rows(object_api_name, records, access_token, instance_url, all_or_none=False, run_assignment_rules=False, external_id_field_name='Id'):
@@ -553,24 +509,13 @@ class Standard:
         """
         # /composite/sobjects/SobjectName/ExternalIdFieldName
         patch_rows_uri = "/composite/sobjects/" + _quote_path(object_api_name) + "/" + _quote_path(external_id_field_name)
-        header_details = Util.get_standard_header(access_token)
-
-        if run_assignment_rules:
-            header_details["Sforce-Auto-Assign"] = "true"
-        else:
-            header_details["Sforce-Auto-Assign"] = "false"
+        headers = {"Sforce-Auto-Assign": "true" if run_assignment_rules else "false"}
 
         request_body = {}
         request_body["allOrNone"] = all_or_none
         request_body["records"] = records
 
-        data_body_json = json.dumps(request_body, indent=4, separators=(',', ': '))
-
-        response = webservice.Tools.patch_http_response(
-            instance_url + Standard.base_standard_uri + 'v' + pysalesforceutils.API_VERSION + patch_rows_uri, data_body_json,
-            header_details)
-
-        return json.loads(response.text)
+        return _rest_json('PATCH', patch_rows_uri, access_token, instance_url, request_body, headers)
 
     @staticmethod
     def delete_sobject_rows(record_ids, all_or_none, access_token, instance_url):
@@ -617,7 +562,6 @@ class Standard:
                 ]
         """
         delete_rows_uri = '/composite/sobjects'
-        header_details = Util.get_standard_header(access_token)
 
         delete_params = "?ids=" + ",".join(_quote_path(record_id) for record_id in record_ids)
 
@@ -626,11 +570,7 @@ class Standard:
         else:
             delete_params += "&allOrNone=false"
 
-        response = webservice.Tools.delete_http_response(
-            instance_url + Standard.base_standard_uri + 'v' + pysalesforceutils.API_VERSION + delete_rows_uri + delete_params, None,
-            header_details)
-
-        return json.loads(response.text)
+        return _rest_json('DELETE', delete_rows_uri + delete_params, access_token, instance_url)
 
     @staticmethod
     def query(query_string, access_token, instance_url):
@@ -652,13 +592,9 @@ class Standard:
                     will also return a nextRecordsUrl to get more records.
         """
         query_uri = '/query/?q='
-        header_details = Util.get_standard_header(access_token)
         url_encoded_query = urllib.parse.quote(query_string)
 
-        response = webservice.Tools.get_http_response(
-            instance_url + Standard.base_standard_uri + 'v' + pysalesforceutils.API_VERSION + query_uri + url_encoded_query,
-            header_details)
-        json_response = json.loads(response.text)
+        json_response = _rest_json('GET', query_uri + url_encoded_query, access_token, instance_url)
 
         return json_response
 
@@ -683,13 +619,9 @@ class Standard:
                     will also return a nextRecordsUrl to get more records.
         """
         query_uri = '/queryAll/?q='
-        header_details = Util.get_standard_header(access_token)
         url_encoded_query = urllib.parse.quote(query_string)
 
-        response = webservice.Tools.get_http_response(
-            instance_url + Standard.base_standard_uri + 'v' + pysalesforceutils.API_VERSION + query_uri + url_encoded_query,
-            header_details)
-        json_response = json.loads(response.text)
+        json_response = _rest_json('GET', query_uri + url_encoded_query, access_token, instance_url)
 
         return json_response
     
@@ -715,13 +647,9 @@ class Standard:
 
         """
         search_uri = '/search/?q='
-        header_details = Util.get_standard_header(access_token)
         url_encoded_search = urllib.parse.quote(search_string)
 
-        response = webservice.Tools.get_http_response(
-            instance_url + Standard.base_standard_uri + 'v' + pysalesforceutils.API_VERSION + search_uri + url_encoded_search,
-            header_details)
-        json_response = json.loads(response.text)
+        json_response = _rest_json('GET', search_uri + url_encoded_search, access_token, instance_url)
 
         return json_response
 
@@ -741,12 +669,8 @@ class Standard:
             object: returns information about the password reset
         """
         query_uri = f'/sobjects/User/{_quote_path(user_id)}/password'
-        header_details = Util.get_standard_header(access_token)
 
-        response = webservice.Tools.delete_http_response(
-            instance_url + Standard.base_standard_uri + 'v' + pysalesforceutils.API_VERSION + query_uri, None,
-            header_details)
-        json_response = json.loads(response.text)
+        json_response = _rest_json('DELETE', query_uri, access_token, instance_url)
 
         return json_response
 
@@ -765,12 +689,8 @@ class Standard:
             object: returns information about the current user
         """
         query_uri = '/chatter/users/me'
-        header_details = Util.get_standard_header(access_token)
 
-        response = webservice.Tools.get_http_response(
-            instance_url + Standard.base_standard_uri + 'v' + pysalesforceutils.API_VERSION + query_uri,
-            header_details)
-        json_response = json.loads(response.text)
+        json_response = _rest_json('GET', query_uri, access_token, instance_url)
 
         return json_response
 
@@ -793,19 +713,13 @@ class Standard:
                     will also return a nextRecordsUrl to get more records.
         """
         query_uri = '/chatter/feed-elements'
-        header_details = Util.get_standard_header(access_token)
         request_body = {}
         request_body['body'] = {}
         request_body['body']["messageSegments"] = [{"type": "Mention", "id": mention_id}, {'type': 'Text', "text": text}]
         request_body["feedElementType"] = "FeedItem"
         request_body["subjectId"] = subject_id
 
-        data_body_json = json.dumps(request_body, indent=4, separators=(',', ': '))
-
-        response = webservice.Tools.post_http_response(
-            instance_url + Standard.base_standard_uri + 'v' + pysalesforceutils.API_VERSION + query_uri, data_body_json,
-            header_details)
-        json_response = json.loads(response.text)
+        json_response = _rest_json('POST', query_uri, access_token, instance_url, request_body)
 
         return json_response
 
@@ -891,12 +805,7 @@ class Standard:
             urllib.parse.quote(start_date_time.strftime('%Y-%m-%dT%H:%M:%SZ')) + '&end=' + \
             urllib.parse.quote(end_date_time.strftime('%Y-%m-%dT%H:%M:%SZ'))
 
-        header_details = Util.get_standard_header(access_token)
-
-        response = webservice.Tools.get_http_response(
-            instance_url + Standard.base_standard_uri + 'v' + pysalesforceutils.API_VERSION + get_updated_uri,
-            header_details)
-        json_response = json.loads(response.text)
+        json_response = _rest_json('GET', get_updated_uri, access_token, instance_url)
 
         return json_response
 
@@ -953,18 +862,12 @@ class Standard:
             ]
         """
         retrieve_uri = '/composite/sobjects/' + _quote_path(object_name)
-        header_details = Util.get_standard_header(access_token)
 
         request_body = {}
         request_body['ids'] = ids
         request_body['fields'] = fields
 
-        data_body_json = json.dumps(request_body, indent=4, separators=(',', ': '))
-
-        response = webservice.Tools.post_http_response(
-            instance_url + Standard.base_standard_uri + 'v' + pysalesforceutils.API_VERSION + retrieve_uri, data_body_json,
-            header_details)
-        json_response = json.loads(response.text)
+        json_response = _rest_json('POST', retrieve_uri, access_token, instance_url, request_body)
 
         return json_response
 
@@ -1022,12 +925,7 @@ class Standard:
             urllib.parse.quote(start_date_time.strftime('%Y-%m-%dT%H:%M:%SZ')) + '&end=' + \
             urllib.parse.quote(end_date_time.strftime('%Y-%m-%dT%H:%M:%SZ'))
 
-        header_details = Util.get_standard_header(access_token)
-
-        response = webservice.Tools.get_http_response(
-            instance_url + Standard.base_standard_uri + 'v' + pysalesforceutils.API_VERSION + get_deleted_uri,
-            header_details)
-        json_response = json.loads(response.text)
+        json_response = _rest_json('GET', get_deleted_uri, access_token, instance_url)
 
         return json_response
 
@@ -1107,14 +1005,7 @@ class Standard:
         """
         graph_uri = '/composite/graph'
 
-        header_details = Util.get_standard_header(access_token)
-
-        data_body_json = json.dumps(request_body, indent=4, separators=(',', ': '))
-
-        response = webservice.Tools.post_http_response(
-            instance_url + Standard.base_standard_uri + 'v' + pysalesforceutils.API_VERSION + graph_uri, data_body_json,
-            header_details)
-        json_response = json.loads(response.text)
+        json_response = _rest_json('POST', graph_uri, access_token, instance_url, request_body)
 
         return json_response
 
@@ -1150,15 +1041,13 @@ class Standard:
         """
         describe_uri = "/sobjects/{}/describe/".format(_quote_path(object_name))
 
-        header_details = Util.get_standard_header(access_token)
+        headers = {}
 
         if modified_since_date:
             modified_since_date = modified_since_date.strftime('%a, %d %b %Y %H:%M:%S GMT')
-            header_details["If-Modified-Since"] = modified_since_date
+            headers["If-Modified-Since"] = modified_since_date
 
-        response = webservice.Tools.get_http_response(
-            instance_url + Standard.base_standard_uri + 'v' + pysalesforceutils.API_VERSION + describe_uri,
-            header_details)
+        response = _rest_request('GET', describe_uri, access_token, instance_url, None, headers)
 
         # 304 Not Modified has no response body
         if response.status_code == 304:
