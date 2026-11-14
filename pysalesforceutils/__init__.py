@@ -8,7 +8,6 @@ import json
 from . import webservice
 import urllib
 import time
-import sys
 import os
 from mimetypes import MimeTypes
 
@@ -2797,6 +2796,9 @@ class Metadata:
         Returns:
             Returns the client service for SOAP Metadata requests
         """
+        if not metadata_url.lower().startswith('https://'):
+            raise ValueError('The session id can only be sent to an https URL: {}'.format(metadata_url))
+
         soap_client_service = Util.get_soap_client_service(METADATA_WSDL_FILE, METADATA_SERVICE_BINDING, metadata_url)
 
         return soap_client_service
@@ -2875,8 +2877,7 @@ class Metadata:
             object: Returns the package that was requested.
         """
         if kwargs.get('version') is None:
-            print('The version parameter is required to create a package.')
-            sys.exit(0)
+            raise ValueError('The version parameter is required to create a package.')
 
         client = Util.get_soap_client(METADATA_WSDL_FILE)
         package_type = client.get_type('ns0:Package')
@@ -3056,8 +3057,7 @@ class Metadata:
                     requests
         """
         if kwargs.get('api_version') is None:
-            print('The version parameter is required to create a package.')
-            sys.exit(0)
+            raise ValueError('The api_version parameter is required to create a retrieve request.')
 
         client = Util.get_soap_client(METADATA_WSDL_FILE)
         retrieveRequest_type = client.get_type('ns0:RetrieveRequest')

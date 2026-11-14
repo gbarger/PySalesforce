@@ -3,7 +3,7 @@ import unittest
 from unittest import mock
 
 import pysalesforceutils
-from pysalesforceutils import Standard, Bulk, Bulk2
+from pysalesforceutils import Standard, Bulk, Bulk2, Metadata
 
 TOKEN = 'token'
 INSTANCE = 'https://example.my.salesforce.com'
@@ -75,6 +75,21 @@ class TestUrlEncoding(unittest.TestCase):
         Bulk2.get_job_info('750A/../../x', TOKEN, INSTANCE)
 
         self.assertEqual(self.requested_url(), INSTANCE + Bulk2.base_bulk2_uri + '/750A%2F..%2F..%2Fx')
+
+
+class TestMetadataValidation(unittest.TestCase):
+
+    def test_get_package_requires_version(self):
+        with self.assertRaises(ValueError):
+            Metadata.get_package(full_name='MyPackage')
+
+    def test_get_retrieve_request_requires_api_version(self):
+        with self.assertRaises(ValueError):
+            Metadata.get_retrieve_request(single_package=True)
+
+    def test_client_service_requires_https(self):
+        with self.assertRaises(ValueError):
+            Metadata.get_client_service('http://example.my.salesforce.com/services/Soap/m/50.0')
 
 
 if __name__ == '__main__':

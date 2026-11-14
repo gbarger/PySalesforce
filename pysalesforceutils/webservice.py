@@ -32,6 +32,10 @@ class Tools:
 
         response = ""
 
+        # never send the access token over an unencrypted connection
+        if header_details and 'Authorization' in header_details and not URL.lower().startswith('https://'):
+            raise ValueError('The access token can only be sent to an https URL: {}'.format(URL))
+
         try:
             req = requests.Request(requestType, URL, data=data_body, headers=header_details, files=files)
             prepReq = req.prepare()

@@ -60,6 +60,20 @@ class TestWebservice(unittest.TestCase):
         self.assertIn('Service Unavailable', str(context.exception))
         self.assertEqual(context.exception.response.status_code, 503)
 
+    def test_access_token_is_not_sent_over_http(self):
+        with self.assertRaises(ValueError):
+            webservice.Tools.get_http_response('http://example.my.salesforce.com/services/data/',
+                                               {'Authorization': 'Bearer token'})
+
+        self.send.assert_not_called()
+
+    def test_http_is_allowed_without_access_token(self):
+        self.send.return_value = build_response(200, b'{}')
+
+        webservice.Tools.get_http_response('http://example.com/', {})
+
+        self.send.assert_called_once()
+
 
 if __name__ == '__main__':
     unittest.main()
