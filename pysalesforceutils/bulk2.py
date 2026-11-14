@@ -4,12 +4,12 @@
 Salesforce Bulk API 2.0.
 """
 
-import json
 import time
 
 import pysalesforceutils
-from . import webservice
-from .util import Util, _quote_path
+from .util import _quote_path, _rest_json, _rest_request
+
+_INGEST_URI = '/jobs/ingest'
 
 
 class Bulk2:
@@ -19,6 +19,8 @@ class Bulk2:
 
     https://developer.salesforce.com/docs/atlas.en-us.api_bulk_v2.meta/api_bulk_v2/introduction_bulk_api_2.htm
     """
+    # no longer used by the methods in this class. Kept so existing code that
+    # reads it doesn't break.
     base_bulk2_uri = '/services/data/v' + pysalesforceutils.API_VERSION + '/jobs/ingest'
 
     @staticmethod
@@ -51,8 +53,6 @@ class Bulk2:
                                         to get the next set of results in a
                                         subsequent request if done isn’t true.
         """
-        header_details = Util.get_standard_header(access_token)
-
         uri_params = []
         uri_param_string = ""
 
@@ -68,9 +68,7 @@ class Bulk2:
         if uri_params:
             uri_param_string = "?" + "&".join(uri_params)
 
-        response = webservice.Tools.get_http_response(instance_url + Bulk2.base_bulk2_uri + uri_param_string,
-                                                      header_details)
-        json_response = json.loads(response.text)
+        json_response = _rest_json('GET', _INGEST_URI + uri_param_string, access_token, instance_url)
 
         return json_response
 
@@ -125,9 +123,7 @@ class Bulk2:
                   necessary for the remaining calls. Create job response details:
                   https://developer.salesforce.com/docs/atlas.en-us.api_bulk_v2.meta/api_bulk_v2/create_job.htm
         """
-        header_details = Util.get_standard_header(access_token)
-        header_details["Content-Type"] = "application/json; charset=UTF-8"
-        header_details["Accept"] = "application/json"
+        headers = {"Content-Type": "application/json; charset=UTF-8", "Accept": "application/json"}
 
         post_body = {}
         post_body["object"] = object_name
@@ -145,10 +141,7 @@ class Bulk2:
         if line_ending:
             post_body["lineEnding"] = line_ending
 
-        json_post_body_data = json.dumps(post_body, indent=4, separators=(',', ': '))
-        response = webservice.Tools.post_http_response(instance_url + Bulk2.base_bulk2_uri, json_post_body_data,
-                                                       header_details)
-        json_response = json.loads(response.text)
+        json_response = _rest_json('POST', _INGEST_URI, access_token, instance_url, post_body, headers)
 
         return json_response
 
@@ -169,12 +162,10 @@ class Bulk2:
             int: Returns the status code. If the upload was successful, the
                  response code should be 201.
         """
-        header_details = Util.get_standard_header(access_token)
-        header_details["Content-Type"] = "text/csv"
-        header_details["Accept"] = "application/json"
+        headers = {"Content-Type": "text/csv", "Accept": "application/json"}
 
-        response = webservice.Tools.put_http_response(instance_url + Bulk2.base_bulk2_uri + '/' + _quote_path(job_id) + '/batches',
-                                                      data_set, header_details)
+        response = _rest_request('PUT', _INGEST_URI + '/' + _quote_path(job_id) + '/batches', access_token,
+                                 instance_url, data_set, headers)
 
         return response.status_code
 
@@ -197,14 +188,10 @@ class Bulk2:
         Returns:
             dict: Returns the current job state details.
         """
-        header_details = Util.get_standard_header(access_token)
-
         request_body = {"state": job_state}
 
-        json_request_body = json.dumps(request_body, indent=4, separators=(',', ': '))
-        response = webservice.Tools.patch_http_response(instance_url + Bulk2.base_bulk2_uri + '/' + _quote_path(job_id),
-                                                        json_request_body, header_details)
-        json_response = json.loads(response.text)
+        json_response = _rest_json('PATCH', _INGEST_URI + '/' + _quote_path(job_id), access_token, instance_url,
+                                   request_body)
 
         return json_response
 
@@ -225,10 +212,7 @@ class Bulk2:
             int: Returns the http status code. Should be 204 which indicates the
                  job was deleted successfully.
         """
-        header_details = Util.get_standard_header(access_token)
-
-        response = webservice.Tools.delete_http_response(instance_url + Bulk2.base_bulk2_uri + '/' + _quote_path(job_id), None,
-                                                         header_details)
+        response = _rest_request('DELETE', _INGEST_URI + '/' + _quote_path(job_id), access_token, instance_url)
 
         return response.status_code
 
@@ -250,11 +234,7 @@ class Bulk2:
                   a failed job. More details here:
                   https://developer.salesforce.com/docs/atlas.en-us.api_bulk_v2.meta/api_bulk_v2/get_job_info.htm
         """
-        header_details = Util.get_standard_header(access_token)
-
-        response = webservice.Tools.get_http_response(instance_url + Bulk2.base_bulk2_uri + '/' + _quote_path(job_id),
-                                                      header_details)
-        json_response = json.loads(response.text)
+        json_response = _rest_json('GET', _INGEST_URI + '/' + _quote_path(job_id), access_token, instance_url)
 
         return json_response
 
@@ -320,10 +300,8 @@ class Bulk2:
                  sf__Created (bool): Indicates if the record was created.
                  sf__Id (str): ID of the record that was successfully processed.
         """
-        header_details = Util.get_standard_header(access_token)
-
-        response = webservice.Tools.get_http_response(
-            instance_url + Bulk2.base_bulk2_uri + '/' + _quote_path(job_id) + '/successfulResults/', header_details)
+        response = _rest_request('GET', _INGEST_URI + '/' + _quote_path(job_id) + '/successfulResults/', access_token,
+                                 instance_url)
 
         return response.text
 
@@ -346,10 +324,8 @@ class Bulk2:
                  sf__Id (str): ID of the record that had an error during
                                processing, if applicable.
         """
-        header_details = Util.get_standard_header(access_token)
-
-        response = webservice.Tools.get_http_response(
-            instance_url + Bulk2.base_bulk2_uri + '/' + _quote_path(job_id) + '/failedResults/', header_details)
+        response = _rest_request('GET', _INGEST_URI + '/' + _quote_path(job_id) + '/failedResults/', access_token,
+                                 instance_url)
 
         return response.text
 
@@ -368,9 +344,7 @@ class Bulk2:
         Returns:
             str: Returns a CSV with all the fields that were originally supplied.
         """
-        header_details = Util.get_standard_header(access_token)
-
-        response = webservice.Tools.get_http_response(
-            instance_url + Bulk2.base_bulk2_uri + '/' + _quote_path(job_id) + '/unprocessedrecords/', header_details)
+        response = _rest_request('GET', _INGEST_URI + '/' + _quote_path(job_id) + '/unprocessedrecords/', access_token,
+                                 instance_url)
 
         return response.text

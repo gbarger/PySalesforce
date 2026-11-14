@@ -300,6 +300,73 @@ class TestStandard(MockedRequestTestCase):
         self.assertIsNone(result)
 
 
+class TestBulk2Requests(MockedRequestTestCase):
+    """
+    Checks the HTTP method, URL, headers and body each Bulk2 method sends.
+    """
+    INGEST = BASE + '/jobs/ingest'
+
+    def test_get_job_list(self):
+        Bulk2.get_job_list(True, 'V2Ingest', 5, TOKEN, INSTANCE)
+
+        self.assert_request('GET', self.INGEST + '?isPkChunkingEnabled=true&jobType=V2Ingest&queryLocator=5')
+
+    def test_create_job(self):
+        self.http_request.return_value.text = '{"id": "750A"}'
+
+        result = Bulk2.create_job('Account', 'upsert', 'Ext__c', 'COMMA', 'CSV', 'LF', TOKEN, INSTANCE)
+
+        self.assertEqual(result, {'id': '750A'})
+        self.assert_request(
+            'POST', self.INGEST,
+            {'object': 'Account', 'operation': 'upsert', 'externalIdFieldName': 'Ext__c', 'columnDelimiter': 'COMMA',
+             'contentType': 'CSV', 'lineEnding': 'LF'},
+            {'Content-Type': 'application/json; charset=UTF-8', 'Accept': 'application/json'})
+
+    def test_upload_csv_batch_sends_the_csv_as_is(self):
+        self.http_request.return_value.status_code = 201
+
+        result = Bulk2.upload_csv_batch('Name\nAcme\n', '750A', TOKEN, INSTANCE)
+
+        kwargs = self.http_request.call_args.kwargs
+        self.assertEqual(result, 201)
+        self.assertEqual(kwargs['requestType'], 'PUT')
+        self.assertEqual(kwargs['URL'], self.INGEST + '/750A/batches')
+        self.assertEqual(kwargs['data_body'], 'Name\nAcme\n')
+        self.assertEqual(kwargs['header_details'], {'Authorization': 'Bearer token', 'Content-Type': 'text/csv',
+                                                    'Accept': 'application/json'})
+
+    def test_change_job_state(self):
+        Bulk2.change_job_state('UploadComplete', '750A', TOKEN, INSTANCE)
+
+        self.assert_request('PATCH', self.INGEST + '/750A', {'state': 'UploadComplete'})
+
+    def test_delete_job(self):
+        self.http_request.return_value.status_code = 204
+
+        result = Bulk2.delete_job('750A', TOKEN, INSTANCE)
+
+        self.assertEqual(result, 204)
+        self.assert_request('DELETE', self.INGEST + '/750A')
+
+    def test_get_job_info(self):
+        Bulk2.get_job_info('750A', TOKEN, INSTANCE)
+
+        self.assert_request('GET', self.INGEST + '/750A')
+
+    def test_result_downloads_return_text(self):
+        cases = [(Bulk2.get_success_results, '/successfulResults/'), (Bulk2.get_failed_results, '/failedResults/'),
+                 (Bulk2.get_unprocessed_results, '/unprocessedrecords/')]
+        self.http_request.return_value.text = 'sf__Id,Name\n001A,Acme\n'
+
+        for method, uri in cases:
+            with self.subTest(uri=uri):
+                result = method('750A', TOKEN, INSTANCE)
+
+                self.assertEqual(result, 'sf__Id,Name\n001A,Acme\n')
+                self.assert_request('GET', self.INGEST + '/750A' + uri)
+
+
 class TestBulkPolling(MockedRequestTestCase):
 
     def setUp(self):

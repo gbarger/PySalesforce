@@ -38,8 +38,8 @@ def _rest_request(method, path, access_token, instance_url, data=None, headers=N
                             login response
         instance_url (str): This is the instance_url value received from the
                             login response
-        data (object): A python object to send as the JSON request body.
-                       Defaults to None
+        data (object): A python object to send as the JSON request body. A
+                       str or bytes value is sent as is. Defaults to None
         headers (dict): Headers to add to the standard header. Defaults to None
 
     Returns:
@@ -52,7 +52,9 @@ def _rest_request(method, path, access_token, instance_url, data=None, headers=N
 
     data_body = None
 
-    if data != None:
+    if isinstance(data, (str, bytes)):
+        data_body = data
+    elif data != None:
         data_body = json.dumps(data)
 
     url = instance_url + '/services/data/v' + pysalesforceutils.API_VERSION + path
