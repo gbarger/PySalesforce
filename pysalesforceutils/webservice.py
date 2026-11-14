@@ -1,12 +1,11 @@
 #!/usr/bin/python3
 import requests
 import sys
-import ssl
-
-from urllib3.poolmanager import PoolManager
 
 class Tools:
-    default_timeout = None
+    # seconds to wait for the server to connect or send data. Set to None to
+    # wait forever.
+    default_timeout = 120
 
     @staticmethod
     def http_request(**kwargs):
@@ -37,14 +36,18 @@ class Tools:
             req = requests.Request(requestType, URL, data=data_body, headers=header_details, files=files)
             prepReq = req.prepare()
             with requests.Session() as session:
-                session.mount('https://', SslHttpAdapter())
                 response = session.send(prepReq, timeout=Tools.default_timeout)
                 response.raise_for_status()
         except requests.exceptions.HTTPError as e:
-            # e.response.json won't be visible if exception is just raised
+            # the response body won't be visible if exception is just raised
             if e.response is not None:
-                new_error_str = '{} response: {}' .format(str(e), str(e.response.json()))
-                raise type(e)(new_error_str).with_traceback(sys.exc_info()[2])
+                try:
+                    error_body = e.response.json()
+                except ValueError:
+                    error_body = e.response.text
+
+                new_error_str = '{} response: {}' .format(str(e), str(error_body))
+                raise type(e)(new_error_str, response=e.response, request=e.request).with_traceback(sys.exc_info()[2])
             raise
         return response
 
@@ -136,7 +139,8 @@ class Tools:
 
 
 class SslHttpAdapter(requests.adapters.HTTPAdapter):
-    def init_poolmanager(self, connections, maxsize, block=False):
-        self.poolmanager = PoolManager(
-                                num_pools=connections, maxsize=maxsize,
-                                block=block, ssl_version=ssl.PROTOCOL_SSLv23)
+    """
+    No longer used. This used to force a specific SSL protocol version, but
+    the requests default is now the secure choice. Kept so existing imports
+    don't break.
+    """
