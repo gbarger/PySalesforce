@@ -4,7 +4,11 @@
 Utilities reused by the other modules in this package.
 """
 
+import json
 import urllib.parse
+
+import pysalesforceutils
+from . import webservice
 
 try:
     from zeep import Client
@@ -21,6 +25,49 @@ def _quote_path(value):
         raise ValueError('Invalid URL path value: {}'.format(value))
 
     return urllib.parse.quote(value, safe='')
+
+
+def _rest_request(method, path, access_token, instance_url, data=None, headers=None):
+    """
+    Sends a request to the Salesforce REST API for the current API_VERSION.
+
+    Args:
+        method (str): The request type: GET, POST, PATCH, PUT or DELETE
+        path (str): The part of the URL that comes after /services/data/vXX.X
+        access_token (str): This is the access_token value received from the
+                            login response
+        instance_url (str): This is the instance_url value received from the
+                            login response
+        data (object): A python object to send as the JSON request body.
+                       Defaults to None
+        headers (dict): Headers to add to the standard header. Defaults to None
+
+    Returns:
+        Response: Returns the response for the HTTP request.
+    """
+    header_details = Util.get_standard_header(access_token)
+
+    if headers != None:
+        header_details.update(headers)
+
+    data_body = None
+
+    if data != None:
+        data_body = json.dumps(data)
+
+    url = instance_url + '/services/data/v' + pysalesforceutils.API_VERSION + path
+
+    return webservice.Tools.http_request(requestType=method, URL=url, data_body=data_body,
+                                         header_details=header_details)
+
+
+def _rest_json(method, path, access_token, instance_url, data=None, headers=None):
+    """
+    Does the same as _rest_request, but returns the parsed JSON response body.
+    """
+    response = _rest_request(method, path, access_token, instance_url, data, headers)
+
+    return json.loads(response.text)
 
 
 class Util:

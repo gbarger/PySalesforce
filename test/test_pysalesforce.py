@@ -5,7 +5,7 @@ import unittest
 from unittest import mock
 
 import pysalesforceutils
-from pysalesforceutils import Standard, Bulk, Bulk2, Metadata
+from pysalesforceutils import Tooling, Standard, Bulk, Bulk2, Metadata
 
 TOKEN = 'token'
 INSTANCE = 'https://example.my.salesforce.com'
@@ -81,6 +81,54 @@ class TestUrlEncoding(MockedRequestTestCase):
         Bulk2.get_job_info('750A/../../x', TOKEN, INSTANCE)
 
         self.assertEqual(self.requested_url(), INSTANCE + Bulk2.base_bulk2_uri + '/750A%2F..%2F..%2Fx')
+
+
+class TestTooling(MockedRequestTestCase):
+
+    def test_query(self):
+        self.http_request.return_value.text = '{"size": 0}'
+
+        result = Tooling.query('SELECT Id FROM ApexClass', TOKEN, INSTANCE)
+
+        self.assertEqual(result, {'size': 0})
+        self.assertEqual(self.requested_url(), BASE + '/tooling/query/?q=SELECT%20Id%20FROM%20ApexClass')
+        self.assertEqual(self.http_request.call_args.kwargs['requestType'], 'GET')
+        self.assertEqual(self.http_request.call_args.kwargs['header_details'],
+                         {'Authorization': 'Bearer token', 'Content-Type': 'application/json'})
+
+    def test_execute_anonymous(self):
+        Tooling.execute_anonymous('System.debug(1);', TOKEN, INSTANCE)
+
+        self.assertEqual(self.requested_url(),
+                         BASE + '/tooling/executeAnonymous/?anonymousBody=System.debug%281%29%3B')
+
+    def test_completions(self):
+        Tooling.completions('apex', TOKEN, INSTANCE)
+
+        self.assertEqual(self.requested_url(), BASE + '/tooling/completions?type=apex')
+
+    def test_run_tests_asynchronous_list(self):
+        Tooling.run_tests_asynchronous_list(['01pA'], None, 2, 'RunSpecifiedTests', TOKEN, INSTANCE)
+
+        self.assertEqual(self.requested_url(), BASE + '/tooling/runTestsAsynchronous/')
+        self.assertEqual(self.http_request.call_args.kwargs['requestType'], 'POST')
+        self.assertEqual(json.loads(self.http_request.call_args.kwargs['data_body']),
+                         {'classids': ['01pA'], 'maxFailedTests': 2, 'testLevel': 'RunSpecifiedTests'})
+
+    def test_run_tests_asynchronous_json(self):
+        tests = [{'classId': '01pA', 'testMethods': ['testOne']}]
+
+        Tooling.run_tests_asynchronous_json(tests, TOKEN, INSTANCE)
+
+        self.assertEqual(self.requested_url(), BASE + '/tooling/runTestsAsynchronous/')
+        self.assertEqual(json.loads(self.http_request.call_args.kwargs['data_body']), {'tests': tests})
+
+    def test_api_version_can_be_overridden_at_runtime(self):
+        with mock.patch.object(pysalesforceutils, 'API_VERSION', '60.0'):
+            Tooling.query('SELECT Id FROM ApexClass', TOKEN, INSTANCE)
+
+        self.assertEqual(self.requested_url(),
+                         INSTANCE + '/services/data/v60.0/tooling/query/?q=SELECT%20Id%20FROM%20ApexClass')
 
 
 class TestStandard(MockedRequestTestCase):

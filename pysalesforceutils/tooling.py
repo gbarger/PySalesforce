@@ -4,18 +4,18 @@
 Salesforce Tooling API.
 """
 
-import json
 import urllib.parse
 
 import pysalesforceutils
-from . import webservice
-from .util import Util
+from .util import _rest_json
 
 
 class Tooling:
     """
     The purpose of this class is to expose the Salesforce Tooling API methods
     """
+    # no longer used by the methods in this class. Kept so existing code that
+    # reads it doesn't break.
     base_tooling_uri = '/services/data/v' + pysalesforceutils.API_VERSION + '/tooling'
 
     @staticmethod
@@ -35,13 +35,10 @@ class Tooling:
         Returns:
             object: Returns the completion values for the specified type
         """
-        completions_uri = '/completions?type='
-        header_details = Util.get_standard_header(access_token)
+        completions_uri = '/tooling/completions?type='
         url_encoded_type = urllib.parse.quote(completions_type)
 
-        response = webservice.Tools.get_http_response(
-            instance_url + Tooling.base_tooling_uri + completions_uri + url_encoded_type, header_details)
-        json_response = json.loads(response.text)
+        json_response = _rest_json('GET', completions_uri + url_encoded_type, access_token, instance_url)
 
         return json_response
 
@@ -66,13 +63,10 @@ class Tooling:
         Returns:
             object: returns the response result from executing the SFDC script
         """
-        execute_anonymous_uri = '/executeAnonymous/?anonymousBody='
-        header_details = Util.get_standard_header(access_token)
+        execute_anonymous_uri = '/tooling/executeAnonymous/?anonymousBody='
         url_encoded_code = urllib.parse.quote(code_string)
 
-        response = webservice.Tools.get_http_response(
-            instance_url + Tooling.base_tooling_uri + execute_anonymous_uri + url_encoded_code, header_details)
-        json_response = json.loads(response.text)
+        json_response = _rest_json('GET', execute_anonymous_uri + url_encoded_code, access_token, instance_url)
 
         return json_response
 
@@ -99,13 +93,10 @@ class Tooling:
         Returns:
             object: returns a JSON object with the results of the query.
         """
-        query_uri = '/query/?q='
-        header_details = Util.get_standard_header(access_token)
+        query_uri = '/tooling/query/?q='
         url_encoded_query = urllib.parse.quote(query_string)
 
-        response = webservice.Tools.get_http_response(
-            instance_url + Tooling.base_tooling_uri + query_uri + url_encoded_query, header_details)
-        json_response = json.loads(response.text)
+        json_response = _rest_json('GET', query_uri + url_encoded_query, access_token, instance_url)
 
         return json_response
 
@@ -148,8 +139,7 @@ class Tooling:
         Returns:
             object: returns the Id of the test run
         """
-        test_async_uri = '/runTestsAsynchronous/'
-        header_details = Util.get_standard_header(access_token)
+        test_async_uri = '/tooling/runTestsAsynchronous/'
 
         data_body = {}
 
@@ -165,11 +155,7 @@ class Tooling:
         if test_level != None:
             data_body['testLevel'] = test_level
 
-        json_data_body = json.dumps(data_body, indent=4, separators=(',', ': '))
-
-        response = webservice.Tools.post_http_response(instance_url + Tooling.base_tooling_uri + test_async_uri,
-                                                       json_data_body, header_details)
-        json_response = json.loads(response.text)
+        json_response = _rest_json('POST', test_async_uri, access_token, instance_url, data_body)
 
         return json_response
 
@@ -202,13 +188,9 @@ class Tooling:
         Returns:
             object: returns the Id of the test run
         """
-        test_async_uri = '/runTestsAsynchronous/'
-        header_details = Util.get_standard_header(access_token)
+        test_async_uri = '/tooling/runTestsAsynchronous/'
         data_body = {'tests': test_array}
-        json_data_body = json.dumps(data_body, indent=4, separators=(',', ': '))
 
-        response = webservice.Tools.post_http_response(instance_url + Tooling.base_tooling_uri + test_async_uri,
-                                                       json_data_body, header_details)
-        json_response = json.loads(response.text)
+        json_response = _rest_json('POST', test_async_uri, access_token, instance_url, data_body)
 
         return json_response
