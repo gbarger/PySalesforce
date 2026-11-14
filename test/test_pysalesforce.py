@@ -1,3 +1,81 @@
 #!/usr/bin/python3
 import unittest
+from unittest import mock
 
+import pysalesforceutils
+from pysalesforceutils import Standard, Bulk, Bulk2
+
+TOKEN = 'token'
+INSTANCE = 'https://example.my.salesforce.com'
+BASE = INSTANCE + '/services/data/v' + pysalesforceutils.API_VERSION
+
+
+class TestUrlEncoding(unittest.TestCase):
+    """
+    Values supplied by the caller must not be able to change which endpoint
+    is called or add query parameters.
+    """
+
+    def setUp(self):
+        patcher = mock.patch('pysalesforceutils.webservice.Tools.http_request')
+        self.http_request = patcher.start()
+        self.http_request.return_value.text = '{}'
+        self.addCleanup(patcher.stop)
+
+    def requested_url(self):
+        return self.http_request.call_args.kwargs['URL']
+
+    def test_valid_values_are_unchanged(self):
+        Standard.get_sobject_row('Account', '001xx000003DGb2AAG', 'Id,Name,Owner.Name', TOKEN, INSTANCE)
+
+        self.assertEqual(self.requested_url(),
+                         BASE + '/sobjects/Account/001xx000003DGb2AAG?fields=Id,Name,Owner.Name')
+
+    def test_record_id_cannot_traverse_to_another_endpoint(self):
+        Standard.get_sobject_row('Account', '../../tooling/executeAnonymous/?anonymousBody=x', None, TOKEN, INSTANCE)
+
+        self.assertEqual(self.requested_url(),
+                         BASE + '/sobjects/Account/..%2F..%2Ftooling%2FexecuteAnonymous%2F%3FanonymousBody%3Dx')
+
+    def test_dot_segments_are_rejected(self):
+        with self.assertRaises(ValueError):
+            Standard.get_sobject_row('Account', '..', None, TOKEN, INSTANCE)
+
+        self.http_request.assert_not_called()
+
+    def test_field_list_cannot_add_query_params(self):
+        Standard.get_sobject_row('Account', '001xx000003DGb2AAG', 'Id&x=1', TOKEN, INSTANCE)
+
+        self.assertEqual(self.requested_url(), BASE + '/sobjects/Account/001xx000003DGb2AAG?fields=Id%26x%3D1')
+
+    def test_get_sobject_rows(self):
+        Standard.get_sobject_rows('Account', '001A,001B&x=1', 'Id,Name', TOKEN, INSTANCE)
+
+        self.assertEqual(self.requested_url(),
+                         BASE + '/composite/sobjects/Account?ids=001A,001B%26x%3D1&fields=Id,Name')
+
+    def test_delete_ids_cannot_override_all_or_none(self):
+        Standard.delete_sobject_rows(['001A', '001B&allOrNone=true'], False, TOKEN, INSTANCE)
+
+        self.assertEqual(self.requested_url(),
+                         BASE + '/composite/sobjects?ids=001A,001B%26allOrNone%3Dtrue&allOrNone=false')
+
+    def test_upsert_external_id_field(self):
+        Standard.upsert_sobject_rows('Account', [], TOKEN, INSTANCE, external_id_field_name='Ext__c/../x')
+
+        self.assertEqual(self.requested_url(), BASE + '/composite/sobjects/Account/Ext__c%2F..%2Fx')
+
+    def test_bulk_batch_result(self):
+        Bulk.get_batch_result('750A/x', '751B?y', TOKEN, INSTANCE)
+
+        self.assertEqual(self.requested_url(),
+                         INSTANCE + Bulk.base_bulk_uri + Bulk.batch_uri + '/750A%2Fx/batch/751B%3Fy/result')
+
+    def test_bulk2_job_id(self):
+        Bulk2.get_job_info('750A/../../x', TOKEN, INSTANCE)
+
+        self.assertEqual(self.requested_url(), INSTANCE + Bulk2.base_bulk2_uri + '/750A%2F..%2F..%2Fx')
+
+
+if __name__ == '__main__':
+    unittest.main()

@@ -26,6 +26,17 @@ PARTNER_WSDL_FILE = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'W
 PARTNER_SANDBOX_WSDL_FILE = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'WSDL', 'partner_sandbox.wsdl')
 
 
+def _quote_path(value):
+    """
+    URL encodes a value so it can only ever be a single URL path segment or
+    query value, and can't change which endpoint is called.
+    """
+    if value in ('.', '..'):
+        raise ValueError('Invalid URL path value: {}'.format(value))
+
+    return urllib.parse.quote(value, safe='')
+
+
 class Util:
     """
     This is a collection of utilities that will need to be reused by the methods
@@ -683,7 +694,7 @@ class Standard:
         header_details = Util.get_standard_header(access_token)
 
         response = webservice.Tools.get_http_response(
-            instance_url + Standard.base_standard_uri + 'v' + version_num_string + '/', header_details)
+            instance_url + Standard.base_standard_uri + 'v' + _quote_path(version_num_string) + '/', header_details)
         json_response = json.loads(response.text)
 
         return json_response
@@ -711,11 +722,11 @@ class Standard:
             dict: returns the record with the explicit field list, or all (or
                 a lot) of the fields if the field_list_string is None.
         """
-        get_row_uri = '/sobjects/' + object_name + '/' + record_id
+        get_row_uri = '/sobjects/' + _quote_path(object_name) + '/' + _quote_path(record_id)
         header_details = Util.get_standard_header(access_token)
 
         if field_list_string != None:
-            get_row_uri = get_row_uri + '?fields=' + field_list_string
+            get_row_uri = get_row_uri + '?fields=' + urllib.parse.quote(field_list_string, safe=',')
 
         response = webservice.Tools.get_http_response(
             instance_url + Standard.base_standard_uri + 'v' + API_VERSION + get_row_uri, header_details)
@@ -752,7 +763,7 @@ class Standard:
             "ContentNote": "Content"
         }
 
-        get_row_uri = '/sobjects/' + object_name + '/' + record_id + '/' + object_to_blob_map[object_name]
+        get_row_uri = '/sobjects/' + _quote_path(object_name) + '/' + _quote_path(record_id) + '/' + object_to_blob_map[object_name]
         header_details = Util.get_standard_header(access_token)
 
         response = webservice.Tools.get_http_response(
@@ -785,7 +796,7 @@ class Standard:
         Returns:
             object: returns the text from the creation response
         """
-        post_row_uri = '/sobjects/'+ object_name + '/'
+        post_row_uri = '/sobjects/'+ _quote_path(object_name) + '/'
         header_details = {"Authorization": "Bearer " + access_token}
         mimetype = MimeTypes().guess_type(os.path.basename(file.name))[0] or 'application/octet-stream'
 
@@ -845,7 +856,7 @@ class Standard:
         Returns:
             dict: returns the text from the creation response
         """
-        post_row_uri = '/sobjects/' + object_name + '/'
+        post_row_uri = '/sobjects/' + _quote_path(object_name) + '/'
         header_details = Util.get_standard_header(access_token)
 
         if run_assignment_rules:
@@ -891,10 +902,11 @@ class Standard:
                 a lot) of the fields if the field_list_string is None.
         """
 
-        get_row_uri = '/composite/sobjects/' + object_name
+        get_row_uri = '/composite/sobjects/' + _quote_path(object_name)
         header_details = Util.get_standard_header(access_token)
 
-        get_rows_uri = get_row_uri + '?ids=' + record_id_list_string + '&fields=' + field_list_string
+        get_rows_uri = get_row_uri + '?ids=' + urllib.parse.quote(record_id_list_string, safe=',') + \
+            '&fields=' + urllib.parse.quote(field_list_string, safe=',')
 
         response = webservice.Tools.get_http_response(
             instance_url + Standard.base_standard_uri + 'v' + API_VERSION + get_rows_uri, header_details)
@@ -1013,7 +1025,7 @@ class Standard:
                  response isn't more detailed because Salesforce returns no
                  text, only a response code of 204
         """
-        patch_row_uri = '/sobjects/' + object_name + '/' + record_id
+        patch_row_uri = '/sobjects/' + _quote_path(object_name) + '/' + _quote_path(record_id)
         header_details = Util.get_standard_header(access_token)
         header_details["Sforce-Auto-Assign"] = "true" if run_assignment_rules else "false"
 
@@ -1165,7 +1177,7 @@ class Standard:
                   ]
         """
         # /composite/sobjects/SobjectName/ExternalIdFieldName
-        patch_rows_uri = "/composite/sobjects/" + object_api_name + "/" + external_id_field_name
+        patch_rows_uri = "/composite/sobjects/" + _quote_path(object_api_name) + "/" + _quote_path(external_id_field_name)
         header_details = Util.get_standard_header(access_token)
 
         if run_assignment_rules:
@@ -1232,7 +1244,7 @@ class Standard:
         delete_rows_uri = '/composite/sobjects'
         header_details = Util.get_standard_header(access_token)
 
-        delete_params = "?ids=" + ",".join(record_ids)
+        delete_params = "?ids=" + ",".join(_quote_path(record_id) for record_id in record_ids)
 
         if all_or_none:
             delete_params += "&allOrNone=true"
@@ -1353,7 +1365,7 @@ class Standard:
         Returns:
             object: returns information about the password reset
         """
-        query_uri = f'/sobjects/User/{user_id}/password'
+        query_uri = f'/sobjects/User/{_quote_path(user_id)}/password'
         header_details = Util.get_standard_header(access_token)
 
         response = webservice.Tools.delete_http_response(
@@ -1500,7 +1512,7 @@ class Standard:
                     'latestDateCovered': '2020-03-13T12:00:00.000+0000'
                 }
         """
-        get_updated_uri = '/sobjects/' + object_name + '/updated/?start=' + \
+        get_updated_uri = '/sobjects/' + _quote_path(object_name) + '/updated/?start=' + \
             urllib.parse.quote(start_date_time.strftime('%Y-%m-%dT%H:%M:%SZ')) + '&end=' + \
             urllib.parse.quote(end_date_time.strftime('%Y-%m-%dT%H:%M:%SZ'))
 
@@ -1565,7 +1577,7 @@ class Standard:
                 None
             ]
         """
-        retrieve_uri = '/composite/sobjects/' + object_name
+        retrieve_uri = '/composite/sobjects/' + _quote_path(object_name)
         header_details = Util.get_standard_header(access_token)
 
         request_body = {}
@@ -1631,7 +1643,7 @@ class Standard:
                     'latestDateCovered': '2020-03-13T12:00:00.000+0000'
                 }
         """
-        get_deleted_uri = '/sobjects/' + object_name + '/deleted/?start=' + \
+        get_deleted_uri = '/sobjects/' + _quote_path(object_name) + '/deleted/?start=' + \
             urllib.parse.quote(start_date_time.strftime('%Y-%m-%dT%H:%M:%SZ')) + '&end=' + \
             urllib.parse.quote(end_date_time.strftime('%Y-%m-%dT%H:%M:%SZ'))
 
@@ -1760,7 +1772,7 @@ class Standard:
             dict: Returns a dictionary with the metadata description of the
                 given object.
         """
-        describe_uri = "/sobjects/{}/describe/".format(object_name)
+        describe_uri = "/sobjects/{}/describe/".format(_quote_path(object_name))
 
         header_details = Util.get_standard_header(access_token)
 
@@ -1815,7 +1827,7 @@ class Bulk:
 
         while True:
             response = webservice.Tools.get_http_response(
-                instance_url + Bulk.base_bulk_uri + Bulk.batch_uri + '/' + job_id, header_details)
+                instance_url + Bulk.base_bulk_uri + Bulk.batch_uri + '/' + _quote_path(job_id), header_details)
             json_response = json.loads(response.text)
 
             if verbose:
@@ -1852,7 +1864,8 @@ class Bulk:
         header_details = Util.get_bulk_header(access_token)
 
         response = webservice.Tools.get_http_response(
-            instance_url + Bulk.base_bulk_uri + Bulk.batch_uri + '/' + job_id + '/batch/' + batch_id + '/result',
+            instance_url + Bulk.base_bulk_uri + Bulk.batch_uri + '/' + _quote_path(job_id) + '/batch/' +
+            _quote_path(batch_id) + '/result',
             header_details)
         json_response = json.loads(response.text)
 
@@ -1881,7 +1894,8 @@ class Bulk:
         header_details = Util.get_bulk_header(access_token)
 
         response = webservice.Tools.get_http_response(
-            instance_url + Bulk.base_bulk_uri + Bulk.batch_uri + '/' + job_id + '/batch/' + batch_id + '/result' + '/' + query_result_id,
+            instance_url + Bulk.base_bulk_uri + Bulk.batch_uri + '/' + _quote_path(job_id) + '/batch/' +
+            _quote_path(batch_id) + '/result' + '/' + _quote_path(query_result_id),
             header_details)
         json_response = json.loads(response.text)
 
@@ -2278,10 +2292,10 @@ class Bulk2:
             uri_params.append("isPkChunkingEnabled=true")
 
         if job_type:
-            uri_params.append("jobType=" + job_type)
+            uri_params.append("jobType=" + _quote_path(job_type))
 
         if query_locator:
-            uri_params.append("queryLocator=" + str(query_locator))
+            uri_params.append("queryLocator=" + _quote_path(str(query_locator)))
 
         if uri_params:
             uri_param_string = "?" + "&".join(uri_params)
@@ -2388,7 +2402,7 @@ class Bulk2:
         header_details["Content-Type"] = "text/csv"
         header_details["Accept"] = "application/json"
 
-        response = webservice.Tools.put_http_response(instance_url + Bulk2.base_bulk2_uri + '/' + job_id + '/batches',
+        response = webservice.Tools.put_http_response(instance_url + Bulk2.base_bulk2_uri + '/' + _quote_path(job_id) + '/batches',
                                                       data_set, header_details)
 
         return response.status_code
@@ -2417,7 +2431,7 @@ class Bulk2:
         request_body = {"state": job_state}
 
         json_request_body = json.dumps(request_body, indent=4, separators=(',', ': '))
-        response = webservice.Tools.patch_http_response(instance_url + Bulk2.base_bulk2_uri + '/' + job_id,
+        response = webservice.Tools.patch_http_response(instance_url + Bulk2.base_bulk2_uri + '/' + _quote_path(job_id),
                                                         json_request_body, header_details)
         json_response = json.loads(response.text)
 
@@ -2442,7 +2456,7 @@ class Bulk2:
         """
         header_details = Util.get_standard_header(access_token)
 
-        response = webservice.Tools.delete_http_response(instance_url + Bulk2.base_bulk2_uri + '/' + job_id, None,
+        response = webservice.Tools.delete_http_response(instance_url + Bulk2.base_bulk2_uri + '/' + _quote_path(job_id), None,
                                                          header_details)
 
         return response.status_code
@@ -2467,7 +2481,7 @@ class Bulk2:
         """
         header_details = Util.get_standard_header(access_token)
 
-        response = webservice.Tools.get_http_response(instance_url + Bulk2.base_bulk2_uri + '/' + job_id,
+        response = webservice.Tools.get_http_response(instance_url + Bulk2.base_bulk2_uri + '/' + _quote_path(job_id),
                                                       header_details)
         json_response = json.loads(response.text)
 
@@ -2538,7 +2552,7 @@ class Bulk2:
         header_details = Util.get_standard_header(access_token)
 
         response = webservice.Tools.get_http_response(
-            instance_url + Bulk2.base_bulk2_uri + '/' + job_id + '/successfulResults/', header_details)
+            instance_url + Bulk2.base_bulk2_uri + '/' + _quote_path(job_id) + '/successfulResults/', header_details)
 
         return response.text
 
@@ -2564,7 +2578,7 @@ class Bulk2:
         header_details = Util.get_standard_header(access_token)
 
         response = webservice.Tools.get_http_response(
-            instance_url + Bulk2.base_bulk2_uri + '/' + job_id + '/failedResults/', header_details)
+            instance_url + Bulk2.base_bulk2_uri + '/' + _quote_path(job_id) + '/failedResults/', header_details)
 
         return response.text
 
@@ -2586,7 +2600,7 @@ class Bulk2:
         header_details = Util.get_standard_header(access_token)
 
         response = webservice.Tools.get_http_response(
-            instance_url + Bulk2.base_bulk2_uri + '/' + job_id + '/unprocessedrecords/', header_details)
+            instance_url + Bulk2.base_bulk2_uri + '/' + _quote_path(job_id) + '/unprocessedrecords/', header_details)
 
         return response.text
 
