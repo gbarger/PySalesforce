@@ -199,6 +199,53 @@ class TestStandardRequests(MockedRequestTestCase):
         self.assert_request('PATCH', BASE + '/sobjects/Account/001A', {'Name': 'Acme'},
                             {'Sforce-Auto-Assign': 'false'})
 
+    def test_delete_sobject_row(self):
+        self.http_request.return_value.status_code = 204
+
+        result = Standard.delete_sobject_row('Account', '001A', TOKEN, INSTANCE)
+
+        self.assertEqual(result, 'Delete Successful')
+        self.assert_request('DELETE', BASE + '/sobjects/Account/001A')
+
+    def test_get_sobject_row_by_external_id(self):
+        self.http_request.return_value.text = '{"Id": "001A"}'
+
+        result = Standard.get_sobject_row_by_external_id('Account', 'Ext__c', 'A/1', 'Id,Name', TOKEN, INSTANCE)
+
+        self.assertEqual(result, {'Id': '001A'})
+        self.assert_request('GET', BASE + '/sobjects/Account/Ext__c/A%2F1?fields=Id,Name')
+
+    def test_get_sobject_row_by_external_id_without_fields(self):
+        Standard.get_sobject_row_by_external_id('Account', 'Number__c', 42, None, TOKEN, INSTANCE)
+
+        self.assert_request('GET', BASE + '/sobjects/Account/Number__c/42')
+
+    def test_upsert_sobject_row_by_external_id(self):
+        self.http_request.return_value.text = '{"id": "001A", "success": true, "errors": [], "created": true}'
+
+        result = Standard.upsert_sobject_row_by_external_id('Account', 'Ext__c', 'A1', {'Name': 'Acme'}, TOKEN,
+                                                            INSTANCE)
+
+        self.assertEqual(result, {'id': '001A', 'success': True, 'errors': [], 'created': True})
+        self.assert_request('PATCH', BASE + '/sobjects/Account/Ext__c/A1', {'Name': 'Acme'})
+
+    def test_upsert_sobject_row_by_external_id_with_no_response_body(self):
+        self.http_request.return_value.status_code = 204
+        self.http_request.return_value.text = ''
+
+        result = Standard.upsert_sobject_row_by_external_id('Account', 'Ext__c', 'A1', {'Name': 'Acme'}, TOKEN,
+                                                            INSTANCE)
+
+        self.assertEqual(result, 'Update Successful')
+
+    def test_delete_sobject_row_by_external_id(self):
+        self.http_request.return_value.status_code = 204
+
+        result = Standard.delete_sobject_row_by_external_id('Account', 'Ext__c', 'A1', TOKEN, INSTANCE)
+
+        self.assertEqual(result, 'Delete Successful')
+        self.assert_request('DELETE', BASE + '/sobjects/Account/Ext__c/A1')
+
     def test_create_sobject_rows(self):
         self.http_request.return_value.text = '[{"success": true}]'
 
@@ -268,6 +315,59 @@ class TestStandardRequests(MockedRequestTestCase):
         Standard.retrieve('Account', ['001A'], ['Id', 'Name'], TOKEN, INSTANCE)
 
         self.assert_request('POST', BASE + '/composite/sobjects/Account', {'ids': ['001A'], 'fields': ['Id', 'Name']})
+
+    def test_composite_request(self):
+        subrequests = [
+            {'method': 'POST', 'url': '/services/data/v67.0/sobjects/Account/', 'referenceId': 'account',
+             'body': {'Name': 'Acme'}},
+            {'method': 'GET', 'url': '/services/data/v67.0/sobjects/Account/@{account.id}', 'referenceId': 'lookup'}]
+        self.http_request.return_value.text = '{"compositeResponse": []}'
+
+        result = Standard.composite_request(subrequests, True, TOKEN, INSTANCE)
+
+        self.assertEqual(result, {'compositeResponse': []})
+        self.assert_request('POST', BASE + '/composite',
+                            {'allOrNone': True, 'collateSubrequests': True, 'compositeRequest': subrequests})
+
+    def test_composite_request_without_collating(self):
+        Standard.composite_request([], False, TOKEN, INSTANCE, collate_subrequests=False)
+
+        self.assert_request('POST', BASE + '/composite',
+                            {'allOrNone': False, 'collateSubrequests': False, 'compositeRequest': []})
+
+    def test_composite_batch_request(self):
+        subrequests = [
+            {'method': 'PATCH', 'url': 'v67.0/sobjects/Account/001A', 'richInput': {'Name': 'Acme'}},
+            {'method': 'GET', 'url': 'v67.0/sobjects/Account/001A?fields=Name'}]
+
+        Standard.composite_batch_request(subrequests, True, TOKEN, INSTANCE)
+
+        self.assert_request('POST', BASE + '/composite/batch', {'haltOnError': True, 'batchRequests': subrequests})
+
+    def test_composite_batch_request_converts_composite_subrequests(self):
+        subrequests = [
+            {'method': 'PATCH', 'url': '/services/data/v67.0/sobjects/Account/001A', 'referenceId': 'update',
+             'body': {'Name': 'Acme'}},
+            {'method': 'GET', 'url': '/services/data/v67.0/sobjects/Account/001A?fields=Name', 'referenceId': 'get'}]
+
+        Standard.composite_batch_request(subrequests, False, TOKEN, INSTANCE)
+
+        self.assert_request('POST', BASE + '/composite/batch', {'haltOnError': False, 'batchRequests': [
+            {'method': 'PATCH', 'url': 'v67.0/sobjects/Account/001A', 'richInput': {'Name': 'Acme'}},
+            {'method': 'GET', 'url': 'v67.0/sobjects/Account/001A?fields=Name'}]})
+        # the caller's subrequests aren't changed
+        self.assertEqual(subrequests[0]['url'], '/services/data/v67.0/sobjects/Account/001A')
+        self.assertIn('referenceId', subrequests[0])
+
+    def test_create_sobject_tree(self):
+        records = [{'attributes': {'type': 'Account', 'referenceId': 'ref1'}, 'Name': 'Acme', 'Contacts': {
+            'records': [{'attributes': {'type': 'Contact', 'referenceId': 'ref2'}, 'LastName': 'Smith'}]}}]
+        self.http_request.return_value.text = '{"hasErrors": false, "results": []}'
+
+        result = Standard.create_sobject_tree('Account', records, TOKEN, INSTANCE)
+
+        self.assertEqual(result, {'hasErrors': False, 'results': []})
+        self.assert_request('POST', BASE + '/composite/tree/Account', {'records': records})
 
     def test_graph_composite_request(self):
         request_body = {'graphs': [{'graphId': 'graph1', 'compositeRequest': []}]}

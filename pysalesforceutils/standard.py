@@ -386,6 +386,155 @@ class Standard:
         return response_text
 
     @staticmethod
+    def delete_sobject_row(object_name, record_id, access_token, instance_url):
+        """
+        Deletes a specific record.
+
+        Args:
+            object_name (str): The API name of the object.
+            record_id (str): The record Id you're trying to delete
+            access_token (str): This is the access_token value received from the
+                                login response
+            instance_url (str): This is the instance_url value received from the
+                                login response
+
+        Returns:
+            str: This only returns 'Delete Successful' if the delete worked, or
+                 returns an error message if the delete wasn't successful. The
+                 response isn't more detailed because Salesforce returns no
+                 text, only a response code of 204
+        """
+        delete_row_uri = '/sobjects/' + _quote_path(object_name) + '/' + _quote_path(record_id)
+
+        response = _rest_request('DELETE', delete_row_uri, access_token, instance_url)
+        response_text = ""
+
+        if response.status_code == 204:
+            response_text = "Delete Successful"
+        else:
+            response_text = response.text
+
+        return response_text
+
+    @staticmethod
+    def get_sobject_row_by_external_id(object_name, external_id_field_name, external_id, field_list_string,
+                                       access_token, instance_url):
+        """
+        Provides the details requested for the record that has the given value
+        in its external Id field.
+
+        Args:
+            object_name (str): The API name of the object.
+            external_id_field_name (str): The API name of the external Id field
+            external_id (str): The external Id value of the record you're
+                               trying to retrieve
+            field_list_string (str): List of comma separated values for fields
+                                     to retrieve. Use None to leave this out.
+            access_token (str): This is the access_token value received from the
+                                login response
+            instance_url (str): This is the instance_url value received from the
+                                login response
+
+        Returns:
+            dict: returns the record with the explicit field list, or the
+                  fields Salesforce returns by default if the
+                  field_list_string is None.
+        """
+        get_row_uri = '/sobjects/' + _quote_path(object_name) + '/' + _quote_path(external_id_field_name) + '/' + \
+            _quote_path(str(external_id))
+
+        if field_list_string != None:
+            get_row_uri = get_row_uri + '?fields=' + urllib.parse.quote(field_list_string, safe=',')
+
+        json_response = _rest_json('GET', get_row_uri, access_token, instance_url)
+
+        return json_response
+
+    @staticmethod
+    def upsert_sobject_row_by_external_id(object_name, external_id_field_name, external_id, record_json,
+                                          access_token, instance_url):
+        """
+        Creates the record if no record has the given value in its external Id
+        field, or updates the record that does.
+
+        Args:
+            object_name (str): The API name of the object.
+            external_id_field_name (str): The API name of the external Id field
+            external_id (str): The external Id value of the record you're
+                               trying to create or update
+            record_json (dict): The JSON describing the fields you want to
+                                set on the record. You should pass in a
+                                python object and it will be converted to a
+                                json string to send the request. Don't
+                                include the external Id field itself, because
+                                its value comes from external_id. e.g.:
+                                    {
+                                        'BillingCity': 'Bellevue',
+                                        'BillingState': 'WA'
+                                    }
+            access_token (str): This is the access_token value received from the
+                                login response
+            instance_url (str): This is the instance_url value received from the
+                                login response
+
+        Returns:
+            dict: Returns the result of the upsert. The created value is True
+                  if a new record was created. e.g.:
+                      {
+                          "id": "001xx0000004GxDAAU",
+                          "success": true,
+                          "errors": [],
+                          "created": true
+                      }
+                  If Salesforce returns no text, only a response code of 204,
+                  this returns the str 'Update Successful' instead.
+        """
+        patch_row_uri = '/sobjects/' + _quote_path(object_name) + '/' + _quote_path(external_id_field_name) + '/' + \
+            _quote_path(str(external_id))
+
+        response = _rest_request('PATCH', patch_row_uri, access_token, instance_url, record_json)
+
+        if response.status_code == 204:
+            return "Update Successful"
+
+        return json.loads(response.text)
+
+    @staticmethod
+    def delete_sobject_row_by_external_id(object_name, external_id_field_name, external_id, access_token,
+                                          instance_url):
+        """
+        Deletes the record that has the given value in its external Id field.
+
+        Args:
+            object_name (str): The API name of the object.
+            external_id_field_name (str): The API name of the external Id field
+            external_id (str): The external Id value of the record you're
+                               trying to delete
+            access_token (str): This is the access_token value received from the
+                                login response
+            instance_url (str): This is the instance_url value received from the
+                                login response
+
+        Returns:
+            str: This only returns 'Delete Successful' if the delete worked, or
+                 returns an error message if the delete wasn't successful. The
+                 response isn't more detailed because Salesforce returns no
+                 text, only a response code of 204
+        """
+        delete_row_uri = '/sobjects/' + _quote_path(object_name) + '/' + _quote_path(external_id_field_name) + '/' + \
+            _quote_path(str(external_id))
+
+        response = _rest_request('DELETE', delete_row_uri, access_token, instance_url)
+        response_text = ""
+
+        if response.status_code == 204:
+            response_text = "Delete Successful"
+        else:
+            response_text = response.text
+
+        return response_text
+
+    @staticmethod
     def update_sobject_rows(records, all_or_none, run_assignment_rules, access_token, instance_url):
         """
         Updates a list of up to 200 records.
@@ -926,6 +1075,211 @@ class Standard:
             urllib.parse.quote(end_date_time.strftime('%Y-%m-%dT%H:%M:%SZ'))
 
         json_response = _rest_json('GET', get_deleted_uri, access_token, instance_url)
+
+        return json_response
+
+    @staticmethod
+    def composite_request(subrequests, all_or_none, access_token, instance_url, collate_subrequests=True):
+        """
+        https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/resources_composite_composite.htm
+
+        Executes a series of REST API requests in a single call. The output of
+        one request can be used as the input to a later request by referring
+        to its referenceId, e.g. "@{reference_id_account_1.id}". There can be
+        up to 25 subrequests in a single call, and up to 5 of them can be
+        queries or sObject collections requests.
+
+        Args:
+            subrequests (list): The list of requests to execute. Each one is a
+                dict, which can be written by hand or built with the
+                Composite class. An example list looks like this:
+                [
+                    {
+                        "method": "POST",
+                        "url": "/services/data/v50.0/sobjects/Account/",
+                        "referenceId": "reference_id_account_1",
+                        "body": {"Name": "Cloudy Consulting"}
+                    },
+                    {
+                        "method": "POST",
+                        "url": "/services/data/v50.0/sobjects/Contact/",
+                        "referenceId": "reference_id_contact_1",
+                        "body": {
+                            "LastName": "Cashman",
+                            "AccountId": "@{reference_id_account_1.id}"
+                        }
+                    }
+                ]
+
+            all_or_none (bool): Indicates whether to roll back the entire
+                request when any of the subrequests fail (True) or to keep
+                the subrequests that worked (False).
+
+            access_token (str): This is the access_token value received from the
+                                login response
+
+            instance_url (str): This is the instance_url value received from the
+                                login response
+
+            collate_subrequests (bool): Salesforce can group the subrequests
+                to run them faster, which means they aren't guaranteed to
+                run in the order given. Set this to False when the order
+                matters. Defaults to True
+
+        Returns:
+            dict: Returns an object containing the result of each subrequest
+                in the same order as the request.
+                {
+                    "compositeResponse": [
+                        {
+                            "body": {"id": "001R00000033JNuIAM", "success": true, "errors": []},
+                            "httpHeaders": {"Location": "/services/data/v50.0/sobjects/Account/001R00000033JNuIAM"},
+                            "httpStatusCode": 201,
+                            "referenceId": "reference_id_account_1"
+                        }
+                    ]
+                }
+        """
+        composite_uri = '/composite'
+
+        request_body = {}
+        request_body["allOrNone"] = all_or_none
+        request_body["collateSubrequests"] = collate_subrequests
+        request_body["compositeRequest"] = subrequests
+
+        json_response = _rest_json('POST', composite_uri, access_token, instance_url, request_body)
+
+        return json_response
+
+    @staticmethod
+    def composite_batch_request(subrequests, halt_on_error, access_token, instance_url):
+        """
+        https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/resources_composite_batch.htm
+
+        Executes up to 25 REST API requests in a single call. Unlike
+        composite_request, the subrequests are independent, so the output of
+        one can't be used in another and they can't be rolled back together.
+
+        Args:
+            subrequests (list): The list of requests to execute. Each one is a
+                dict, which can be written by hand or built with the
+                Composite class. Subrequests in the format used by
+                composite_request are also accepted and are converted to the
+                batch format. An example list looks like this:
+                [
+                    {
+                        "method": "PATCH",
+                        "url": "v50.0/sobjects/Account/001D000000K0fXOIAZ",
+                        "richInput": {"Name": "NewName"}
+                    },
+                    {
+                        "method": "GET",
+                        "url": "v50.0/sobjects/Account/001D000000K0fXOIAZ?fields=Name"
+                    }
+                ]
+
+            halt_on_error (bool): Indicates whether to stop when a subrequest
+                fails (True) or to continue with the remaining subrequests
+                (False).
+
+            access_token (str): This is the access_token value received from the
+                                login response
+
+            instance_url (str): This is the instance_url value received from the
+                                login response
+
+        Returns:
+            dict: Returns an object containing the result of each subrequest
+                in the same order as the request.
+                {
+                    "hasErrors": false,
+                    "results": [
+                        {"statusCode": 204, "result": null},
+                        {"statusCode": 200, "result": {"Name": "NewName"}}
+                    ]
+                }
+        """
+        batch_uri = '/composite/batch'
+
+        batch_requests = []
+
+        for subrequest in subrequests:
+            batch_request = dict(subrequest)
+
+            # convert subrequests that are in the composite_request format
+            if batch_request['url'].startswith(Standard.base_standard_uri):
+                batch_request['url'] = batch_request['url'][len(Standard.base_standard_uri):]
+
+            if 'body' in batch_request:
+                batch_request['richInput'] = batch_request.pop('body')
+
+            batch_request.pop('referenceId', None)
+            batch_requests.append(batch_request)
+
+        request_body = {}
+        request_body["haltOnError"] = halt_on_error
+        request_body["batchRequests"] = batch_requests
+
+        json_response = _rest_json('POST', batch_uri, access_token, instance_url, request_body)
+
+        return json_response
+
+    @staticmethod
+    def create_sobject_tree(object_name, records, access_token, instance_url):
+        """
+        https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/resources_composite_sobject_tree.htm
+
+        Creates records together with their child records in a single call.
+        If any record fails, none of the records are created. A request can
+        contain up to 200 records in total.
+
+        Args:
+            object_name (str): The API name of the object at the top of each
+                tree.
+
+            records (list): The records to create. Each record needs an
+                attributes field that contains the "type", which is the
+                object name, and a "referenceId" that is used to match it in
+                the response. Child records are nested under the name of the
+                child relationship. An example list looks like this:
+                [
+                    {
+                        "attributes": {"type": "Account", "referenceId": "ref1"},
+                        "Name": "SampleAccount",
+                        "Contacts": {
+                            "records": [
+                                {
+                                    "attributes": {"type": "Contact", "referenceId": "ref2"},
+                                    "LastName": "Smith"
+                                }
+                            ]
+                        }
+                    }
+                ]
+
+            access_token (str): This is the access_token value received from the
+                                login response
+
+            instance_url (str): This is the instance_url value received from the
+                                login response
+
+        Returns:
+            dict: Returns an object containing the Id of each record that
+                was created.
+                {
+                    "hasErrors": false,
+                    "results": [
+                        {"referenceId": "ref1", "id": "001D000000K0fXOIAZ"},
+                        {"referenceId": "ref2", "id": "003D000000QV9n2IAD"}
+                    ]
+                }
+        """
+        tree_uri = '/composite/tree/' + _quote_path(object_name)
+
+        request_body = {}
+        request_body["records"] = records
+
+        json_response = _rest_json('POST', tree_uri, access_token, instance_url, request_body)
 
         return json_response
 
