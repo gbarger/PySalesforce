@@ -72,6 +72,7 @@ class Salesforce:
     def __init__(self, access_token, instance_url):
         self.access_token = access_token
         self.instance_url = instance_url
+        self.token_expiration = None
 
         self.standard = _BoundApi(Standard, self)
         self.tooling = _BoundApi(Tooling, self)
@@ -126,6 +127,38 @@ class Salesforce:
                                                                      instance_url)
 
         return cls(login_response['access_token'], login_response['instance_url'])
+
+    @classmethod
+    def login_jwt_bearer(cls, login_username, login_client_id, login_client_secret, private_key, is_production=True):
+        """
+        Logs into Salesforce with Authentication.get_jwt_bearer_login and
+        returns a client for that login. The token_expiration value on the
+        client is when the token expires in seconds since the epoch.
+
+        Args:
+            login_username (str): this is the salesforce login of the user to
+                                  log in as
+            login_client_id (str): this is the client Id from the oAuth settings
+                                   in the Salesforce app setup
+            login_client_secret (str): this is the secret from the oAuth settings
+                                       in the Salesforce app setup
+            private_key (str): The contents of the private key file in PEM
+                               format. This is the key itself, not the path
+                               to the file.
+            is_production (bool): this is a boolean value to set whether or not
+                                  the base oAuth connection will be in production
+                                  or a sandbox environment. Defaults to True
+
+        Returns:
+            Salesforce: Returns a client for the new login.
+        """
+        login_response = Authentication.get_jwt_bearer_login(login_username, login_client_id, login_client_secret,
+                                                             private_key, is_production)
+
+        client = cls(login_response['access_token'], login_response['instance_url'])
+        client.token_expiration = login_response['exp']
+
+        return client
 
     def logout(self):
         """

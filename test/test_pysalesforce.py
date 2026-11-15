@@ -4,8 +4,16 @@ import datetime
 import inspect
 import io
 import json
+import time
 import unittest
 from unittest import mock
+
+try:
+    import jwt
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric import rsa
+except ImportError:
+    jwt = None
 
 import pysalesforceutils
 from pysalesforceutils import Util, Authentication, Tooling, Standard, Bulk, Bulk2, Metadata, Salesforce
@@ -633,6 +641,89 @@ class TestClientCredentialsLogin(MockedRequestTestCase):
         sf = Salesforce.login_client_credentials('client id', 'client secret', 'https://acme.my.salesforce.com')
 
         self.assertEqual((sf.access_token, sf.instance_url), ('abc', 'https://acme.my.salesforce.com'))
+
+
+class TestJwtBearerLogin(MockedRequestTestCase):
+    LOGIN_RESPONSE = {'access_token': 'abc', 'instance_url': 'https://acme.my.salesforce.com'}
+
+    INTROSPECT_RESPONSE = {'active': True, 'exp': 1800000000}
+
+    def setUp(self):
+        super().setUp()
+        responses = []
+        for body in (self.LOGIN_RESPONSE, self.INTROSPECT_RESPONSE):
+            response = mock.Mock()
+            response.text = json.dumps(body)
+            responses.append(response)
+        self.http_request.side_effect = responses
+
+    def test_missing_library_raises_import_error(self):
+        with mock.patch('pysalesforceutils.authentication.jwt', None):
+            with self.assertRaises(ImportError) as context:
+                Authentication.get_jwt_bearer_login('user@example.com', 'client id', 'client secret', 'key', True)
+
+        self.assertIn('pysalesforceutils[jwt]', str(context.exception))
+        self.http_request.assert_not_called()
+
+    @unittest.skipIf(jwt is None, 'PyJWT[crypto] is not installed')
+    def test_get_jwt_bearer_login(self):
+        private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+        private_key_pem = private_key.private_bytes(
+            serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8, serialization.NoEncryption()).decode()
+
+        for is_production, login_url in ((True, 'https://login.salesforce.com'),
+                                         (False, 'https://test.salesforce.com')):
+            with self.subTest(is_production=is_production):
+                self.setUp()
+
+                result = Authentication.get_jwt_bearer_login('user@example.com', 'client id', 'client secret',
+                                                             private_key_pem, is_production)
+
+                login_request, introspect_request = [call.kwargs for call in self.http_request.call_args_list]
+                self.assertEqual(result, {'access_token': 'abc', 'instance_url': 'https://acme.my.salesforce.com',
+                                          'exp': 1800000000})
+
+                self.assertEqual(login_request['requestType'], 'POST')
+                self.assertEqual(login_request['URL'], login_url + '/services/oauth2/token')
+                self.assertEqual(login_request['data_body']['grant_type'],
+                                 'urn:ietf:params:oauth:grant-type:jwt-bearer')
+
+                # checks the signature, the audience and that it hasn't expired
+                claims = jwt.decode(login_request['data_body']['assertion'], private_key.public_key(),
+                                    algorithms=['RS256'], audience=login_url)
+                self.assertEqual((claims['iss'], claims['sub']), ('client id', 'user@example.com'))
+                self.assertLessEqual(claims['exp'] - time.time(), 180)
+
+                # the token is introspected at the instance_url from the login response
+                self.assertEqual(introspect_request['requestType'], 'POST')
+                self.assertEqual(introspect_request['URL'],
+                                 'https://acme.my.salesforce.com/services/oauth2/introspect')
+                self.assertEqual(introspect_request['data_body'], {
+                    'token': 'abc', 'token_type_hint': 'access_token', 'client_id': 'client id',
+                    'client_secret': 'client secret'})
+
+    def test_introspect_token(self):
+        self.http_request.side_effect = None
+        self.http_request.return_value.text = json.dumps(self.INTROSPECT_RESPONSE)
+
+        result = Authentication.introspect_token('abc', 'client id', 'client secret', 'https://acme.my.salesforce.com')
+
+        kwargs = self.http_request.call_args.kwargs
+        self.assertEqual(result, self.INTROSPECT_RESPONSE)
+        self.assertEqual(kwargs['URL'], 'https://acme.my.salesforce.com/services/oauth2/introspect')
+
+        with self.assertRaises(ValueError):
+            Authentication.introspect_token('abc', 'client id', 'client secret', 'http://acme.my.salesforce.com')
+
+    def test_salesforce_login_jwt_bearer(self):
+        login_response = dict(self.LOGIN_RESPONSE, exp=1800000000)
+
+        with mock.patch.object(Authentication, 'get_jwt_bearer_login', return_value=login_response) as login:
+            sf = Salesforce.login_jwt_bearer('user@example.com', 'client id', 'client secret', 'key', False)
+
+        login.assert_called_once_with('user@example.com', 'client id', 'client secret', 'key', False)
+        self.assertEqual((sf.access_token, sf.instance_url, sf.token_expiration),
+                         ('abc', 'https://acme.my.salesforce.com', 1800000000))
 
 
 class TestSoqlQuote(unittest.TestCase):

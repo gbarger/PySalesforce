@@ -21,5 +21,6 @@ setup(
     ],
     extras_require={
         'soap': ['zeep'],
+        'jwt': ['PyJWT[crypto]>=2'],
     },
 )

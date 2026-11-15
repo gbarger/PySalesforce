@@ -5,10 +5,16 @@ Log in and out of Salesforce.
 """
 
 import json
+import time
 
 import pysalesforceutils
 from . import webservice
 from .util import Util
+
+try:
+    import jwt
+except ImportError:
+    jwt = None
 
 
 class Authentication:
@@ -99,6 +105,108 @@ class Authentication:
                            'client_secret': login_client_secret}
 
         response = webservice.Tools.post_http_response(oauth_url, login_body_data, '')
+        json_response = json.loads(response.text)
+
+        return json_response
+
+    @staticmethod
+    def get_jwt_bearer_login(login_username, login_client_id, login_client_secret, private_key, is_production):
+        """
+        This function logs into Salesforce using the oAuth 2.0 JWT bearer
+        grant type, so no password is needed. Instead, the request is signed
+        with a private key, and the matching certificate is uploaded to the
+        connected app in Salesforce ("Use digital signatures"). The user must
+        also be pre-authorized for the connected app. After logging in, the
+        new token is looked up with introspect_token to find out when it
+        expires, which is what the client secret is needed for. This requires
+        the PyJWT library, which can be installed with
+        `pip install pysalesforceutils[jwt]`.
+        https://help.salesforce.com/s/articleView?id=sf.remoteaccess_oauth_jwt_flow.htm
+
+        Args:
+            login_username (str): this is the salesforce login of the user to
+                                  log in as
+            login_client_id (str): this is the client Id from the oAuth settings
+                                   in the Salesforce app setup
+            login_client_secret (str): this is the secret from the oAuth settings
+                                       in the Salesforce app setup
+            private_key (str): The contents of the private key file in PEM
+                               format. This is the key itself, not the path
+                               to the file.
+            is_production (bool): this is a boolean value to set whether or not
+                                  the base oAuth connection will be in production
+                                  or a sandbox environment
+
+        Returns:
+            object: returns the json from the login response body the important
+                    aspects of the response are the access_token, which will be
+                    used to authenticate the other calls, and instance_url,
+                    which is the base endpoint used for the other calls. The
+                    exp value from introspect_token is added to the response,
+                    which is when the token expires in seconds since the epoch.
+        """
+        if jwt is None:
+            raise ImportError(
+                "The 'PyJWT' library is required to use the JWT bearer login. "
+                "Install it using `pip install pysalesforceutils[jwt]`."
+            )
+
+        if is_production:
+            base_oauth_url = 'https://login.salesforce.com'
+        else:
+            base_oauth_url = 'https://test.salesforce.com'
+
+        # Salesforce only accepts requests that expire within 3 minutes
+        claims = {'iss': login_client_id, 'sub': login_username, 'aud': base_oauth_url,
+                  'exp': int(time.time()) + 180}
+        assertion = jwt.encode(claims, private_key, algorithm='RS256')
+
+        login_body_data = {'grant_type': 'urn:ietf:params:oauth:grant-type:jwt-bearer', 'assertion': assertion}
+
+        response = webservice.Tools.post_http_response(base_oauth_url + '/services/oauth2/token', login_body_data, '')
+        json_response = json.loads(response.text)
+
+        introspect_response = Authentication.introspect_token(json_response['access_token'], login_client_id,
+                                                              login_client_secret, json_response['instance_url'])
+        json_response['exp'] = introspect_response['exp']
+
+        return json_response
+
+    @staticmethod
+    def introspect_token(auth_token, login_client_id, login_client_secret, instance_url):
+        """
+        This function looks up the current state of a token, including whether
+        it's still active and when it expires. A connected app can always
+        introspect its own tokens. To introspect tokens from other connected
+        apps, "Introspect All Tokens" must be selected in the oAuth settings
+        of the connected app.
+        https://help.salesforce.com/s/articleView?id=sf.remoteaccess_oidc_token_introspection_endpoint.htm
+
+        Args:
+            auth_token (str): this is the token received in the access_token
+                              response from one of the login functions.
+            login_client_id (str): this is the client Id from the oAuth settings
+                                   in the Salesforce app setup
+            login_client_secret (str): this is the secret from the oAuth settings
+                                       in the Salesforce app setup
+            instance_url (str): This is the instance_url value received from the
+                                login response
+
+        Returns:
+            object: returns the json from the introspect response body. The
+                    important aspects of the response are active (True or
+                    False), and exp, which is when the token expires in
+                    seconds since the epoch.
+        """
+        if not instance_url.lower().startswith('https://'):
+            raise ValueError('The access token can only be sent to an https URL: {}'.format(instance_url))
+
+        introspect_url = instance_url.rstrip('/') + '/services/oauth2/introspect'
+
+        introspect_body_data = {'token': auth_token, 'token_type_hint': 'access_token',
+                                'client_id': login_client_id, 'client_secret': login_client_secret}
+
+        response = webservice.Tools.post_http_response(introspect_url, introspect_body_data, '')
         json_response = json.loads(response.text)
 
         return json_response
