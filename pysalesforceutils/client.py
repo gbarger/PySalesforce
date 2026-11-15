@@ -67,15 +67,11 @@ class Salesforce:
                             login response
         instance_url (str): This is the instance_url value received from the
                             login response
-        is_production (bool): Whether this login is for production or a
-                              sandbox environment. This is only used by
-                              logout. Defaults to True
     """
 
-    def __init__(self, access_token, instance_url, is_production=True):
+    def __init__(self, access_token, instance_url):
         self.access_token = access_token
         self.instance_url = instance_url
-        self.is_production = is_production
 
         self.standard = _BoundApi(Standard, self)
         self.tooling = _BoundApi(Tooling, self)
@@ -106,14 +102,37 @@ class Salesforce:
         login_response = Authentication.get_oauth_login(login_username, login_password, login_client_id,
                                                         login_client_secret, is_production)
 
-        return cls(login_response['access_token'], login_response['instance_url'], is_production)
+        return cls(login_response['access_token'], login_response['instance_url'])
+
+    @classmethod
+    def login_client_credentials(cls, login_client_id, login_client_secret, instance_url):
+        """
+        Logs into Salesforce with Authentication.get_client_credentials_login
+        and returns a client for that login.
+
+        Args:
+            login_client_id (str): this is the client Id from the oAuth settings
+                                   in the Salesforce app setup
+            login_client_secret (str): this is the secret from the oAuth settings
+                                       in the Salesforce app setup
+            instance_url (str): The instance url for the org, which is its My
+                                Domain url, e.g.
+                                https://mycompany.my.salesforce.com
+
+        Returns:
+            Salesforce: Returns a client for the new login.
+        """
+        login_response = Authentication.get_client_credentials_login(login_client_id, login_client_secret,
+                                                                     instance_url)
+
+        return cls(login_response['access_token'], login_response['instance_url'])
 
     def logout(self):
         """
-        Revokes the access token with Authentication.get_oauth_logout.
+        Revokes the access token with Authentication.revoke_token.
 
         Returns:
             object: returns a json response with success (True or False), and
                     the status_code returned by the call to revoke the token
         """
-        return Authentication.get_oauth_logout(self.access_token, self.is_production)
+        return Authentication.revoke_token(self.access_token, self.instance_url)

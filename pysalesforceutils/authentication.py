@@ -63,6 +63,47 @@ class Authentication:
         return json_response
 
     @staticmethod
+    def get_client_credentials_login(login_client_id, login_client_secret, instance_url):
+        """
+        This function logs into Salesforce using the oAuth 2.0 client
+        credentials grant type, so no username or password is needed. The
+        calls made with the returned token run as the "Run As" user selected in
+        the connected app's client credentials flow settings. In order for
+        this function to work, a connected app must be set up in Salesforce
+        with "Enable Client Credentials Flow" selected.
+        https://help.salesforce.com/s/articleView?id=sf.remoteaccess_oauth_client_credentials_flow.htm
+
+        Args:
+            login_client_id (str): this is the client Id from the oAuth settings
+                                   in the Salesforce app setup
+            login_client_secret (str): this is the secret from the oAuth settings
+                                       in the Salesforce app setup
+            instance_url (str): The instance url for the org, which is its My
+                                Domain url, e.g.
+                                https://mycompany.my.salesforce.com. This flow
+                                can't be used with login.salesforce.com or
+                                test.salesforce.com.
+
+        Returns:
+            object: returns the json from the login response body the important
+                    aspects of the response are the access_token, which will be
+                    used to authenticate the other calls, and instance_url,
+                    which is the base endpoint used for the other calls
+        """
+        if not instance_url.lower().startswith('https://'):
+            raise ValueError('The client secret can only be sent to an https URL: {}'.format(instance_url))
+
+        oauth_url = instance_url.rstrip('/') + '/services/oauth2/token'
+
+        login_body_data = {'grant_type': 'client_credentials', 'client_id': login_client_id,
+                           'client_secret': login_client_secret}
+
+        response = webservice.Tools.post_http_response(oauth_url, login_body_data, '')
+        json_response = json.loads(response.text)
+
+        return json_response
+
+    @staticmethod
     def get_oauth_logout(auth_token, is_production):
         """
         this function calls the correct endpoint for the oauth logout by providing
@@ -93,6 +134,32 @@ class Authentication:
             success = True
 
         json_response = {'success': success, 'status_code': response.status_code}
+
+        return json_response
+
+    @staticmethod
+    def revoke_token(auth_token, instance_url):
+        """
+        This function logs out by revoking the token at the given url, so it
+        doesn't need to know whether the login is production or a sandbox.
+
+        Args:
+            auth_token (str): this is the token received in the access_token
+                              response from one of the login functions.
+            instance_url (str): This is the instance_url value received from the
+                                login response
+        Returns:
+            object: returns a json response with success (True or False), and
+                    the status_code returned by the call to revoke the token
+        """
+        if not instance_url.lower().startswith('https://'):
+            raise ValueError('The access token can only be sent to an https URL: {}'.format(instance_url))
+
+        revoke_url = instance_url.rstrip('/') + '/services/oauth2/revoke'
+
+        response = webservice.Tools.post_http_response(revoke_url, {'token': auth_token}, '')
+
+        json_response = {'success': response.status_code == 200, 'status_code': response.status_code}
 
         return json_response
 

@@ -230,6 +230,31 @@ class Util:
             yield list[i:i + n]
 
     @staticmethod
+    def soql_quote(value):
+        """
+        Turns a string into a quoted SOQL or SOSL string literal, escaping the
+        characters that would otherwise end the string early. Use this for any
+        value in a query that comes from a user or another system, e.g.:
+            query = 'SELECT Id FROM Account WHERE Name = ' + Util.soql_quote(name)
+
+        This doesn't escape the LIKE wildcards % and _.
+
+        Args:
+            value (str): The string value to use in the query
+
+        Returns:
+            str: Returns the value wrapped in single quotes with the special
+                 characters escaped.
+        """
+        if not isinstance(value, str):
+            raise TypeError('Only strings can be quoted for SOQL, not {}'.format(type(value).__name__))
+
+        escaped_value = value.replace('\\', '\\\\').replace("'", "\\'").replace('\n', '\\n') \
+            .replace('\r', '\\r').replace('\t', '\\t')
+
+        return "'" + escaped_value + "'"
+
+    @staticmethod
     def get_soap_client(wsdl_file):
         """
         Pass the wsdl and generate the soap client for the given WSDL

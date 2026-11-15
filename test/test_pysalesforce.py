@@ -583,16 +583,77 @@ class TestSalesforceClient(MockedRequestTestCase):
     def test_login_and_logout(self):
         login_response = {'access_token': 'abc', 'instance_url': 'https://sandbox.my.salesforce.com'}
 
-        with mock.patch.object(Authentication, 'get_oauth_login', return_value=login_response) as login, \
-                mock.patch.object(Authentication, 'get_oauth_logout', return_value={'success': True}) as logout:
+        with mock.patch.object(Authentication, 'get_oauth_login', return_value=login_response) as login:
             sf = Salesforce.login('user', 'password', 'client id', 'client secret', False)
-            result = sf.logout()
 
         login.assert_called_once_with('user', 'password', 'client id', 'client secret', False)
-        self.assertEqual((sf.access_token, sf.instance_url, sf.is_production),
-                         ('abc', 'https://sandbox.my.salesforce.com', False))
-        logout.assert_called_once_with('abc', False)
-        self.assertEqual(result, {'success': True})
+        self.assertEqual((sf.access_token, sf.instance_url), ('abc', 'https://sandbox.my.salesforce.com'))
+
+        self.http_request.return_value.status_code = 200
+        result = sf.logout()
+
+        kwargs = self.http_request.call_args.kwargs
+        self.assertEqual(result, {'success': True, 'status_code': 200})
+        self.assertEqual(kwargs['requestType'], 'POST')
+        self.assertEqual(kwargs['URL'], 'https://sandbox.my.salesforce.com/services/oauth2/revoke')
+        self.assertEqual(kwargs['data_body'], {'token': 'abc'})
+
+    def test_revoke_token_is_not_sent_over_http(self):
+        with self.assertRaises(ValueError):
+            Authentication.revoke_token('abc', 'http://sandbox.my.salesforce.com')
+
+        self.http_request.assert_not_called()
+
+
+class TestClientCredentialsLogin(MockedRequestTestCase):
+    LOGIN_RESPONSE = {'access_token': 'abc', 'instance_url': 'https://acme.my.salesforce.com'}
+
+    def setUp(self):
+        super().setUp()
+        self.http_request.return_value.text = json.dumps(self.LOGIN_RESPONSE)
+
+    def test_get_client_credentials_login(self):
+        result = Authentication.get_client_credentials_login('client id', 'client secret',
+                                                             'https://acme.my.salesforce.com/')
+
+        kwargs = self.http_request.call_args.kwargs
+        self.assertEqual(result, self.LOGIN_RESPONSE)
+        self.assertEqual(kwargs['requestType'], 'POST')
+        self.assertEqual(kwargs['URL'], 'https://acme.my.salesforce.com/services/oauth2/token')
+        self.assertEqual(kwargs['data_body'], {'grant_type': 'client_credentials', 'client_id': 'client id',
+                                               'client_secret': 'client secret'})
+
+    def test_client_secret_is_not_sent_over_http(self):
+        with self.assertRaises(ValueError):
+            Authentication.get_client_credentials_login('client id', 'client secret', 'http://acme.my.salesforce.com')
+
+        self.http_request.assert_not_called()
+
+    def test_salesforce_login_client_credentials(self):
+        sf = Salesforce.login_client_credentials('client id', 'client secret', 'https://acme.my.salesforce.com')
+
+        self.assertEqual((sf.access_token, sf.instance_url), ('abc', 'https://acme.my.salesforce.com'))
+
+
+class TestSoqlQuote(unittest.TestCase):
+
+    def test_plain_value(self):
+        self.assertEqual(Util.soql_quote('Acme'), "'Acme'")
+
+    def test_quote_cannot_end_the_string(self):
+        self.assertEqual(Util.soql_quote("x' OR Name != '"), "'x\\' OR Name != \\''")
+
+    def test_backslash_is_escaped_before_quote(self):
+        self.assertEqual(Util.soql_quote("a\\' OR 1"), "'a\\\\\\' OR 1'")
+
+    def test_control_characters(self):
+        self.assertEqual(Util.soql_quote('a\nb\rc\td'), "'a\\nb\\rc\\td'")
+
+    def test_only_strings_are_accepted(self):
+        for value in (None, 5, b'Acme'):
+            with self.subTest(value=value):
+                with self.assertRaises(TypeError):
+                    Util.soql_quote(value)
 
 
 class TestSoapClientCache(unittest.TestCase):
