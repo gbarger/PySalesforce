@@ -9,7 +9,33 @@ import time
 
 import pysalesforceutils
 from . import webservice
-from .util import Util, _quote_path
+from .util import Util, _encode_body, _quote_path
+
+
+def _bulk_json(method, path, access_token, instance_url, data=None):
+    """
+    Sends a request to the Salesforce Bulk API for the current API_VERSION.
+
+    Args:
+        method (str): The request type: GET or POST
+        path (str): The part of the URL that comes after /services/async/XX.X
+        access_token (str): This is the access_token value received from the
+                            login response
+        instance_url (str): This is the instance_url value received from the
+                            login response
+        data (object): A python object to send as the JSON request body. A
+                       str or bytes value is sent as is. Defaults to None
+
+    Returns:
+        object: Returns the parsed JSON response body.
+    """
+    header_details = Util.get_bulk_header(access_token)
+    url = instance_url + '/services/async/' + pysalesforceutils.API_VERSION + path
+
+    response = webservice.Tools.http_request(requestType=method, URL=url, data_body=_encode_body(data),
+                                             header_details=header_details)
+
+    return json.loads(response.text)
 
 
 class Bulk:
@@ -21,6 +47,8 @@ class Bulk:
     examples here: https://trailhead-salesforce-com.firelayers.net/en/api_basics/api_basics_bulk
     Considerations here: https://developer.salesforce.com/docs/atlas.en-us.salesforce_app_limits_cheatsheet.meta/salesforce_app_limits_cheatsheet/salesforce_app_limits_platform_bulkapi.htm
     """
+    # no longer used by the methods in this class. Kept so existing code that
+    # reads them doesn't break.
     base_bulk_uri = '/services/async/' + pysalesforceutils.API_VERSION
     batch_uri = '/job/'
 
@@ -44,15 +72,11 @@ class Bulk:
                      then it will break out and just returns the final job status
                      response.
         """
-        header_details = Util.get_bulk_header(access_token)
-
         if verbose:
             print("Status for job: {}".format(job_id))
 
         while True:
-            response = webservice.Tools.get_http_response(
-                instance_url + Bulk.base_bulk_uri + Bulk.batch_uri + _quote_path(job_id), header_details)
-            json_response = json.loads(response.text)
+            json_response = _bulk_json('GET', '/job/' + _quote_path(job_id), access_token, instance_url)
 
             if verbose:
                 print("Batches completed/failed/total: {}/{}/{}".format(json_response['numberBatchesCompleted'],
@@ -88,13 +112,8 @@ class Bulk:
             array: Returns the an array containing the results for each record
                    in the given batch
         """
-        header_details = Util.get_bulk_header(access_token)
-
-        response = webservice.Tools.get_http_response(
-            instance_url + Bulk.base_bulk_uri + Bulk.batch_uri + _quote_path(job_id) + '/batch/' +
-            _quote_path(batch_id) + '/result',
-            header_details)
-        json_response = json.loads(response.text)
+        json_response = _bulk_json('GET', '/job/' + _quote_path(job_id) + '/batch/' + _quote_path(batch_id) + '/result',
+                                   access_token, instance_url)
 
         return json_response
 
@@ -118,13 +137,8 @@ class Bulk:
             array: Returns the an array containing the results for the query
                    request
         """
-        header_details = Util.get_bulk_header(access_token)
-
-        response = webservice.Tools.get_http_response(
-            instance_url + Bulk.base_bulk_uri + Bulk.batch_uri + _quote_path(job_id) + '/batch/' +
-            _quote_path(batch_id) + '/result' + '/' + _quote_path(query_result_id),
-            header_details)
-        json_response = json.loads(response.text)
+        json_response = _bulk_json('GET', '/job/' + _quote_path(job_id) + '/batch/' + _quote_path(batch_id) +
+                                   '/result/' + _quote_path(query_result_id), access_token, instance_url)
 
         return json_response
 
@@ -177,7 +191,6 @@ class Bulk:
             object: Returns an object containing the status for each record that
                     was put into the batch
         """
-        header_details = Util.get_bulk_header(access_token)
         body_details = {}
 
         if external_id_field_name != None:
@@ -191,28 +204,19 @@ class Bulk:
         results_list = []
 
         # create the bulk job
-        create_job_json_body = json.dumps(body_details, indent=4, separators=(',', ': '))
-        job_create_response = webservice.Tools.post_http_response(instance_url + Bulk.base_bulk_uri + Bulk.batch_uri,
-                                                                  create_job_json_body, header_details)
-        json_job_create_response = json.loads(job_create_response.text)
+        json_job_create_response = _bulk_json('POST', '/job/', access_token, instance_url, body_details)
         job_id = json_job_create_response['id']
 
         # loop through the record batches, and add them to the processing queue
         for record_chunk in chunked_records_list:
-            records_json = json.dumps(record_chunk, indent=4, separators=(',', ': '))
-            job_batch_response = webservice.Tools.post_http_response(
-                instance_url + Bulk.base_bulk_uri + Bulk.batch_uri + job_id + '/batch', records_json,
-                header_details)
-            json_job_batch_response = json.loads(job_batch_response.text)
+            json_job_batch_response = _bulk_json('POST', '/job/' + job_id + '/batch', access_token, instance_url,
+                                                 record_chunk)
             batch_id = json_job_batch_response['id']
             batch_ids.append(batch_id)
 
         # close the bulk job
         close_body = {'state': 'Closed'}
-        json_close_body = json.dumps(close_body, indent=4, separators=(',', ': '))
-        close_response = webservice.Tools.post_http_response(
-            instance_url + Bulk.base_bulk_uri + Bulk.batch_uri + job_id, json_close_body, header_details)
-        json_close_response = json.loads(close_response.text)
+        _bulk_json('POST', '/job/' + job_id, access_token, instance_url, close_body)
 
         # set default job check polling to 5 seconds
         if polling_wait is None:
@@ -427,7 +431,6 @@ class Bulk:
         Returns:
             object: Returns an array of results for the specified query
         """
-        header_details = Util.get_bulk_header(access_token)
         batch_results_list = []
         query_result_list = []
 
@@ -438,24 +441,16 @@ class Bulk:
 
         # create the bulk job
         job_body_details = Util.get_bulk_job_body(object_api_name, query_type, None, None)
-        create_job_json_body = json.dumps(job_body_details, indent=4, separators=(',', ': '))
-        job_create_response = webservice.Tools.post_http_response(instance_url + Bulk.base_bulk_uri + Bulk.batch_uri,
-                                                                  create_job_json_body, header_details)
-        json_job_create_response = json.loads(job_create_response.text)
+        json_job_create_response = _bulk_json('POST', '/job/', access_token, instance_url, job_body_details)
         job_id = json_job_create_response['id']
 
         # create the query request batch
-        job_batch_response = webservice.Tools.post_http_response(
-            instance_url + Bulk.base_bulk_uri + Bulk.batch_uri + job_id + '/batch', query, header_details)
-        json_job_batch_response = json.loads(job_batch_response.text)
+        json_job_batch_response = _bulk_json('POST', '/job/' + job_id + '/batch', access_token, instance_url, query)
         batch_id = json_job_batch_response['id']
 
         # close the bulk job
         close_body = {'state': 'Closed'}
-        json_close_body = json.dumps(close_body, indent=4, separators=(',', ': '))
-        close_response = webservice.Tools.post_http_response(
-            instance_url + Bulk.base_bulk_uri + Bulk.batch_uri + job_id, json_close_body, header_details)
-        json_close_response = json.loads(close_response.text)
+        _bulk_json('POST', '/job/' + job_id, access_token, instance_url, close_body)
 
         # check job status until the job completes
         Bulk.get_job_status(job_id, 5, verbose, access_token, instance_url)

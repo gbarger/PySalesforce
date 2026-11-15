@@ -27,6 +27,17 @@ def _quote_path(value):
     return urllib.parse.quote(value, safe='')
 
 
+def _encode_body(data):
+    """
+    Turns a python object into a JSON request body. A str or bytes value is
+    returned as is, and None means there is no body.
+    """
+    if data is None or isinstance(data, (str, bytes)):
+        return data
+
+    return json.dumps(data)
+
+
 def _rest_request(method, path, access_token, instance_url, data=None, headers=None):
     """
     Sends a request to the Salesforce REST API for the current API_VERSION.
@@ -50,16 +61,9 @@ def _rest_request(method, path, access_token, instance_url, data=None, headers=N
     if headers != None:
         header_details.update(headers)
 
-    data_body = None
-
-    if isinstance(data, (str, bytes)):
-        data_body = data
-    elif data != None:
-        data_body = json.dumps(data)
-
     url = instance_url + '/services/data/v' + pysalesforceutils.API_VERSION + path
 
-    return webservice.Tools.http_request(requestType=method, URL=url, data_body=data_body,
+    return webservice.Tools.http_request(requestType=method, URL=url, data_body=_encode_body(data),
                                          header_details=header_details)
 
 

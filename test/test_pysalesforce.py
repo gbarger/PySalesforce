@@ -1,5 +1,7 @@
 #!/usr/bin/python3
+import contextlib
 import datetime
+import io
 import json
 import unittest
 from unittest import mock
@@ -365,6 +367,105 @@ class TestBulk2Requests(MockedRequestTestCase):
 
                 self.assertEqual(result, 'sf__Id,Name\n001A,Acme\n')
                 self.assert_request('GET', self.INGEST + '/750A' + uri)
+
+    def test_api_version_can_be_overridden_at_runtime(self):
+        with mock.patch.object(pysalesforceutils, 'API_VERSION', '60.0'):
+            Bulk2.get_job_info('750A', TOKEN, INSTANCE)
+
+        self.assertEqual(self.requested_url(), INSTANCE + '/services/data/v60.0/jobs/ingest/750A')
+
+
+class TestBulkRequests(MockedRequestTestCase):
+    """
+    Checks the sequence of HTTP requests the Bulk methods send.
+    """
+    ASYNC = INSTANCE + '/services/async/' + pysalesforceutils.API_VERSION
+    BULK_HEADER = {'Authorization': 'Bearer token', 'Content-Type': 'application/json', 'X-SFDC-Session': 'token'}
+
+    def respond_with(self, *bodies):
+        responses = []
+        for body in bodies:
+            response = mock.Mock()
+            response.text = json.dumps(body)
+            responses.append(response)
+        self.http_request.side_effect = responses
+
+    def requests_sent(self):
+        requests_sent = []
+        for call in self.http_request.call_args_list:
+            self.assertEqual(call.kwargs['header_details'], self.BULK_HEADER)
+            body = call.kwargs.get('data_body')
+            try:
+                body = json.loads(body)
+            except (TypeError, ValueError):
+                pass
+            requests_sent.append((call.kwargs['requestType'], call.kwargs['URL'], body))
+
+        return requests_sent
+
+    def test_get_batch_result(self):
+        self.respond_with([{'success': True}])
+
+        result = Bulk.get_batch_result('750A', '751A', TOKEN, INSTANCE)
+
+        self.assertEqual(result, [{'success': True}])
+        self.assertEqual(self.requests_sent(), [('GET', self.ASYNC + '/job/750A/batch/751A/result', None)])
+
+    def test_get_query_result(self):
+        self.respond_with([{'Id': '001A'}])
+
+        result = Bulk.get_query_result('750A', '751A', '752A', TOKEN, INSTANCE)
+
+        self.assertEqual(result, [{'Id': '001A'}])
+        self.assertEqual(self.requests_sent(), [('GET', self.ASYNC + '/job/750A/batch/751A/result/752A', None)])
+
+    def test_upsert_sobject_rows(self):
+        records = [{'Name': 'A'}, {'Name': 'B'}, {'Name': 'C'}]
+        self.respond_with(
+            {'id': '750A'}, {'id': '751A'}, {'id': '751B'}, {'state': 'Closed'},
+            {'numberBatchesCompleted': 2, 'numberBatchesFailed': 0, 'numberBatchesTotal': 2},
+            [{'id': '001A'}, {'id': '001B'}], [{'id': '001C'}])
+
+        with contextlib.redirect_stdout(io.StringIO()):
+            result = Bulk.upsert_sobject_rows('Account', records, 2, 0, TOKEN, INSTANCE, 'Ext__c')
+
+        self.assertEqual(result, [{'id': '001A'}, {'id': '001B'}, {'id': '001C'}])
+        self.assertEqual(self.requests_sent(), [
+            ('POST', self.ASYNC + '/job/', {'operation': 'upsert', 'object': 'Account', 'contentType': 'JSON',
+                                            'externalIdFieldName': 'Ext__c'}),
+            ('POST', self.ASYNC + '/job/750A/batch', [{'Name': 'A'}, {'Name': 'B'}]),
+            ('POST', self.ASYNC + '/job/750A/batch', [{'Name': 'C'}]),
+            ('POST', self.ASYNC + '/job/750A', {'state': 'Closed'}),
+            ('GET', self.ASYNC + '/job/750A', None),
+            ('GET', self.ASYNC + '/job/750A/batch/751A/result', None),
+            ('GET', self.ASYNC + '/job/750A/batch/751B/result', None),
+        ])
+
+    def test_query_sobject_rows(self):
+        self.respond_with(
+            {'id': '750A'}, {'id': '751A'}, {'state': 'Closed'},
+            {'numberBatchesCompleted': 1, 'numberBatchesFailed': 0, 'numberBatchesTotal': 1},
+            ['752A'], [{'Id': '001A'}])
+
+        result = Bulk.query_sobject_rows('Account', 'SELECT Id FROM Account', True, TOKEN, INSTANCE, verbose=False)
+
+        self.assertEqual(result, [{'Id': '001A'}])
+        self.assertEqual(self.requests_sent(), [
+            ('POST', self.ASYNC + '/job/', {'operation': 'queryAll', 'object': 'Account', 'contentType': 'JSON'}),
+            ('POST', self.ASYNC + '/job/750A/batch', 'SELECT Id FROM Account'),
+            ('POST', self.ASYNC + '/job/750A', {'state': 'Closed'}),
+            ('GET', self.ASYNC + '/job/750A', None),
+            ('GET', self.ASYNC + '/job/750A/batch/751A/result', None),
+            ('GET', self.ASYNC + '/job/750A/batch/751A/result/752A', None),
+        ])
+
+    def test_api_version_can_be_overridden_at_runtime(self):
+        self.respond_with([])
+
+        with mock.patch.object(pysalesforceutils, 'API_VERSION', '60.0'):
+            Bulk.get_batch_result('750A', '751A', TOKEN, INSTANCE)
+
+        self.assertEqual(self.requested_url(), INSTANCE + '/services/async/60.0/job/750A/batch/751A/result')
 
 
 class TestBulkPolling(MockedRequestTestCase):
