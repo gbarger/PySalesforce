@@ -16,6 +16,10 @@ except ImportError:
     Client = None
 
 
+# SOAP clients that have already been loaded, by WSDL file
+_soap_clients = {}
+
+
 def _quote_path(value):
     """
     URL encodes a value so it can only ever be a single URL path segment or
@@ -235,7 +239,8 @@ class Util:
                              the client
 
         Returns:
-            Client: Returns the SOAP client.
+            Client: Returns the SOAP client. The same client is returned
+                    each time this is called with the same wsdl_file.
         """
         if Client is None:
             raise ImportError(
@@ -243,8 +248,11 @@ class Util:
                 "Install it using `pip install zeep` or `pip install pysalesforceutils[soap]`."
             )
 
-        soap_client = Client(wsdl_file)
-        return soap_client
+        # parsing a WSDL is slow, so each WSDL file is only loaded once
+        if wsdl_file not in _soap_clients:
+            _soap_clients[wsdl_file] = Client(wsdl_file)
+
+        return _soap_clients[wsdl_file]
 
     @staticmethod
     def get_soap_client_service(wsdl_file, service_binding, endpoint_url):

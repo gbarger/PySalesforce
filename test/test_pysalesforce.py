@@ -7,7 +7,7 @@ import unittest
 from unittest import mock
 
 import pysalesforceutils
-from pysalesforceutils import Tooling, Standard, Bulk, Bulk2, Metadata
+from pysalesforceutils import Util, Tooling, Standard, Bulk, Bulk2, Metadata
 
 TOKEN = 'token'
 INSTANCE = 'https://example.my.salesforce.com'
@@ -518,6 +518,37 @@ class TestBulkPolling(MockedRequestTestCase):
 
         self.assertEqual(result, {'done': True, 'records': []})
         self.assertEqual(self.requested_url(), INSTANCE + Bulk2.base_bulk2_uri + '?jobType=V2Ingest')
+
+
+class TestSoapClientCache(unittest.TestCase):
+
+    def setUp(self):
+        for patcher in (mock.patch('pysalesforceutils.util.Client'),
+                        mock.patch.dict('pysalesforceutils.util._soap_clients', clear=True)):
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+        self.client_class = pysalesforceutils.util.Client
+        self.client_class.side_effect = lambda wsdl_file: mock.Mock(name=wsdl_file)
+
+    def test_same_wsdl_is_only_loaded_once(self):
+        first = Util.get_soap_client('metadata.wsdl')
+        second = Util.get_soap_client('metadata.wsdl')
+
+        self.assertIs(first, second)
+        self.client_class.assert_called_once_with('metadata.wsdl')
+
+    def test_each_wsdl_gets_its_own_client(self):
+        metadata = Util.get_soap_client('metadata.wsdl')
+        partner = Util.get_soap_client('partner.wsdl')
+
+        self.assertIsNot(metadata, partner)
+        self.assertEqual(self.client_class.call_count, 2)
+
+    def test_metadata_headers_load_the_wsdl_once(self):
+        Metadata.get_soap_headers('session', 'client', True, [])
+
+        self.client_class.assert_called_once_with(pysalesforceutils.METADATA_WSDL_FILE)
 
 
 class TestMetadataValidation(unittest.TestCase):
