@@ -1,4 +1,6 @@
 #!/usr/bin/python3
+import http.server
+import threading
 import unittest
 from unittest import mock
 
@@ -73,6 +75,35 @@ class TestWebservice(unittest.TestCase):
         webservice.Tools.get_http_response('http://example.com/', {})
 
         self.send.assert_called_once()
+
+
+class TestConnectionReuse(unittest.TestCase):
+
+    def test_requests_reuse_one_connection(self):
+        connections = set()
+
+        class Handler(http.server.BaseHTTPRequestHandler):
+            protocol_version = 'HTTP/1.1'
+
+            def do_GET(self):
+                connections.add(self.client_address)
+                self.send_response(200)
+                self.send_header('Content-Length', '2')
+                self.end_headers()
+                self.wfile.write(b'{}')
+
+            def log_message(self, *args):
+                pass
+
+        server = http.server.ThreadingHTTPServer(('127.0.0.1', 0), Handler)
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        self.addCleanup(server.server_close)
+        self.addCleanup(server.shutdown)
+
+        for _ in range(3):
+            webservice.Tools.get_http_response('http://127.0.0.1:{}/'.format(server.server_port), {})
+
+        self.assertEqual(len(connections), 1)
 
 
 if __name__ == '__main__':

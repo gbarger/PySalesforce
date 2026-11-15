@@ -7,6 +7,10 @@ class Tools:
     # wait forever.
     default_timeout = 120
 
+    # all requests share this session so connections to the same host are
+    # reused, which avoids a new TLS handshake for every request.
+    session = requests.Session()
+
     @staticmethod
     def http_request(**kwargs):
         """
@@ -39,9 +43,8 @@ class Tools:
         try:
             req = requests.Request(requestType, URL, data=data_body, headers=header_details, files=files)
             prepReq = req.prepare()
-            with requests.Session() as session:
-                response = session.send(prepReq, timeout=Tools.default_timeout)
-                response.raise_for_status()
+            response = Tools.session.send(prepReq, timeout=Tools.default_timeout)
+            response.raise_for_status()
         except requests.exceptions.HTTPError as e:
             # the response body won't be visible if exception is just raised
             if e.response is not None:
