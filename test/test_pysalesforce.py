@@ -1,13 +1,14 @@
 #!/usr/bin/python3
 import contextlib
 import datetime
+import inspect
 import io
 import json
 import unittest
 from unittest import mock
 
 import pysalesforceutils
-from pysalesforceutils import Util, Tooling, Standard, Bulk, Bulk2, Metadata
+from pysalesforceutils import Util, Authentication, Tooling, Standard, Bulk, Bulk2, Metadata, Salesforce
 
 TOKEN = 'token'
 INSTANCE = 'https://example.my.salesforce.com'
@@ -518,6 +519,80 @@ class TestBulkPolling(MockedRequestTestCase):
 
         self.assertEqual(result, {'done': True, 'records': []})
         self.assertEqual(self.requested_url(), INSTANCE + Bulk2.base_bulk2_uri + '?jobType=V2Ingest')
+
+
+class TestSalesforceClient(MockedRequestTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.sf = Salesforce(TOKEN, INSTANCE)
+
+    def test_standard_method_fills_in_token_and_instance(self):
+        self.http_request.return_value.text = '{"totalSize": 0}'
+
+        result = self.sf.standard.query('SELECT Id FROM Account')
+
+        self.assertEqual(result, {'totalSize': 0})
+        self.assert_request('GET', BASE + '/query/?q=SELECT%20Id%20FROM%20Account')
+
+    def test_arguments_after_the_token_can_be_positional_or_keyword(self):
+        records = [{'attributes': {'type': 'Account'}, 'Name': 'Acme'}]
+
+        self.sf.standard.upsert_sobject_rows('Account', records, True, external_id_field_name='Ext__c')
+
+        self.assert_request('PATCH', BASE + '/composite/sobjects/Account/Ext__c',
+                            {'allOrNone': True, 'records': records}, {'Sforce-Auto-Assign': 'false'})
+
+    def test_tooling_bulk_and_bulk2(self):
+        self.sf.tooling.query('SELECT Id FROM ApexClass')
+        self.assert_request('GET', BASE + '/tooling/query/?q=SELECT%20Id%20FROM%20ApexClass')
+
+        self.sf.bulk2.get_job_info('750A')
+        self.assert_request('GET', BASE + '/jobs/ingest/750A')
+
+        self.http_request.return_value.text = '[]'
+        self.sf.bulk.get_batch_result('750A', '751A')
+        self.assert_request('GET', INSTANCE + '/services/async/' + pysalesforceutils.API_VERSION +
+                            '/job/750A/batch/751A/result', headers={'X-SFDC-Session': 'token'})
+
+    def test_changed_access_token_is_used(self):
+        self.sf.access_token = 'refreshed'
+
+        self.sf.standard.get_current_user_info()
+
+        self.assertEqual(self.http_request.call_args.kwargs['header_details']['Authorization'], 'Bearer refreshed')
+
+    def test_every_api_method_is_available(self):
+        for name, api_class in (('standard', Standard), ('tooling', Tooling), ('bulk', Bulk), ('bulk2', Bulk2)):
+            expected = {method for method, value in vars(api_class).items() if isinstance(value, staticmethod)}
+
+            self.assertEqual(set(vars(getattr(self.sf, name))), expected)
+
+    def test_signature_and_docstring(self):
+        method = self.sf.standard.get_sobject_row
+
+        self.assertEqual(list(inspect.signature(method).parameters), ['object_name', 'record_id', 'field_list_string'])
+        self.assertEqual(method.__doc__, Standard.get_sobject_row.__doc__)
+
+    def test_missing_argument_raises_type_error(self):
+        with self.assertRaises(TypeError):
+            self.sf.standard.get_sobject_row('Account')
+
+        self.http_request.assert_not_called()
+
+    def test_login_and_logout(self):
+        login_response = {'access_token': 'abc', 'instance_url': 'https://sandbox.my.salesforce.com'}
+
+        with mock.patch.object(Authentication, 'get_oauth_login', return_value=login_response) as login, \
+                mock.patch.object(Authentication, 'get_oauth_logout', return_value={'success': True}) as logout:
+            sf = Salesforce.login('user', 'password', 'client id', 'client secret', False)
+            result = sf.logout()
+
+        login.assert_called_once_with('user', 'password', 'client id', 'client secret', False)
+        self.assertEqual((sf.access_token, sf.instance_url, sf.is_production),
+                         ('abc', 'https://sandbox.my.salesforce.com', False))
+        logout.assert_called_once_with('abc', False)
+        self.assertEqual(result, {'success': True})
 
 
 class TestSoapClientCache(unittest.TestCase):
