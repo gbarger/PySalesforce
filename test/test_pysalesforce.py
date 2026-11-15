@@ -16,7 +16,8 @@ except ImportError:
     jwt = None
 
 import pysalesforceutils
-from pysalesforceutils import Util, Authentication, Tooling, Standard, Bulk, Bulk2, Metadata, Salesforce
+from pysalesforceutils import (Util, Authentication, Tooling, Standard, Bulk, Bulk2, Metadata, Salesforce,
+                               Composite)
 
 TOKEN = 'token'
 INSTANCE = 'https://example.my.salesforce.com'
@@ -575,6 +576,249 @@ class TestBulkRequests(MockedRequestTestCase):
             Bulk.get_batch_result('750A', '751A', TOKEN, INSTANCE)
 
         self.assertEqual(self.requested_url(), INSTANCE + '/services/async/60.0/job/750A/batch/751A/result')
+
+
+class TestComposite(MockedRequestTestCase):
+    VERSIONED = '/services/data/v' + pysalesforceutils.API_VERSION
+
+    def test_builders(self):
+        cases = [
+            (Composite.create('a', 'Account', {'Name': 'Acme'}),
+             {'method': 'POST', 'url': self.VERSIONED + '/sobjects/Account/', 'referenceId': 'a',
+              'body': {'Name': 'Acme'}}),
+            (Composite.update('b', 'Account', '001A', {'Name': 'Acme'}),
+             {'method': 'PATCH', 'url': self.VERSIONED + '/sobjects/Account/001A', 'referenceId': 'b',
+              'body': {'Name': 'Acme'}}),
+            (Composite.upsert('c', 'Account', 'Ext__c', 'A/1', {'Name': 'Acme'}),
+             {'method': 'PATCH', 'url': self.VERSIONED + '/sobjects/Account/Ext__c/A%2F1', 'referenceId': 'c',
+              'body': {'Name': 'Acme'}}),
+            (Composite.delete('d', 'Account', '001A'),
+             {'method': 'DELETE', 'url': self.VERSIONED + '/sobjects/Account/001A', 'referenceId': 'd'}),
+            (Composite.get('e', 'Account', '001A'),
+             {'method': 'GET', 'url': self.VERSIONED + '/sobjects/Account/001A', 'referenceId': 'e'}),
+            (Composite.get('f', 'Account', '001A', 'Id,Name'),
+             {'method': 'GET', 'url': self.VERSIONED + '/sobjects/Account/001A?fields=Id,Name', 'referenceId': 'f'}),
+            (Composite.query('g', 'SELECT Id FROM Account'),
+             {'method': 'GET', 'url': self.VERSIONED + '/query/?q=SELECT%20Id%20FROM%20Account', 'referenceId': 'g'}),
+            (Composite.request('h', 'GET', '/limits'),
+             {'method': 'GET', 'url': self.VERSIONED + '/limits', 'referenceId': 'h'}),
+        ]
+
+        for subrequest, expected in cases:
+            with self.subTest(reference_id=expected['referenceId']):
+                self.assertEqual(subrequest, expected)
+
+    def test_references_to_other_subrequests_are_kept(self):
+        self.assertEqual(Composite.get('lookup', 'Account', '@{new_account.id}')['url'],
+                         self.VERSIONED + '/sobjects/Account/@{new_account.id}')
+        self.assertEqual(Composite.query('contacts', "SELECT Id FROM Contact WHERE AccountId = '@{new_account.id}'")['url'],
+                         self.VERSIONED + '/query/?q=SELECT%20Id%20FROM%20Contact%20WHERE%20AccountId%20%3D%20'
+                         '%27@{new_account.id}%27')
+
+    def test_record_id_cannot_change_the_endpoint(self):
+        self.assertEqual(Composite.delete('d', 'Account', '../../tooling/x?y=1')['url'],
+                         self.VERSIONED + '/sobjects/Account/..%2F..%2Ftooling%2Fx%3Fy%3D1')
+
+        with self.assertRaises(ValueError):
+            Composite.delete('d', 'Account', '..')
+
+    def test_api_version_can_be_overridden_at_runtime(self):
+        with mock.patch.object(pysalesforceutils, 'API_VERSION', '60.0'):
+            self.assertEqual(Composite.get('e', 'Account', '001A')['url'],
+                             '/services/data/v60.0/sobjects/Account/001A')
+
+    def test_builders_with_composite_request(self):
+        subrequests = [Composite.create('new_account', 'Account', {'Name': 'Acme'}),
+                       Composite.create('new_contact', 'Contact', {'LastName': 'Lee',
+                                                                   'AccountId': '@{new_account.id}'})]
+
+        Standard.composite_request(subrequests, True, TOKEN, INSTANCE)
+
+        self.assert_request('POST', BASE + '/composite', {'allOrNone': True, 'collateSubrequests': True,
+                                                          'compositeRequest': subrequests})
+
+    def test_builders_with_composite_batch_request(self):
+        subrequests = [Composite.update('u', 'Account', '001A', {'Name': 'Acme'}),
+                       Composite.get('g', 'Account', '001A', 'Name')]
+        version = 'v' + pysalesforceutils.API_VERSION
+
+        Standard.composite_batch_request(subrequests, False, TOKEN, INSTANCE)
+
+        self.assert_request('POST', BASE + '/composite/batch', {'haltOnError': False, 'batchRequests': [
+            {'method': 'PATCH', 'url': version + '/sobjects/Account/001A', 'richInput': {'Name': 'Acme'}},
+            {'method': 'GET', 'url': version + '/sobjects/Account/001A?fields=Name'}]})
+
+    def test_builders_with_graph_composite_request(self):
+        subrequests = [Composite.create('new_account', 'Account', {'Name': 'Acme'})]
+        request_body = {'graphs': [Composite.graph('graph1', subrequests)]}
+
+        Standard.graph_composite_request(request_body, TOKEN, INSTANCE)
+
+        self.assert_request('POST', BASE + '/composite/graph',
+                            {'graphs': [{'graphId': 'graph1', 'compositeRequest': subrequests}]})
+
+
+class TestBulk2QueryJobs(MockedRequestTestCase):
+    QUERY = BASE + '/jobs/query'
+
+    def test_create_query_job(self):
+        self.http_request.return_value.text = '{"id": "750A"}'
+
+        result = Bulk2.create_query_job('SELECT Id FROM Account', False, TOKEN, INSTANCE)
+
+        self.assertEqual(result, {'id': '750A'})
+        self.assert_request('POST', self.QUERY, {'operation': 'query', 'query': 'SELECT Id FROM Account'})
+
+    def test_create_query_all_job(self):
+        Bulk2.create_query_job('SELECT Id FROM Account', True, TOKEN, INSTANCE)
+
+        self.assert_request('POST', self.QUERY, {'operation': 'queryAll', 'query': 'SELECT Id FROM Account'})
+
+    def test_get_query_job_info(self):
+        Bulk2.get_query_job_info('750A', TOKEN, INSTANCE)
+
+        self.assert_request('GET', self.QUERY + '/750A')
+
+    def test_get_query_job_status_polls_until_finished(self):
+        responses = []
+        for state in ('UploadComplete', 'InProgress', 'JobComplete'):
+            response = mock.Mock()
+            response.text = json.dumps({'state': state, 'numberRecordsProcessed': 5})
+            responses.append(response)
+        self.http_request.side_effect = responses
+
+        with mock.patch('time.sleep') as sleep:
+            result = Bulk2.get_query_job_status('750A', 5, False, TOKEN, INSTANCE)
+
+        self.assertEqual(result['state'], 'JobComplete')
+        self.assertEqual(sleep.call_count, 2)
+
+    def test_get_query_job_results(self):
+        self.http_request.return_value.text = 'Id\n001A\n'
+        self.http_request.return_value.headers = {'Sforce-Locator': 'MTAwMDA', 'Sforce-NumberOfRecords': '1'}
+
+        result = Bulk2.get_query_job_results('750A', None, None, TOKEN, INSTANCE)
+
+        self.assertEqual(result, {'records': 'Id\n001A\n', 'locator': 'MTAwMDA'})
+        self.assert_request('GET', self.QUERY + '/750A/results', headers={'Accept': 'text/csv'})
+
+    def test_get_query_job_results_last_page(self):
+        self.http_request.return_value.text = 'Id\n001B\n'
+        self.http_request.return_value.headers = {'Sforce-Locator': 'null'}
+
+        result = Bulk2.get_query_job_results('750A', 'MTAwMDA', 1000, TOKEN, INSTANCE)
+
+        self.assertEqual(result, {'records': 'Id\n001B\n', 'locator': None})
+        self.assert_request('GET', self.QUERY + '/750A/results?locator=MTAwMDA&maxRecords=1000',
+                            headers={'Accept': 'text/csv'})
+
+    def test_abort_and_delete_query_job(self):
+        Bulk2.abort_query_job('750A', TOKEN, INSTANCE)
+        self.assert_request('PATCH', self.QUERY + '/750A', {'state': 'Aborted'})
+
+        self.http_request.return_value.status_code = 204
+        result = Bulk2.delete_query_job('750A', TOKEN, INSTANCE)
+
+        self.assertEqual(result, 204)
+        self.assert_request('DELETE', self.QUERY + '/750A')
+
+
+class TestStandardOtherResources(MockedRequestTestCase):
+
+    def test_get_global_describe_and_limits(self):
+        Standard.get_global_describe(TOKEN, INSTANCE)
+        self.assert_request('GET', BASE + '/sobjects')
+
+        Standard.get_limits(TOKEN, INSTANCE)
+        self.assert_request('GET', BASE + '/limits')
+
+    def test_query_records_follows_every_batch(self):
+        next_url = '/services/data/v' + pysalesforceutils.API_VERSION + '/query/01gxx-2000'
+        responses = []
+        for body in ({'done': False, 'nextRecordsUrl': next_url, 'records': [{'Id': '001A'}]},
+                     {'done': True, 'records': [{'Id': '001B'}]}):
+            response = mock.Mock()
+            response.text = json.dumps(body)
+            responses.append(response)
+        self.http_request.side_effect = responses
+
+        result = Standard.query_records('SELECT Id FROM Account', TOKEN, INSTANCE)
+
+        self.assertEqual(result, [{'Id': '001A'}, {'Id': '001B'}])
+        self.assertEqual([call.kwargs['URL'] for call in self.http_request.call_args_list],
+                         [BASE + '/query/?q=SELECT%20Id%20FROM%20Account', INSTANCE + next_url])
+
+    def test_query_records_can_include_deleted(self):
+        self.http_request.return_value.text = '{"done": true, "records": []}'
+
+        result = Standard.query_records('SELECT Id FROM Account', TOKEN, INSTANCE, include_deleted=True)
+
+        self.assertEqual(result, [])
+        self.assert_request('GET', BASE + '/queryAll/?q=SELECT%20Id%20FROM%20Account')
+
+    def test_query_explain(self):
+        Standard.query_explain('SELECT Id FROM Account', TOKEN, INSTANCE)
+
+        self.assert_request('GET', BASE + '/query/?explain=SELECT%20Id%20FROM%20Account')
+
+    def test_parameterized_search(self):
+        search_body = {'q': 'Smith', 'fields': ['Id'], 'sobjects': [{'name': 'Contact'}]}
+
+        Standard.parameterized_search(search_body, TOKEN, INSTANCE)
+
+        self.assert_request('POST', BASE + '/parameterizedSearch', search_body)
+
+    def test_invoke_actions(self):
+        inputs = [{'accountId': '001A'}]
+
+        Standard.invoke_standard_action('chatterPost', inputs, TOKEN, INSTANCE)
+        self.assert_request('POST', BASE + '/actions/standard/chatterPost', {'inputs': inputs})
+
+        Standard.invoke_custom_action('flow', 'My_Flow', inputs, TOKEN, INSTANCE)
+        self.assert_request('POST', BASE + '/actions/custom/flow/My_Flow', {'inputs': inputs})
+
+    def test_apex_rest_request_returns_the_response(self):
+        result = Standard.apex_rest_request('POST', '/MyService/001A', TOKEN, INSTANCE, {'Name': 'Acme'})
+
+        self.assertIs(result, self.http_request.return_value)
+        self.assert_request('POST', INSTANCE + '/services/apexrest/MyService/001A', {'Name': 'Acme'})
+
+    def test_request_returns_the_response(self):
+        result = Standard.request('GET', '/sobjects/Account/describe', TOKEN, INSTANCE, headers={'X-Test': '1'})
+
+        self.assertIs(result, self.http_request.return_value)
+        self.assert_request('GET', BASE + '/sobjects/Account/describe', headers={'X-Test': '1'})
+
+
+class TestToolingRecords(MockedRequestTestCase):
+    SOBJECTS = BASE + '/tooling/sobjects'
+
+    def test_get_sobject_row(self):
+        self.http_request.return_value.text = '{"Id": "01pA"}'
+
+        result = Tooling.get_sobject_row('ApexClass', '01pA', TOKEN, INSTANCE)
+
+        self.assertEqual(result, {'Id': '01pA'})
+        self.assert_request('GET', self.SOBJECTS + '/ApexClass/01pA')
+
+    def test_create_sobject_row(self):
+        self.http_request.return_value.text = '{"id": "7tfA", "success": true}'
+
+        result = Tooling.create_sobject_row('TraceFlag', {'LogType': 'USER_DEBUG'}, TOKEN, INSTANCE)
+
+        self.assertEqual(result, {'id': '7tfA', 'success': True})
+        self.assert_request('POST', self.SOBJECTS + '/TraceFlag/', {'LogType': 'USER_DEBUG'})
+
+    def test_update_and_delete_sobject_row(self):
+        self.http_request.return_value.status_code = 204
+
+        result = Tooling.update_sobject_row('TraceFlag', '7tfA', {'LogType': 'USER_DEBUG'}, TOKEN, INSTANCE)
+        self.assertEqual(result, 'Update Successful')
+        self.assert_request('PATCH', self.SOBJECTS + '/TraceFlag/7tfA', {'LogType': 'USER_DEBUG'})
+
+        result = Tooling.delete_sobject_row('TraceFlag', '7tfA', TOKEN, INSTANCE)
+        self.assertEqual(result, 'Delete Successful')
+        self.assert_request('DELETE', self.SOBJECTS + '/TraceFlag/7tfA')
 
 
 class TestBulkPolling(MockedRequestTestCase):

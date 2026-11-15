@@ -10,6 +10,7 @@ import pysalesforceutils
 from .util import _quote_path, _rest_json, _rest_request
 
 _INGEST_URI = '/jobs/ingest'
+_QUERY_URI = '/jobs/query'
 
 
 class Bulk2:
@@ -348,3 +349,192 @@ class Bulk2:
                                  instance_url)
 
         return response.text
+
+    @staticmethod
+    def create_query_job(query, query_all, access_token, instance_url):
+        """
+        Creates a job that runs a SOQL query asynchronously, which is meant
+        for queries that return a large number of records. Use
+        get_query_job_status to wait for the job to finish, then
+        get_query_job_results to get the records.
+        https://developer.salesforce.com/docs/atlas.en-us.api_asynch.meta/api_asynch/query_create_job.htm
+
+        Args:
+            query (str): The query you'd like to run to retrieve records
+            query_all (bool): State whether or not this query should query all
+                              records (so you can get deleted records)
+            access_token (str): This is the access_token value received from the
+                                login response
+            instance_url (str): This is the instance_url value received from the
+                                login response
+
+        Returns:
+            dict: Returns data about the job. The "id" field provides the job Id
+                  necessary for the remaining calls.
+        """
+        post_body = {}
+        post_body["operation"] = "queryAll" if query_all else "query"
+        post_body["query"] = query
+
+        json_response = _rest_json('POST', _QUERY_URI, access_token, instance_url, post_body)
+
+        return json_response
+
+    @staticmethod
+    def get_query_job_info(job_id, access_token, instance_url):
+        """
+        Retrieves detailed information about a query job.
+
+        Args:
+            job_id (str): The job id returned by Bulk2.create_query_job
+            access_token (str): This is the access_token value received from the
+                                login response
+            instance_url (str): This is the instance_url value received from the
+                                login response.
+
+        Returns:
+            dict: Returns details about the status of the given job. If the job
+                  succeeds, the state will be 'JobComplete' vs 'Failed' for
+                  a failed job.
+        """
+        json_response = _rest_json('GET', _QUERY_URI + '/' + _quote_path(job_id), access_token, instance_url)
+
+        return json_response
+
+    @staticmethod
+    def get_query_job_status(job_id, polling_wait, verbose, access_token, instance_url):
+        """
+        This method waits for a query job to finish. If verbose is False it
+        will still wait but ignore the print statements.
+
+        Args:
+            job_id (str): The job id returned by Bulk2.create_query_job
+            polling_wait (int): This is the number of seconds to wait between
+                                each poll for updates on the job
+            verbose (bool): Whether or not to print the status on each poll
+            access_token (str): This is the access_token value received from the
+                                login response
+            instance_url (str): This is the instance_url value received from the
+                                login response
+
+        Returns:
+            dict: Polls for an update every polling_wait seconds until the
+                  state is JobComplete, Aborted or Failed, then returns the
+                  final job info response.
+        """
+        if verbose:
+            print("Status for job: {}".format(job_id))
+
+        finished_statuses = ['JobComplete', 'Aborted', 'Failed']
+        while True:
+            json_response = Bulk2.get_query_job_info(job_id, access_token, instance_url)
+
+            if verbose:
+                print("Job state/total: {}/{}".format(json_response['state'],
+                                                      json_response.get('numberRecordsProcessed')))
+
+            if json_response['state'] in finished_statuses:
+                break
+
+            time.sleep(polling_wait)
+
+        return json_response
+
+    @staticmethod
+    def get_query_job_results(job_id, locator, max_records, access_token, instance_url):
+        """
+        Retrieves one set of records from a completed query job. If there are
+        more records than fit in one response, call this again with the
+        locator that was returned until the locator is None, e.g.:
+            locator = None
+            while True:
+                results = Bulk2.get_query_job_results(job_id, locator, None, access_token, instance_url)
+                process(results['records'])
+                locator = results['locator']
+                if locator is None:
+                    break
+
+        Args:
+            job_id (str): The job id returned by Bulk2.create_query_job
+            locator (str): The locator value from the previous response. Use
+                           None to get the first set of records.
+            max_records (int): The maximum number of records to return in
+                               this response. Use None to let Salesforce
+                               decide.
+            access_token (str): This is the access_token value received from the
+                                login response
+            instance_url (str): This is the instance_url value received from the
+                                login response.
+
+        Returns:
+            dict: Returns the records and the locator for the next set.
+                  records (str): A CSV with a header row and the queried
+                                 fields for each record.
+                  locator (str): The locator to use to get the next set of
+                                 records, or None if there aren't any more.
+        """
+        uri_params = []
+        uri_param_string = ""
+
+        if locator:
+            uri_params.append("locator=" + _quote_path(str(locator)))
+
+        if max_records:
+            uri_params.append("maxRecords=" + _quote_path(str(max_records)))
+
+        if uri_params:
+            uri_param_string = "?" + "&".join(uri_params)
+
+        response = _rest_request('GET', _QUERY_URI + '/' + _quote_path(job_id) + '/results' + uri_param_string,
+                                 access_token, instance_url, None, {"Accept": "text/csv"})
+
+        # Salesforce sends the text null when there aren't any more records
+        next_locator = response.headers.get('Sforce-Locator')
+
+        if next_locator == 'null':
+            next_locator = None
+
+        return {'records': response.text, 'locator': next_locator}
+
+    @staticmethod
+    def abort_query_job(job_id, access_token, instance_url):
+        """
+        Aborts a query job, so it doesn't get processed.
+
+        Args:
+            job_id (str): The job id returned by Bulk2.create_query_job
+            access_token (str): This is the access_token value received from the
+                                login response
+            instance_url (str): This is the instance_url value received from the
+                                login response.
+
+        Returns:
+            dict: Returns the current job state details.
+        """
+        request_body = {"state": "Aborted"}
+
+        json_response = _rest_json('PATCH', _QUERY_URI + '/' + _quote_path(job_id), access_token, instance_url,
+                                   request_body)
+
+        return json_response
+
+    @staticmethod
+    def delete_query_job(job_id, access_token, instance_url):
+        """
+        Deletes a query job. To be deleted, a job must have a state of
+        JobComplete, Aborted, or Failed.
+
+        Args:
+            job_id (str): The job id returned by Bulk2.create_query_job
+            access_token (str): This is the access_token value received from the
+                                login response
+            instance_url (str): This is the instance_url value received from the
+                                login response.
+
+        Returns:
+            int: Returns the http status code. Should be 204 which indicates the
+                 job was deleted successfully.
+        """
+        response = _rest_request('DELETE', _QUERY_URI + '/' + _quote_path(job_id), access_token, instance_url)
+
+        return response.status_code

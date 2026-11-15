@@ -7,7 +7,7 @@ Salesforce Tooling API.
 import urllib.parse
 
 import pysalesforceutils
-from .util import _rest_json
+from .util import _quote_path, _rest_json, _rest_request
 
 
 class Tooling:
@@ -194,3 +194,119 @@ class Tooling:
         json_response = _rest_json('POST', test_async_uri, access_token, instance_url, data_body)
 
         return json_response
+
+    @staticmethod
+    def get_sobject_row(object_name, record_id, access_token, instance_url):
+        """
+        Provides the details for the specified Tooling API record, e.g. an
+        ApexClass or a TraceFlag.
+
+        Args:
+            object_name (str): The API name of the Tooling API object.
+            record_id (str): The record Id you're trying to retrieve
+            access_token (str): This is the access_token value received from the
+                                login response
+            instance_url (str): This is the instance_url value received from the
+                                login response
+
+        Returns:
+            dict: returns the record.
+        """
+        get_row_uri = '/tooling/sobjects/' + _quote_path(object_name) + '/' + _quote_path(record_id)
+
+        json_response = _rest_json('GET', get_row_uri, access_token, instance_url)
+
+        return json_response
+
+    @staticmethod
+    def create_sobject_row(object_name, record_json, access_token, instance_url):
+        """
+        Creates a Tooling API record, e.g. a TraceFlag.
+
+        Args:
+            object_name (str): The API name of the Tooling API object.
+            record_json (dict): The JSON describing the fields you want to
+                                set on the new record. You should pass in a
+                                python object and it will be converted to a
+                                json string to send the request.
+            access_token (str): This is the access_token value received from the
+                                login response
+            instance_url (str): This is the instance_url value received from the
+                                login response
+
+        Returns:
+            dict: returns the result of the create, which includes the id of
+                  the new record.
+        """
+        post_row_uri = '/tooling/sobjects/' + _quote_path(object_name) + '/'
+
+        json_response = _rest_json('POST', post_row_uri, access_token, instance_url, record_json)
+
+        return json_response
+
+    @staticmethod
+    def update_sobject_row(object_name, record_id, record_json, access_token, instance_url):
+        """
+        Updates a specific Tooling API record with the data in the record_json
+        param
+
+        Args:
+            object_name (str): The API name of the Tooling API object.
+            record_id (str): The record Id you're trying to update
+            record_json (dict): The JSON describing the fields you want to
+                                update on the record. You should pass in a
+                                python object and it will be converted to a
+                                json string to send the request.
+            access_token (str): This is the access_token value received from the
+                                login response
+            instance_url (str): This is the instance_url value received from the
+                                login response
+
+        Returns:
+            str: This only returns 'Update Successful' if the update worked, or
+                 returns an error message if the update wasn't successful. The
+                 response isn't more detailed because Salesforce returns no
+                 text, only a response code of 204
+        """
+        patch_row_uri = '/tooling/sobjects/' + _quote_path(object_name) + '/' + _quote_path(record_id)
+
+        response = _rest_request('PATCH', patch_row_uri, access_token, instance_url, record_json)
+        response_text = ""
+
+        if response.status_code == 204:
+            response_text = "Update Successful"
+        else:
+            response_text = response.text
+
+        return response_text
+
+    @staticmethod
+    def delete_sobject_row(object_name, record_id, access_token, instance_url):
+        """
+        Deletes a specific Tooling API record.
+
+        Args:
+            object_name (str): The API name of the Tooling API object.
+            record_id (str): The record Id you're trying to delete
+            access_token (str): This is the access_token value received from the
+                                login response
+            instance_url (str): This is the instance_url value received from the
+                                login response
+
+        Returns:
+            str: This only returns 'Delete Successful' if the delete worked, or
+                 returns an error message if the delete wasn't successful. The
+                 response isn't more detailed because Salesforce returns no
+                 text, only a response code of 204
+        """
+        delete_row_uri = '/tooling/sobjects/' + _quote_path(object_name) + '/' + _quote_path(record_id)
+
+        response = _rest_request('DELETE', delete_row_uri, access_token, instance_url)
+        response_text = ""
+
+        if response.status_code == 204:
+            response_text = "Delete Successful"
+        else:
+            response_text = response.text
+
+        return response_text

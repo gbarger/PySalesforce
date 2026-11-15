@@ -11,7 +11,7 @@ from mimetypes import MimeTypes
 
 import pysalesforceutils
 from . import webservice
-from .util import Util, _quote_path, _rest_json, _rest_request
+from .util import Util, _encode_body, _quote_path, _rest_json, _rest_request
 
 
 class Standard:
@@ -1363,6 +1363,245 @@ class Standard:
 
         return json_response
 
+
+    @staticmethod
+    def get_global_describe(access_token, instance_url):
+        """
+        Lists the available objects and their metadata for your organization's
+        data.
+
+        Args:
+            access_token (str): This is the access_token value received from the
+                                login response
+            instance_url (str): This is the instance_url value received from the
+                                login response
+
+        Returns:
+            dict: Returns a dictionary with the list of objects in sobjects.
+        """
+        json_response = _rest_json('GET', '/sobjects', access_token, instance_url)
+
+        return json_response
+
+    @staticmethod
+    def get_limits(access_token, instance_url):
+        """
+        Lists information about limits in your org. For each limit, this
+        returns the maximum allocation and the remaining allocation based on
+        usage.
+
+        Args:
+            access_token (str): This is the access_token value received from the
+                                login response
+            instance_url (str): This is the instance_url value received from the
+                                login response
+
+        Returns:
+            dict: Returns a dictionary with Max and Remaining for each limit,
+                e.g. {'DailyApiRequests': {'Max': 15000, 'Remaining': 14998}}
+        """
+        json_response = _rest_json('GET', '/limits', access_token, instance_url)
+
+        return json_response
+
+    @staticmethod
+    def query_records(query_string, access_token, instance_url, include_deleted=False):
+        """
+        Executes the specified SOQL query and returns all of the records. If
+        the query results are too large for one response, this keeps
+        requesting the next batch until there are no more records.
+
+        Args:
+            query_string (str): This query you'd like to run
+            access_token (str): This is the access_token value received from the
+                                login response
+            instance_url (str): This is the instance_url value received from the
+                                login response
+            include_deleted (bool): Whether or not to include deleted records,
+                                    like query_all. Defaults to False
+
+        Returns:
+            list: returns the list of all the records for the query.
+        """
+        if include_deleted:
+            json_response = Standard.query_all(query_string, access_token, instance_url)
+        else:
+            json_response = Standard.query(query_string, access_token, instance_url)
+
+        records = json_response['records']
+
+        while 'nextRecordsUrl' in json_response:
+            json_response = Standard.get_next_query_batch(json_response['nextRecordsUrl'], access_token, instance_url)
+            records.extend(json_response['records'])
+
+        return records
+
+    @staticmethod
+    def query_explain(query_string, access_token, instance_url):
+        """
+        Gets the query plans Salesforce would use for the specified SOQL
+        query, without running the query. This is used to find out why a
+        query is slow.
+
+        Args:
+            query_string (str): This query you'd like to get the plans for
+            access_token (str): This is the access_token value received from the
+                                login response
+            instance_url (str): This is the instance_url value received from the
+                                login response
+
+        Returns:
+            dict: returns a dictionary with the list of query plans in plans.
+        """
+        query_uri = '/query/?explain='
+        url_encoded_query = urllib.parse.quote(query_string)
+
+        json_response = _rest_json('GET', query_uri + url_encoded_query, access_token, instance_url)
+
+        return json_response
+
+    @staticmethod
+    def parameterized_search(search_body, access_token, instance_url):
+        """
+        Executes a simple search using parameters instead of a SOSL string.
+        https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/resources_search_parameterized.htm
+
+        Args:
+            search_body (dict): The search parameters. The q value is the text
+                to search for. An example looks like this:
+                {
+                    "q": "Smith",
+                    "fields": ["Id", "FirstName", "LastName"],
+                    "sobjects": [{"name": "Contact"}, {"name": "Lead"}],
+                    "in": "ALL",
+                    "overallLimit": 100
+                }
+            access_token (str): This is the access_token value received from the
+                                login response
+            instance_url (str): This is the instance_url value received from the
+                                login response
+
+        Returns:
+            dict: returns a dictionary with the list of matching records in
+                searchRecords.
+        """
+        json_response = _rest_json('POST', '/parameterizedSearch', access_token, instance_url, search_body)
+
+        return json_response
+
+    @staticmethod
+    def invoke_standard_action(action_name, inputs, access_token, instance_url):
+        """
+        Runs one of the standard invocable actions, such as emailSimple or
+        chatterPost.
+        https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/resources_actions_invocable_standard.htm
+
+        Args:
+            action_name (str): The name of the action, e.g. 'emailSimple'
+            inputs (list): The list of inputs. The action runs once for each
+                one, e.g.:
+                [{"emailAddresses": "user@example.com", "emailSubject": "Hello", "emailBody": "Hi"}]
+            access_token (str): This is the access_token value received from the
+                                login response
+            instance_url (str): This is the instance_url value received from the
+                                login response
+
+        Returns:
+            list: returns the result for each of the inputs in the same order.
+        """
+        action_uri = '/actions/standard/' + _quote_path(action_name)
+
+        json_response = _rest_json('POST', action_uri, access_token, instance_url, {"inputs": inputs})
+
+        return json_response
+
+    @staticmethod
+    def invoke_custom_action(action_type, action_name, inputs, access_token, instance_url):
+        """
+        Runs a custom invocable action, such as an autolaunched flow or an
+        Apex class with an invocable method.
+        https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/resources_actions_invocable_custom.htm
+
+        Args:
+            action_type (str): The type of the action, e.g. 'flow' or 'apex'
+            action_name (str): The API name of the flow or Apex class
+            inputs (list): The list of inputs. The action runs once for each
+                one, e.g. [{"accountId": "001xx000003DGb2AAG"}]
+            access_token (str): This is the access_token value received from the
+                                login response
+            instance_url (str): This is the instance_url value received from the
+                                login response
+
+        Returns:
+            list: returns the result for each of the inputs in the same order.
+        """
+        action_uri = '/actions/custom/' + _quote_path(action_type) + '/' + _quote_path(action_name)
+
+        json_response = _rest_json('POST', action_uri, access_token, instance_url, {"inputs": inputs})
+
+        return json_response
+
+    @staticmethod
+    def apex_rest_request(method, path, access_token, instance_url, data=None):
+        """
+        Calls a custom Apex REST service, which is an Apex class that uses the
+        @RestResource annotation.
+
+        Args:
+            method (str): The request type: GET, POST, PATCH, PUT or DELETE
+            path (str): The part of the URL that comes after
+                        /services/apexrest, e.g. '/MyService/001xx000003DGb2AAG'.
+                        For a class in a managed package, start with the
+                        namespace, e.g. '/MyNamespace/MyService'. The path
+                        is used as it's given, so url encode any values
+                        that come from a user or another system.
+            access_token (str): This is the access_token value received from the
+                                login response
+            instance_url (str): This is the instance_url value received from the
+                                login response
+            data (object): A python object to send as the JSON request body. A
+                           str or bytes value is sent as is. Defaults to None
+
+        Returns:
+            Response: Returns the response for the HTTP request, because an
+                      Apex REST service can return any kind of content. Use
+                      response.json() or response.text to read it.
+        """
+        header_details = Util.get_standard_header(access_token)
+
+        response = webservice.Tools.http_request(requestType=method, URL=instance_url + '/services/apexrest' + path,
+                                                 data_body=_encode_body(data), header_details=header_details)
+
+        return response
+
+    @staticmethod
+    def request(method, path, access_token, instance_url, data=None, headers=None):
+        """
+        Calls any REST API resource for the current API_VERSION. Use this for
+        resources that don't have their own method in this class.
+
+        Args:
+            method (str): The request type: GET, POST, PATCH, PUT or DELETE
+            path (str): The part of the URL that comes after
+                        /services/data/vXX.X, e.g. '/sobjects/Account/describe'.
+                        The path is used as it's given, so url encode any
+                        values that come from a user or another system.
+            access_token (str): This is the access_token value received from the
+                                login response
+            instance_url (str): This is the instance_url value received from the
+                                login response
+            data (object): A python object to send as the JSON request body. A
+                           str or bytes value is sent as is. Defaults to None
+            headers (dict): Headers to add to the standard header. Defaults to
+                            None
+
+        Returns:
+            Response: Returns the response for the HTTP request. Use
+                      response.json() or response.text to read it.
+        """
+        response = _rest_request(method, path, access_token, instance_url, data, headers)
+
+        return response
 
     @staticmethod
     def get_object_describe(object_name, modified_since_date, access_token, instance_url):
