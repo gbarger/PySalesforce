@@ -33,19 +33,24 @@ webservice.Tools.default_timeout = 30      # seconds
 webservice.Tools.default_timeout = None    # wait forever
 ```
 
-When the time runs out, the library raises `requests.exceptions.Timeout`. The timeout is the wait for the next piece of data, not the total time for the request, so a large download that keeps sending data isn't cut off.
+When the time runs out, the library raises an `httpx.TimeoutException`. The timeout is the wait for the next piece of data, not the total time for the request, so a large download that keeps sending data isn't cut off. The setting applies to `AsyncSalesforce` too.
 
 ## Connections
 
-All requests share one `requests.Session`, so connections to Salesforce are reused instead of being opened again for every call. The session is available as `webservice.Tools.session` if you need to change it, for example to use a proxy or to retry failed connections:
+All synchronous requests share one `httpx.Client`, so connections to Salesforce are reused instead of being opened again for every call. The client is `webservice.Tools.client`. `httpx` settings such as a proxy can't be changed on an existing client, so to change them, replace it with a new one. Keep `follow_redirects=True`, which the library relies on:
 
 ```python
-from requests.adapters import HTTPAdapter
+import httpx
 from pysalesforceutils import webservice
 
-webservice.Tools.session.proxies = {'https': 'http://proxy.example.com:8080'}
-webservice.Tools.session.mount('https://', HTTPAdapter(max_retries=3))
+webservice.Tools.client = httpx.Client(
+    follow_redirects=True,
+    proxy='http://proxy.example.com:8080',
+    transport=httpx.HTTPTransport(retries=3),   # retries failed connections, not error responses
+)
 ```
+
+Each `AsyncSalesforce` has its own `httpx.AsyncClient` in `sf.http_client`, which can be replaced the same way with an `httpx.AsyncClient` before any calls are made. See [Async](async.md#connections).
 
 The library only sends a token to an `https` url. A call with an `http` instance url raises `ValueError` before anything is sent.
 
@@ -53,21 +58,23 @@ The library only sends a token to an `https` url. A call with an `http` instance
 
 | Exception | When it's raised |
 |---|---|
-| `requests.exceptions.HTTPError` | Salesforce answered with an error status, such as 400 or 404 |
-| `requests.exceptions.Timeout` | Salesforce didn't answer in time |
-| `requests.exceptions.ConnectionError` | The connection to Salesforce failed |
+| `httpx.HTTPStatusError` | Salesforce answered with an error status, such as 400 or 404 |
+| `httpx.TimeoutException` | Salesforce didn't answer in time |
+| `httpx.ConnectError` | The connection to Salesforce failed |
 | `ValueError` | An argument can't be used, such as an `http` url, or `.` or `..` as a record Id |
 | `ImportError` | The method needs an optional library that isn't installed |
 
-The `HTTPError` message includes the body of the response, and the response is on the exception:
+`httpx.TimeoutException` and `httpx.ConnectError` are both kinds of `httpx.TransportError`, and all three `httpx` exceptions are kinds of `httpx.HTTPError`, so you can catch those to handle a whole group.
+
+The `HTTPStatusError` message includes the body of the response, and the response is on the exception:
 
 ```python
-import requests
+import httpx
 from pysalesforceutils import Standard
 
 try:
     Standard.get_sobject_row('Account', record_id, 'Id,Name', access_token, instance_url)
-except requests.exceptions.HTTPError as error:
+except httpx.HTTPStatusError as error:
     if error.response.status_code == 404:
         print('The record does not exist')
     elif error.response.status_code == 401:
@@ -114,4 +121,4 @@ Everything else works without them. If you call one of these methods without the
 | `Util.get_standard_header(access_token)` | Returns the headers used for REST calls |
 | `Util.get_bulk_header(access_token)` | Returns the headers used for Bulk API calls |
 
-The `webservice.Tools` class has the methods the library uses to send requests: `get_http_response`, `post_http_response`, `put_http_response`, `patch_http_response` and `delete_http_response`. You can use them to call any url with your own headers.
+The `webservice.Tools` class has the methods the library uses to send requests: `get_http_response`, `post_http_response`, `put_http_response`, `patch_http_response` and `delete_http_response`. You can use them to call any url with your own headers. They return an `httpx.Response`. `Tools.async_http_request(client, ...)` is the async version of `Tools.http_request`, and sends the request with the `httpx.AsyncClient` you pass in.

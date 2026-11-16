@@ -29,35 +29,72 @@ class Tools:
         Returns:
             httpx.Response: Returns the response for the HTTP Request.
         """
+        requestType, URL, request_arguments = Tools._request_arguments(kwargs)
+
+        response = Tools.client.request(requestType, URL, **request_arguments)
+        Tools._check_response(response)
+
+        return response
+
+    @staticmethod
+    async def async_http_request(client, **kwargs):
+        """
+        The async version of http_request. It takes the same keyword
+        arguments, and sends the request with the httpx.AsyncClient passed in.
+
+        Args:
+            client (httpx.AsyncClient): The client to send the request with
+
+        Returns:
+            httpx.Response: Returns the response for the HTTP Request.
+        """
+        requestType, URL, request_arguments = Tools._request_arguments(kwargs)
+
+        response = await client.request(requestType, URL, **request_arguments)
+        Tools._check_response(response)
+
+        return response
+
+    @staticmethod
+    def _request_arguments(kwargs):
+        """
+        Checks the keyword arguments given to http_request and turns them into
+        the arguments for an httpx request.
+
+        Returns:
+            tuple: the request type, the URL, and a dict of the other arguments
+        """
         requestType = kwargs.get('requestType')
         URL = kwargs.get('URL')
         header_details = kwargs.get('header_details', None)
         data_body = kwargs.get('data_body', None)
-        files = None
-        if 'files' in kwargs:
-            files = kwargs.get('files', None)
-
-        response = ""
+        files = kwargs.get('files', None)
 
         # never send the access token over an unencrypted connection
         if header_details and 'Authorization' in header_details and not URL.lower().startswith('https://'):
             raise ValueError('The access token can only be sent to an https URL: {}'.format(URL))
 
-        # a dict is sent as form fields, anything else is sent as it is
-        body_arguments = {}
+        request_arguments = {'headers': header_details or None, 'files': files, 'timeout': Tools.default_timeout}
 
+        # a dict is sent as form fields, anything else is sent as it is
         if isinstance(data_body, dict):
-            body_arguments['data'] = data_body
+            request_arguments['data'] = data_body
         elif data_body is not None:
-            body_arguments['content'] = data_body
+            request_arguments['content'] = data_body
+
+        return requestType, URL, request_arguments
+
+    @staticmethod
+    def _check_response(response):
+        """
+        Raises httpx.HTTPStatusError for a 4xx or 5xx response, with the
+        response body in the message. 304 Not Modified is a normal response.
+        """
+        if not response.is_error:
+            return
 
         try:
-            response = Tools.client.request(requestType, URL, headers=header_details or None, files=files,
-                                            timeout=Tools.default_timeout, **body_arguments)
-
-            # only 4xx and 5xx are errors. 304 Not Modified is a normal response
-            if response.is_error:
-                response.raise_for_status()
+            response.raise_for_status()
         except httpx.HTTPStatusError as e:
             # the response body won't be visible if exception is just raised
             try:
@@ -68,7 +105,6 @@ class Tools:
             new_error_str = '{} response: {}' .format(str(e), str(error_body))
             raise httpx.HTTPStatusError(new_error_str, request=e.request,
                                         response=e.response).with_traceback(sys.exc_info()[2])
-        return response
 
     @staticmethod
     def get_http_response(URL, header_details):

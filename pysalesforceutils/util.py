@@ -4,6 +4,7 @@
 Utilities reused by the other modules in this package.
 """
 
+import asyncio
 import functools
 import json
 import time
@@ -77,6 +78,35 @@ def _run(plan):
             except Exception as error:
                 # let the plan handle the error the same way it would if it
                 # had made the request itself
+                step = plan.throw(error)
+            else:
+                step = plan.send(result)
+    except StopIteration as finished:
+        return finished.value
+
+
+async def _run_async(plan, client):
+    """
+    Runs an API method that was written as a plan, the same way _run does,
+    but sends the requests with an httpx.AsyncClient and waits with
+    asyncio.sleep, so other tasks can run in the meantime.
+
+    Args:
+        plan (generator): The plan to run
+        client (httpx.AsyncClient): The client to send the requests with
+    """
+    try:
+        step = next(plan)
+
+        while True:
+            try:
+                if isinstance(step, _Request):
+                    result = await webservice.Tools.async_http_request(client, **step.kwargs)
+                elif isinstance(step, _Sleep):
+                    result = await asyncio.sleep(step.seconds)
+                else:
+                    result = await _run_async(step, client)
+            except Exception as error:
                 step = plan.throw(error)
             else:
                 step = plan.send(result)

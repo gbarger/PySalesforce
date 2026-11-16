@@ -9,9 +9,11 @@ This is an independent open source project. It is not produced or supported by S
 - [Installation](#installation)
 - [Quick start](#quick-start)
 - [Logging in](#logging-in)
+- [Async](#async)
 - [What's included](#whats-included)
 - [Configuration](#configuration)
 - [Errors](#errors)
+- [Upgrading from 1.x](#upgrading-from-1x)
 - [Documentation](#documentation)
 - [Running the tests](#running-the-tests)
 - [License](#license)
@@ -22,7 +24,7 @@ This is an independent open source project. It is not produced or supported by S
 pip install pysalesforceutils
 ```
 
-The only required dependency is `requests`. Two features need an extra library, which is only installed if you ask for it:
+It needs Python 3.13 or newer. The only required dependency is [`httpx`](https://www.python-httpx.org/). Two features need an extra library, which is only installed if you ask for it:
 
 | Feature | Install with | Library |
 |---|---|---|
@@ -79,11 +81,31 @@ All of the logins need a connected app in Salesforce, which provides the Consume
 
 See [Authentication](https://github.com/gbarger/PySalesforce/blob/master/docs/authentication.md) for the connected app settings each login needs, the matching `Authentication` methods, token expiration and logging out.
 
+## Async
+
+`AsyncSalesforce` has the same logins and the same `standard`, `tooling`, `bulk` and `bulk2` methods as `Salesforce`, but every method is a coroutine, so calls don't block the event loop and can run at the same time:
+
+```python
+import asyncio
+from pysalesforceutils import AsyncSalesforce
+
+async def main():
+    async with await AsyncSalesforce.login_client_credentials(client_id, client_secret, instance_url) as sf:
+        accounts, contacts = await asyncio.gather(
+            sf.standard.query_records('SELECT Id, Name FROM Account'),
+            sf.standard.query_records('SELECT Id, Name FROM Contact'))
+
+asyncio.run(main())
+```
+
+The Metadata API and the SOAP login are only available synchronously. See [Async](https://github.com/gbarger/PySalesforce/blob/master/docs/async.md) for the details.
+
 ## What's included
 
 | Class | What it covers | Documentation |
 |---|---|---|
 | `Salesforce` | A client that holds the token for one login | [Authentication](https://github.com/gbarger/PySalesforce/blob/master/docs/authentication.md) |
+| `AsyncSalesforce` | The same client for `asyncio` code | [Async](https://github.com/gbarger/PySalesforce/blob/master/docs/async.md) |
 | `Authentication` | Logging in and out, token introspection | [Authentication](https://github.com/gbarger/PySalesforce/blob/master/docs/authentication.md) |
 | `Standard` | REST API: records, queries, search, describe, limits, actions, Apex REST | [Standard REST API](https://github.com/gbarger/PySalesforce/blob/master/docs/standard.md) |
 | `Composite` | Builders for composite, batch and graph requests | [Composite requests](https://github.com/gbarger/PySalesforce/blob/master/docs/composite.md) |
@@ -108,21 +130,38 @@ See [Configuration and errors](https://github.com/gbarger/PySalesforce/blob/mast
 
 ## Errors
 
-When Salesforce answers with an error status, the library raises `requests.exceptions.HTTPError`. The message includes the response body, and the response itself is available on the exception.
+When Salesforce answers with an error status, the library raises `httpx.HTTPStatusError`. The message includes the response body, and the response itself is available on the exception.
 
 ```python
-import requests
+import httpx
 
 try:
     sf.standard.get_sobject_row('Account', record_id, 'Id,Name')
-except requests.exceptions.HTTPError as error:
+except httpx.HTTPStatusError as error:
     print(error.response.status_code)
     print(error.response.text)
 ```
 
+## Upgrading from 1.x
+
+Version 2.0 sends its requests with `httpx` instead of `requests`. The method names, arguments and results are unchanged, but a few things around them are different:
+
+| 1.x | 2.0 |
+|---|---|
+| No minimum Python 3 version was stated | Python 3.13 or newer |
+| `requests.exceptions.HTTPError` | `httpx.HTTPStatusError` |
+| `requests.exceptions.Timeout` | `httpx.TimeoutException` |
+| `requests.exceptions.ConnectionError` | `httpx.ConnectError` (or `httpx.TransportError` for any network failure) |
+| `webservice.Tools.session` (a `requests.Session`) | `webservice.Tools.client` (an `httpx.Client`) |
+| Methods that return the response return a `requests.Response` | They return an `httpx.Response`. `status_code`, `text`, `content`, `headers` and `json()` work the same way |
+| `Standard.create_sobject_blob_record` accepted a file opened in text mode | Open files in binary mode, e.g. `open(path, 'rb')` |
+
+If your code catches `requests` exceptions, change it to the `httpx` ones above. See [Configuration and errors](https://github.com/gbarger/PySalesforce/blob/master/docs/configuration.md) for how to set a proxy or retries on the new client.
+
 ## Documentation
 
 - [Authentication](https://github.com/gbarger/PySalesforce/blob/master/docs/authentication.md)
+- [Async](https://github.com/gbarger/PySalesforce/blob/master/docs/async.md)
 - [Standard REST API](https://github.com/gbarger/PySalesforce/blob/master/docs/standard.md)
 - [Composite requests](https://github.com/gbarger/PySalesforce/blob/master/docs/composite.md)
 - [Bulk APIs](https://github.com/gbarger/PySalesforce/blob/master/docs/bulk.md)

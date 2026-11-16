@@ -25,5 +25,5 @@ from .standard import Standard
 from .bulk import Bulk
 from .bulk2 import Bulk2
 from .metadata import Metadata
-from .client import Salesforce
+from .client import AsyncSalesforce, Salesforce
 from .composite import Composite

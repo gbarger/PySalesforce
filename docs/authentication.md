@@ -102,6 +102,8 @@ The client has these attributes:
 
 The `Metadata` and `Composite` classes are not on the client. `Metadata` uses a SOAP session, and the `Composite` builders don't need a token.
 
+For `asyncio` code, `AsyncSalesforce` has the same logins and methods as coroutines. See [Async](async.md).
+
 ## Token expiration
 
 Salesforce doesn't include an expiration in the login response. To find out when a token expires, look it up with the introspect service:
