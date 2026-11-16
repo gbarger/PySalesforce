@@ -10,8 +10,7 @@ import urllib.parse
 from mimetypes import MimeTypes
 
 import pysalesforceutils
-from . import webservice
-from .util import Util, _encode_body, _quote_path, _rest_json, _rest_request
+from .util import Util, _Request, _api_method, _encode_body, _quote_path, _rest_json, _rest_request
 
 
 class Standard:
@@ -25,6 +24,7 @@ class Standard:
     base_standard_uri = '/services/data/'
 
     @staticmethod
+    @_api_method
     def versions(access_token, instance_url):
         """
         Lists summary information about each Salesforce version currently available,
@@ -41,12 +41,14 @@ class Standard:
         """
         header_details = Util.get_standard_header(access_token)
 
-        response = webservice.Tools.get_http_response(instance_url + Standard.base_standard_uri, header_details)
+        response = yield _Request(requestType='GET', URL=instance_url + Standard.base_standard_uri,
+                                  header_details=header_details)
         json_response = json.loads(response.text)
 
         return json_response
 
     @staticmethod
+    @_api_method
     def resources_by_version(version_num_string, access_token, instance_url):
         """
         This method returns the available resources (API services) available for
@@ -66,13 +68,15 @@ class Standard:
         """
         header_details = Util.get_standard_header(access_token)
 
-        response = webservice.Tools.get_http_response(
-            instance_url + Standard.base_standard_uri + 'v' + _quote_path(version_num_string) + '/', header_details)
+        response = yield _Request(
+            requestType='GET', header_details=header_details,
+            URL=instance_url + Standard.base_standard_uri + 'v' + _quote_path(version_num_string) + '/')
         json_response = json.loads(response.text)
 
         return json_response
 
     @staticmethod
+    @_api_method
     def get_sobject_row(object_name, record_id, field_list_string, access_token, instance_url):
         """
         Provides the details requested for the specified record. In practice, if you
@@ -100,18 +104,19 @@ class Standard:
         if field_list_string != None:
             get_row_uri = get_row_uri + '?fields=' + urllib.parse.quote(field_list_string, safe=',')
 
-        json_response = _rest_json('GET', get_row_uri, access_token, instance_url)
+        json_response = yield _rest_json('GET', get_row_uri, access_token, instance_url)
 
         return json_response
 
     @staticmethod
+    @_api_method
     def get_sobject_blob(object_name, record_id, access_token, instance_url):
         """
         Provides the details requested for the specified record blob field. This will retrieve the
         BLOB field for Attachments/ContentVersion/Document.  Example call:
             response = Standard.get_sobject_blob('Attachment', 'attachmentId', access_token, instance_url)
             with open('test.jpg', 'wb') as new_file:
-                for chunk in response.iter_content(chunk_size=1024):
+                for chunk in response.iter_bytes(chunk_size=1024):
                     new_file.write(chunk)
 
         Args:
@@ -135,11 +140,12 @@ class Standard:
 
         get_row_uri = '/sobjects/' + _quote_path(object_name) + '/' + _quote_path(record_id) + '/' + object_to_blob_map[object_name]
 
-        response = _rest_request('GET', get_row_uri, access_token, instance_url)
+        response = yield _rest_request('GET', get_row_uri, access_token, instance_url)
 
         return response
 
     @staticmethod
+    @_api_method
     def create_sobject_blob_record(object_name, record_json, file, access_token, instance_url):
         """
         Creates the provided record in the recordJson param and binary multipart message
@@ -190,9 +196,9 @@ class Standard:
             object_fields['BlobField']: (record_json[object_fields['FileNameField']], file, mimetype)
         }
 
-        response = webservice.Tools.post_http_response(
-            instance_url + Standard.base_standard_uri + 'v' + pysalesforceutils.API_VERSION + post_row_uri, None,
-            header_details, multipart_files)
+        response = yield _Request(
+            requestType='POST', header_details=header_details, files=multipart_files,
+            URL=instance_url + Standard.base_standard_uri + 'v' + pysalesforceutils.API_VERSION + post_row_uri)
         response_text = ""
 
         if response.status_code == 204:
@@ -203,6 +209,7 @@ class Standard:
         return response_text
 
     @staticmethod
+    @_api_method
     def create_sobject_row(object_name, record_json, run_assignment_rules, access_token, instance_url):
         """
         Creates the provided record in the recordJson param
@@ -227,7 +234,7 @@ class Standard:
         post_row_uri = '/sobjects/' + _quote_path(object_name) + '/'
         headers = {"Sforce-Auto-Assign": "true" if run_assignment_rules else "false"}
 
-        response = _rest_request('POST', post_row_uri, access_token, instance_url, record_json, headers)
+        response = yield _rest_request('POST', post_row_uri, access_token, instance_url, record_json, headers)
         response_text = ""
 
         if response.status_code == 204:
@@ -238,6 +245,7 @@ class Standard:
         return response_text
 
     @staticmethod
+    @_api_method
     def get_sobject_rows(object_name, record_id_list_string, field_list_string, access_token, instance_url):
         """
         Provides the details requested for the specified record id list. In practice, if you
@@ -268,11 +276,12 @@ class Standard:
         if field_list_string != None:
             get_rows_uri = get_rows_uri + '&fields=' + urllib.parse.quote(field_list_string, safe=',')
 
-        json_response = _rest_json('GET', get_rows_uri, access_token, instance_url)
+        json_response = yield _rest_json('GET', get_rows_uri, access_token, instance_url)
 
         return json_response
 
     @staticmethod
+    @_api_method
     def create_sobject_rows(records, all_or_none, run_assignment_rules, access_token, instance_url):
         """
         Creates a list of up to 200 records.
@@ -338,9 +347,10 @@ class Standard:
         request_body["allOrNone"] = all_or_none
         request_body["records"] = records
 
-        return _rest_json('POST', post_rows_uri, access_token, instance_url, request_body, headers)
+        return (yield _rest_json('POST', post_rows_uri, access_token, instance_url, request_body, headers))
 
     @staticmethod
+    @_api_method
     def update_sobject_row(object_name, record_id, record_json, run_assignment_rules, access_token, instance_url):
         """
         Updates a specific record with the data in the record_json param
@@ -375,7 +385,7 @@ class Standard:
         patch_row_uri = '/sobjects/' + _quote_path(object_name) + '/' + _quote_path(record_id)
         headers = {"Sforce-Auto-Assign": "true" if run_assignment_rules else "false"}
 
-        response = _rest_request('PATCH', patch_row_uri, access_token, instance_url, record_json, headers)
+        response = yield _rest_request('PATCH', patch_row_uri, access_token, instance_url, record_json, headers)
         response_text = ""
 
         if response.status_code == 204:
@@ -386,6 +396,7 @@ class Standard:
         return response_text
 
     @staticmethod
+    @_api_method
     def delete_sobject_row(object_name, record_id, access_token, instance_url):
         """
         Deletes a specific record.
@@ -406,7 +417,7 @@ class Standard:
         """
         delete_row_uri = '/sobjects/' + _quote_path(object_name) + '/' + _quote_path(record_id)
 
-        response = _rest_request('DELETE', delete_row_uri, access_token, instance_url)
+        response = yield _rest_request('DELETE', delete_row_uri, access_token, instance_url)
         response_text = ""
 
         if response.status_code == 204:
@@ -417,6 +428,7 @@ class Standard:
         return response_text
 
     @staticmethod
+    @_api_method
     def get_sobject_row_by_external_id(object_name, external_id_field_name, external_id, field_list_string,
                                        access_token, instance_url):
         """
@@ -446,11 +458,12 @@ class Standard:
         if field_list_string != None:
             get_row_uri = get_row_uri + '?fields=' + urllib.parse.quote(field_list_string, safe=',')
 
-        json_response = _rest_json('GET', get_row_uri, access_token, instance_url)
+        json_response = yield _rest_json('GET', get_row_uri, access_token, instance_url)
 
         return json_response
 
     @staticmethod
+    @_api_method
     def upsert_sobject_row_by_external_id(object_name, external_id_field_name, external_id, record_json,
                                           access_token, instance_url):
         """
@@ -492,7 +505,7 @@ class Standard:
         patch_row_uri = '/sobjects/' + _quote_path(object_name) + '/' + _quote_path(external_id_field_name) + '/' + \
             _quote_path(str(external_id))
 
-        response = _rest_request('PATCH', patch_row_uri, access_token, instance_url, record_json)
+        response = yield _rest_request('PATCH', patch_row_uri, access_token, instance_url, record_json)
 
         if response.status_code == 204:
             return "Update Successful"
@@ -500,6 +513,7 @@ class Standard:
         return json.loads(response.text)
 
     @staticmethod
+    @_api_method
     def delete_sobject_row_by_external_id(object_name, external_id_field_name, external_id, access_token,
                                           instance_url):
         """
@@ -524,7 +538,7 @@ class Standard:
         delete_row_uri = '/sobjects/' + _quote_path(object_name) + '/' + _quote_path(external_id_field_name) + '/' + \
             _quote_path(str(external_id))
 
-        response = _rest_request('DELETE', delete_row_uri, access_token, instance_url)
+        response = yield _rest_request('DELETE', delete_row_uri, access_token, instance_url)
         response_text = ""
 
         if response.status_code == 204:
@@ -535,6 +549,7 @@ class Standard:
         return response_text
 
     @staticmethod
+    @_api_method
     def update_sobject_rows(records, all_or_none, run_assignment_rules, access_token, instance_url):
         """
         Updates a list of up to 200 records.
@@ -594,9 +609,10 @@ class Standard:
         request_body["allOrNone"] = all_or_none
         request_body["records"] = records
 
-        return _rest_json('PATCH', patch_rows_uri, access_token, instance_url, request_body, headers)
+        return (yield _rest_json('PATCH', patch_rows_uri, access_token, instance_url, request_body, headers))
 
     @staticmethod
+    @_api_method
     def upsert_sobject_rows(object_api_name, records, access_token, instance_url, all_or_none=False, run_assignment_rules=False, external_id_field_name='Id'):
         """
         Upserts a list of up to 200 records.
@@ -664,9 +680,10 @@ class Standard:
         request_body["allOrNone"] = all_or_none
         request_body["records"] = records
 
-        return _rest_json('PATCH', patch_rows_uri, access_token, instance_url, request_body, headers)
+        return (yield _rest_json('PATCH', patch_rows_uri, access_token, instance_url, request_body, headers))
 
     @staticmethod
+    @_api_method
     def delete_sobject_rows(record_ids, all_or_none, access_token, instance_url):
         """
         Deletes a list of up to 200 records.
@@ -719,9 +736,10 @@ class Standard:
         else:
             delete_params += "&allOrNone=false"
 
-        return _rest_json('DELETE', delete_rows_uri + delete_params, access_token, instance_url)
+        return (yield _rest_json('DELETE', delete_rows_uri + delete_params, access_token, instance_url))
 
     @staticmethod
+    @_api_method
     def query(query_string, access_token, instance_url):
         """
         Executes the specified SOQL query. If the query results are too large,
@@ -743,11 +761,12 @@ class Standard:
         query_uri = '/query/?q='
         url_encoded_query = urllib.parse.quote(query_string)
 
-        json_response = _rest_json('GET', query_uri + url_encoded_query, access_token, instance_url)
+        json_response = yield _rest_json('GET', query_uri + url_encoded_query, access_token, instance_url)
 
         return json_response
 
     @staticmethod
+    @_api_method
     def query_all(query_string, access_token, instance_url):
         """
         Executes the specified SOQL query. If the query results are too large,
@@ -770,11 +789,12 @@ class Standard:
         query_uri = '/queryAll/?q='
         url_encoded_query = urllib.parse.quote(query_string)
 
-        json_response = _rest_json('GET', query_uri + url_encoded_query, access_token, instance_url)
+        json_response = yield _rest_json('GET', query_uri + url_encoded_query, access_token, instance_url)
 
         return json_response
     
     @staticmethod
+    @_api_method
     def search(search_string, access_token, instance_url):
         """
         Executes the specified SOSL search. If the search results are too large,
@@ -798,11 +818,12 @@ class Standard:
         search_uri = '/search/?q='
         url_encoded_search = urllib.parse.quote(search_string)
 
-        json_response = _rest_json('GET', search_uri + url_encoded_search, access_token, instance_url)
+        json_response = yield _rest_json('GET', search_uri + url_encoded_search, access_token, instance_url)
 
         return json_response
 
     @staticmethod
+    @_api_method
     def reset_users_password(user_id, access_token, instance_url):
         """
         Resets a users' password.
@@ -819,11 +840,12 @@ class Standard:
         """
         query_uri = f'/sobjects/User/{_quote_path(user_id)}/password'
 
-        json_response = _rest_json('DELETE', query_uri, access_token, instance_url)
+        json_response = yield _rest_json('DELETE', query_uri, access_token, instance_url)
 
         return json_response
 
     @staticmethod
+    @_api_method
     def get_current_user_info(access_token, instance_url):
         """
         Gets information about the currently logged in user.
@@ -839,11 +861,12 @@ class Standard:
         """
         query_uri = '/chatter/users/me'
 
-        json_response = _rest_json('GET', query_uri, access_token, instance_url)
+        json_response = yield _rest_json('GET', query_uri, access_token, instance_url)
 
         return json_response
 
     @staticmethod
+    @_api_method
     def post_chatter_mention(text, mention_id, subject_id, access_token, instance_url):
         """
         Posts a chatter mention. E.g. @someone
@@ -868,11 +891,12 @@ class Standard:
         request_body["feedElementType"] = "FeedItem"
         request_body["subjectId"] = subject_id
 
-        json_response = _rest_json('POST', query_uri, access_token, instance_url, request_body)
+        json_response = yield _rest_json('POST', query_uri, access_token, instance_url, request_body)
 
         return json_response
 
     @staticmethod
+    @_api_method
     def get_next_query_batch(next_record_url, access_token, instance_url):
         """
         Does a GET on the url passed. If the query results are still too large,
@@ -893,14 +917,15 @@ class Standard:
         """
         header_details = Util.get_standard_header(access_token)
 
-        response = webservice.Tools.get_http_response(instance_url + next_record_url,
-            header_details)
+        response = yield _Request(requestType='GET', URL=instance_url + next_record_url,
+                                  header_details=header_details)
 
         json_response = json.loads(response.text)
 
         return json_response
 
     @staticmethod
+    @_api_method
     def get_updated(object_name, start_date_time, end_date_time, access_token, instance_url):
         """
         Retrieves the list of individual records that have been updated (added
@@ -954,11 +979,12 @@ class Standard:
             urllib.parse.quote(start_date_time.strftime('%Y-%m-%dT%H:%M:%SZ')) + '&end=' + \
             urllib.parse.quote(end_date_time.strftime('%Y-%m-%dT%H:%M:%SZ'))
 
-        json_response = _rest_json('GET', get_updated_uri, access_token, instance_url)
+        json_response = yield _rest_json('GET', get_updated_uri, access_token, instance_url)
 
         return json_response
 
     @staticmethod
+    @_api_method
     def retrieve(object_name, ids, fields, access_token, instance_url):
         """
         Use a GET or POST request with sObject Collections to retrieve one or
@@ -1016,11 +1042,12 @@ class Standard:
         request_body['ids'] = ids
         request_body['fields'] = fields
 
-        json_response = _rest_json('POST', retrieve_uri, access_token, instance_url, request_body)
+        json_response = yield _rest_json('POST', retrieve_uri, access_token, instance_url, request_body)
 
         return json_response
 
     @staticmethod
+    @_api_method
     def get_deleted(object_name, start_date_time, end_date_time, access_token, instance_url):
         """
         Retrieves the list of individual records that have been deleted within
@@ -1074,11 +1101,12 @@ class Standard:
             urllib.parse.quote(start_date_time.strftime('%Y-%m-%dT%H:%M:%SZ')) + '&end=' + \
             urllib.parse.quote(end_date_time.strftime('%Y-%m-%dT%H:%M:%SZ'))
 
-        json_response = _rest_json('GET', get_deleted_uri, access_token, instance_url)
+        json_response = yield _rest_json('GET', get_deleted_uri, access_token, instance_url)
 
         return json_response
 
     @staticmethod
+    @_api_method
     def composite_request(subrequests, all_or_none, access_token, instance_url, collate_subrequests=True):
         """
         https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/resources_composite_composite.htm
@@ -1147,11 +1175,12 @@ class Standard:
         request_body["collateSubrequests"] = collate_subrequests
         request_body["compositeRequest"] = subrequests
 
-        json_response = _rest_json('POST', composite_uri, access_token, instance_url, request_body)
+        json_response = yield _rest_json('POST', composite_uri, access_token, instance_url, request_body)
 
         return json_response
 
     @staticmethod
+    @_api_method
     def composite_batch_request(subrequests, halt_on_error, access_token, instance_url):
         """
         https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/resources_composite_batch.htm
@@ -1220,11 +1249,12 @@ class Standard:
         request_body["haltOnError"] = halt_on_error
         request_body["batchRequests"] = batch_requests
 
-        json_response = _rest_json('POST', batch_uri, access_token, instance_url, request_body)
+        json_response = yield _rest_json('POST', batch_uri, access_token, instance_url, request_body)
 
         return json_response
 
     @staticmethod
+    @_api_method
     def create_sobject_tree(object_name, records, access_token, instance_url):
         """
         https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/resources_composite_sobject_tree.htm
@@ -1279,11 +1309,12 @@ class Standard:
         request_body = {}
         request_body["records"] = records
 
-        json_response = _rest_json('POST', tree_uri, access_token, instance_url, request_body)
+        json_response = yield _rest_json('POST', tree_uri, access_token, instance_url, request_body)
 
         return json_response
 
     @staticmethod
+    @_api_method
     def graph_composite_request(request_body, access_token, instance_url):
         """
         https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/resources_composite_graph_introduction.htm#!
@@ -1359,12 +1390,13 @@ class Standard:
         """
         graph_uri = '/composite/graph'
 
-        json_response = _rest_json('POST', graph_uri, access_token, instance_url, request_body)
+        json_response = yield _rest_json('POST', graph_uri, access_token, instance_url, request_body)
 
         return json_response
 
 
     @staticmethod
+    @_api_method
     def get_global_describe(access_token, instance_url):
         """
         Lists the available objects and their metadata for your organization's
@@ -1379,11 +1411,12 @@ class Standard:
         Returns:
             dict: Returns a dictionary with the list of objects in sobjects.
         """
-        json_response = _rest_json('GET', '/sobjects', access_token, instance_url)
+        json_response = yield _rest_json('GET', '/sobjects', access_token, instance_url)
 
         return json_response
 
     @staticmethod
+    @_api_method
     def get_limits(access_token, instance_url):
         """
         Lists information about limits in your org. For each limit, this
@@ -1400,11 +1433,12 @@ class Standard:
             dict: Returns a dictionary with Max and Remaining for each limit,
                 e.g. {'DailyApiRequests': {'Max': 15000, 'Remaining': 14998}}
         """
-        json_response = _rest_json('GET', '/limits', access_token, instance_url)
+        json_response = yield _rest_json('GET', '/limits', access_token, instance_url)
 
         return json_response
 
     @staticmethod
+    @_api_method
     def query_records(query_string, access_token, instance_url, include_deleted=False):
         """
         Executes the specified SOQL query and returns all of the records. If
@@ -1424,19 +1458,21 @@ class Standard:
             list: returns the list of all the records for the query.
         """
         if include_deleted:
-            json_response = Standard.query_all(query_string, access_token, instance_url)
+            json_response = yield Standard.query_all._plan(query_string, access_token, instance_url)
         else:
-            json_response = Standard.query(query_string, access_token, instance_url)
+            json_response = yield Standard.query._plan(query_string, access_token, instance_url)
 
         records = json_response['records']
 
         while 'nextRecordsUrl' in json_response:
-            json_response = Standard.get_next_query_batch(json_response['nextRecordsUrl'], access_token, instance_url)
+            json_response = yield Standard.get_next_query_batch._plan(json_response['nextRecordsUrl'], access_token,
+                                                                      instance_url)
             records.extend(json_response['records'])
 
         return records
 
     @staticmethod
+    @_api_method
     def query_explain(query_string, access_token, instance_url):
         """
         Gets the query plans Salesforce would use for the specified SOQL
@@ -1456,11 +1492,12 @@ class Standard:
         query_uri = '/query/?explain='
         url_encoded_query = urllib.parse.quote(query_string)
 
-        json_response = _rest_json('GET', query_uri + url_encoded_query, access_token, instance_url)
+        json_response = yield _rest_json('GET', query_uri + url_encoded_query, access_token, instance_url)
 
         return json_response
 
     @staticmethod
+    @_api_method
     def parameterized_search(search_body, access_token, instance_url):
         """
         Executes a simple search using parameters instead of a SOSL string.
@@ -1485,11 +1522,12 @@ class Standard:
             dict: returns a dictionary with the list of matching records in
                 searchRecords.
         """
-        json_response = _rest_json('POST', '/parameterizedSearch', access_token, instance_url, search_body)
+        json_response = yield _rest_json('POST', '/parameterizedSearch', access_token, instance_url, search_body)
 
         return json_response
 
     @staticmethod
+    @_api_method
     def invoke_standard_action(action_name, inputs, access_token, instance_url):
         """
         Runs one of the standard invocable actions, such as emailSimple or
@@ -1511,11 +1549,12 @@ class Standard:
         """
         action_uri = '/actions/standard/' + _quote_path(action_name)
 
-        json_response = _rest_json('POST', action_uri, access_token, instance_url, {"inputs": inputs})
+        json_response = yield _rest_json('POST', action_uri, access_token, instance_url, {"inputs": inputs})
 
         return json_response
 
     @staticmethod
+    @_api_method
     def invoke_custom_action(action_type, action_name, inputs, access_token, instance_url):
         """
         Runs a custom invocable action, such as an autolaunched flow or an
@@ -1537,11 +1576,12 @@ class Standard:
         """
         action_uri = '/actions/custom/' + _quote_path(action_type) + '/' + _quote_path(action_name)
 
-        json_response = _rest_json('POST', action_uri, access_token, instance_url, {"inputs": inputs})
+        json_response = yield _rest_json('POST', action_uri, access_token, instance_url, {"inputs": inputs})
 
         return json_response
 
     @staticmethod
+    @_api_method
     def apex_rest_request(method, path, access_token, instance_url, data=None):
         """
         Calls a custom Apex REST service, which is an Apex class that uses the
@@ -1569,12 +1609,13 @@ class Standard:
         """
         header_details = Util.get_standard_header(access_token)
 
-        response = webservice.Tools.http_request(requestType=method, URL=instance_url + '/services/apexrest' + path,
-                                                 data_body=_encode_body(data), header_details=header_details)
+        response = yield _Request(requestType=method, URL=instance_url + '/services/apexrest' + path,
+                                  data_body=_encode_body(data), header_details=header_details)
 
         return response
 
     @staticmethod
+    @_api_method
     def request(method, path, access_token, instance_url, data=None, headers=None):
         """
         Calls any REST API resource for the current API_VERSION. Use this for
@@ -1599,11 +1640,12 @@ class Standard:
             Response: Returns the response for the HTTP request. Use
                       response.json() or response.text to read it.
         """
-        response = _rest_request(method, path, access_token, instance_url, data, headers)
+        response = yield _rest_request(method, path, access_token, instance_url, data, headers)
 
         return response
 
     @staticmethod
+    @_api_method
     def get_object_describe(object_name, modified_since_date, access_token, instance_url):
         """
         Completely describes the individual metadata at all levels for the
@@ -1640,7 +1682,7 @@ class Standard:
             modified_since_date = modified_since_date.strftime('%a, %d %b %Y %H:%M:%S GMT')
             headers["If-Modified-Since"] = modified_since_date
 
-        response = _rest_request('GET', describe_uri, access_token, instance_url, None, headers)
+        response = yield _rest_request('GET', describe_uri, access_token, instance_url, None, headers)
 
         # 304 Not Modified has no response body
         if response.status_code == 304:

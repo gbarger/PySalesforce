@@ -8,8 +8,7 @@ import json
 import time
 
 import pysalesforceutils
-from . import webservice
-from .util import Util
+from .util import Util, _Request, _api_method
 
 try:
     import jwt
@@ -23,6 +22,7 @@ class Authentication:
     """
 
     @staticmethod
+    @_api_method
     def get_oauth_login(login_username, login_password, login_client_id, login_client_secret, is_production):
         """
         this function logs into Salesforce using the oAuth 2.0 password grant type,
@@ -59,7 +59,8 @@ class Authentication:
         login_body_data = {'grant_type': 'password', 'client_id': login_client_id, 'client_secret': login_client_secret,
                            'username': login_username, 'password': login_password}
 
-        response = webservice.Tools.post_http_response(base_oauth_url, login_body_data, '')
+        response = yield _Request(requestType='POST', URL=base_oauth_url, data_body=login_body_data,
+                                  header_details='')
 
         try:
             json_response = json.loads(response.text)
@@ -69,6 +70,7 @@ class Authentication:
         return json_response
 
     @staticmethod
+    @_api_method
     def get_client_credentials_login(login_client_id, login_client_secret, instance_url):
         """
         This function logs into Salesforce using the oAuth 2.0 client
@@ -104,12 +106,13 @@ class Authentication:
         login_body_data = {'grant_type': 'client_credentials', 'client_id': login_client_id,
                            'client_secret': login_client_secret}
 
-        response = webservice.Tools.post_http_response(oauth_url, login_body_data, '')
+        response = yield _Request(requestType='POST', URL=oauth_url, data_body=login_body_data, header_details='')
         json_response = json.loads(response.text)
 
         return json_response
 
     @staticmethod
+    @_api_method
     def get_jwt_bearer_login(login_username, login_client_id, login_client_secret, private_key, is_production):
         """
         This function logs into Salesforce using the oAuth 2.0 JWT bearer
@@ -163,16 +166,18 @@ class Authentication:
 
         login_body_data = {'grant_type': 'urn:ietf:params:oauth:grant-type:jwt-bearer', 'assertion': assertion}
 
-        response = webservice.Tools.post_http_response(base_oauth_url + '/services/oauth2/token', login_body_data, '')
+        response = yield _Request(requestType='POST', URL=base_oauth_url + '/services/oauth2/token',
+                                  data_body=login_body_data, header_details='')
         json_response = json.loads(response.text)
 
-        introspect_response = Authentication.introspect_token(json_response['access_token'], login_client_id,
-                                                              login_client_secret, json_response['instance_url'])
+        introspect_response = yield Authentication.introspect_token._plan(
+            json_response['access_token'], login_client_id, login_client_secret, json_response['instance_url'])
         json_response['exp'] = introspect_response['exp']
 
         return json_response
 
     @staticmethod
+    @_api_method
     def introspect_token(auth_token, login_client_id, login_client_secret, instance_url):
         """
         This function looks up the current state of a token, including whether
@@ -206,12 +211,14 @@ class Authentication:
         introspect_body_data = {'token': auth_token, 'token_type_hint': 'access_token',
                                 'client_id': login_client_id, 'client_secret': login_client_secret}
 
-        response = webservice.Tools.post_http_response(introspect_url, introspect_body_data, '')
+        response = yield _Request(requestType='POST', URL=introspect_url, data_body=introspect_body_data,
+                                  header_details='')
         json_response = json.loads(response.text)
 
         return json_response
 
     @staticmethod
+    @_api_method
     def get_oauth_logout(auth_token, is_production):
         """
         this function calls the correct endpoint for the oauth logout by providing
@@ -235,7 +242,7 @@ class Authentication:
         logout_body_data = {'host': logout_url, 'Content-Type': 'application/x-www-form-urlencoded',
                             'token': auth_token}
 
-        response = webservice.Tools.post_http_response(logout_url, logout_body_data, '')
+        response = yield _Request(requestType='POST', URL=logout_url, data_body=logout_body_data, header_details='')
 
         success = False
         if response.status_code == 200:
@@ -246,6 +253,7 @@ class Authentication:
         return json_response
 
     @staticmethod
+    @_api_method
     def revoke_token(auth_token, instance_url):
         """
         This function logs out by revoking the token at the given url, so it
@@ -265,7 +273,8 @@ class Authentication:
 
         revoke_url = instance_url.rstrip('/') + '/services/oauth2/revoke'
 
-        response = webservice.Tools.post_http_response(revoke_url, {'token': auth_token}, '')
+        response = yield _Request(requestType='POST', URL=revoke_url, data_body={'token': auth_token},
+                                  header_details='')
 
         json_response = {'success': response.status_code == 200, 'status_code': response.status_code}
 

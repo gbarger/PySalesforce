@@ -5,16 +5,15 @@ Salesforce Bulk API.
 """
 
 import json
-import time
 
 import pysalesforceutils
-from . import webservice
-from .util import Util, _encode_body, _quote_path
+from .util import Util, _Request, _Sleep, _api_method, _encode_body, _quote_path
 
 
 def _bulk_json(method, path, access_token, instance_url, data=None):
     """
     Sends a request to the Salesforce Bulk API for the current API_VERSION.
+    An API method uses it with: json_response = yield _bulk_json(...)
 
     Args:
         method (str): The request type: GET or POST
@@ -32,8 +31,8 @@ def _bulk_json(method, path, access_token, instance_url, data=None):
     header_details = Util.get_bulk_header(access_token)
     url = instance_url + '/services/async/' + pysalesforceutils.API_VERSION + path
 
-    response = webservice.Tools.http_request(requestType=method, URL=url, data_body=_encode_body(data),
-                                             header_details=header_details)
+    response = yield _Request(requestType=method, URL=url, data_body=_encode_body(data),
+                              header_details=header_details)
 
     return json.loads(response.text)
 
@@ -53,6 +52,7 @@ class Bulk:
     batch_uri = '/job/'
 
     @staticmethod
+    @_api_method
     def get_job_status(job_id, polling_wait, verbose, access_token, instance_url):
         """
         This method is used for printing job status. If verbose = False, it will
@@ -76,7 +76,7 @@ class Bulk:
             print("Status for job: {}".format(job_id))
 
         while True:
-            json_response = _bulk_json('GET', '/job/' + _quote_path(job_id), access_token, instance_url)
+            json_response = yield _bulk_json('GET', '/job/' + _quote_path(job_id), access_token, instance_url)
 
             if verbose:
                 print("Batches completed/failed/total: {}/{}/{}".format(json_response['numberBatchesCompleted'],
@@ -90,11 +90,12 @@ class Bulk:
                 # the remaining batches will never be processed
                 break
             else:
-                time.sleep(polling_wait)
+                yield _Sleep(polling_wait)
 
         return json_response
 
     @staticmethod
+    @_api_method
     def get_batch_result(job_id, batch_id, access_token, instance_url):
         """
         This method will retrieve the results of a batch operation.
@@ -112,12 +113,13 @@ class Bulk:
             array: Returns the an array containing the results for each record
                    in the given batch
         """
-        json_response = _bulk_json('GET', '/job/' + _quote_path(job_id) + '/batch/' + _quote_path(batch_id) + '/result',
-                                   access_token, instance_url)
+        json_response = yield _bulk_json('GET', '/job/' + _quote_path(job_id) + '/batch/' + _quote_path(batch_id) +
+                                         '/result', access_token, instance_url)
 
         return json_response
 
     @staticmethod
+    @_api_method
     def get_query_result(job_id, batch_id, query_result_id, access_token, instance_url):
         """
         This method will retrieve the results of a batch operation.
@@ -137,12 +139,13 @@ class Bulk:
             array: Returns the an array containing the results for the query
                    request
         """
-        json_response = _bulk_json('GET', '/job/' + _quote_path(job_id) + '/batch/' + _quote_path(batch_id) +
-                                   '/result/' + _quote_path(query_result_id), access_token, instance_url)
+        json_response = yield _bulk_json('GET', '/job/' + _quote_path(job_id) + '/batch/' + _quote_path(batch_id) +
+                                         '/result/' + _quote_path(query_result_id), access_token, instance_url)
 
         return json_response
 
     @staticmethod
+    @_api_method
     def perform_bulk_operation(object_api_name, records, batch_size, operation_type, polling_wait,
                                external_id_field_name, access_token, instance_url, concurrency_mode=None,
                                verbose=True):
@@ -204,35 +207,36 @@ class Bulk:
         results_list = []
 
         # create the bulk job
-        json_job_create_response = _bulk_json('POST', '/job/', access_token, instance_url, body_details)
+        json_job_create_response = yield _bulk_json('POST', '/job/', access_token, instance_url, body_details)
         job_id = json_job_create_response['id']
 
         # loop through the record batches, and add them to the processing queue
         for record_chunk in chunked_records_list:
-            json_job_batch_response = _bulk_json('POST', '/job/' + job_id + '/batch', access_token, instance_url,
-                                                 record_chunk)
+            json_job_batch_response = yield _bulk_json('POST', '/job/' + job_id + '/batch', access_token, instance_url,
+                                                       record_chunk)
             batch_id = json_job_batch_response['id']
             batch_ids.append(batch_id)
 
         # close the bulk job
         close_body = {'state': 'Closed'}
-        _bulk_json('POST', '/job/' + job_id, access_token, instance_url, close_body)
+        yield _bulk_json('POST', '/job/' + job_id, access_token, instance_url, close_body)
 
         # set default job check polling to 5 seconds
         if polling_wait is None:
             polling_wait = 5
 
         # check job status until the job completes
-        Bulk.get_job_status(job_id, polling_wait, verbose, access_token, instance_url)
+        yield Bulk.get_job_status._plan(job_id, polling_wait, verbose, access_token, instance_url)
 
         # populate the results_list by appending the results of each batch
         for this_batch_id in batch_ids:
-            batch_results = Bulk.get_batch_result(job_id, this_batch_id, access_token, instance_url)
+            batch_results = yield Bulk.get_batch_result._plan(job_id, this_batch_id, access_token, instance_url)
             results_list.extend(batch_results)
 
         return results_list
 
     @staticmethod
+    @_api_method
     def insert_sobject_rows(object_api_name, records, batch_size, polling_wait, access_token, instance_url,
                             concurrency_mode=None):
         """
@@ -272,12 +276,13 @@ class Bulk:
             object: Returns an object containing the status for each record that
                     was put into the batch
         """
-        result = Bulk.perform_bulk_operation(object_api_name, records, batch_size, 'insert', polling_wait, None,
-                                             access_token, instance_url, concurrency_mode)
+        result = yield Bulk.perform_bulk_operation._plan(object_api_name, records, batch_size, 'insert', polling_wait,
+                                                         None, access_token, instance_url, concurrency_mode)
 
         return result
 
     @staticmethod
+    @_api_method
     def update_sobject_rows(object_api_name, records, batch_size, polling_wait, access_token, instance_url,
                             concurrency_mode=None):
         """
@@ -317,12 +322,13 @@ class Bulk:
             object: Returns an object containing the status for each record that
                     was put into the batch
         """
-        result = Bulk.perform_bulk_operation(object_api_name, records, batch_size, 'update', polling_wait, None,
-                                             access_token, instance_url, concurrency_mode)
+        result = yield Bulk.perform_bulk_operation._plan(object_api_name, records, batch_size, 'update', polling_wait,
+                                                         None, access_token, instance_url, concurrency_mode)
 
         return result
 
     @staticmethod
+    @_api_method
     def upsert_sobject_rows(object_api_name, records, batch_size, polling_wait, access_token, instance_url,
                             external_id_field_name='Id', concurrency_mode=None):
         """
@@ -367,12 +373,14 @@ class Bulk:
             @return               Returns an object containing the status for each
                                   record that was put into the batch
         """
-        result = Bulk.perform_bulk_operation(object_api_name, records, batch_size, 'upsert', polling_wait,
-                                             external_id_field_name, access_token, instance_url, concurrency_mode)
+        result = yield Bulk.perform_bulk_operation._plan(object_api_name, records, batch_size, 'upsert', polling_wait,
+                                                         external_id_field_name, access_token, instance_url,
+                                                         concurrency_mode)
 
         return result
 
     @staticmethod
+    @_api_method
     def delete_sobject_rows(object_api_name, records, hard_delete, batch_size, polling_wait, access_token,
                             instance_url):
         """
@@ -408,12 +416,13 @@ class Bulk:
         if hard_delete:
             delete_type = 'hardDelete'
 
-        result = Bulk.perform_bulk_operation(object_api_name, records, batch_size, delete_type, polling_wait, None,
-                                             access_token, instance_url)
+        result = yield Bulk.perform_bulk_operation._plan(object_api_name, records, batch_size, delete_type,
+                                                         polling_wait, None, access_token, instance_url)
 
         return result
 
     @staticmethod
+    @_api_method
     def query_sobject_rows(object_api_name, query, query_all, access_token, instance_url, verbose=True):
         """
         This returns the result for a bulk query operations.
@@ -441,26 +450,28 @@ class Bulk:
 
         # create the bulk job
         job_body_details = Util.get_bulk_job_body(object_api_name, query_type, None, None)
-        json_job_create_response = _bulk_json('POST', '/job/', access_token, instance_url, job_body_details)
+        json_job_create_response = yield _bulk_json('POST', '/job/', access_token, instance_url, job_body_details)
         job_id = json_job_create_response['id']
 
         # create the query request batch
-        json_job_batch_response = _bulk_json('POST', '/job/' + job_id + '/batch', access_token, instance_url, query)
+        json_job_batch_response = yield _bulk_json('POST', '/job/' + job_id + '/batch', access_token, instance_url,
+                                                   query)
         batch_id = json_job_batch_response['id']
 
         # close the bulk job
         close_body = {'state': 'Closed'}
-        _bulk_json('POST', '/job/' + job_id, access_token, instance_url, close_body)
+        yield _bulk_json('POST', '/job/' + job_id, access_token, instance_url, close_body)
 
         # check job status until the job completes
-        Bulk.get_job_status(job_id, 5, verbose, access_token, instance_url)
+        yield Bulk.get_job_status._plan(job_id, 5, verbose, access_token, instance_url)
 
         # get results
-        batch_results = Bulk.get_batch_result(job_id, batch_id, access_token, instance_url)
+        batch_results = yield Bulk.get_batch_result._plan(job_id, batch_id, access_token, instance_url)
         batch_results_list.extend(batch_results)
 
         for query_result_id in batch_results_list:
-            query_result = Bulk.get_query_result(job_id, batch_id, query_result_id, access_token, instance_url)
+            query_result = yield Bulk.get_query_result._plan(job_id, batch_id, query_result_id, access_token,
+                                                             instance_url)
             query_result_list.extend(query_result)
 
         return query_result_list

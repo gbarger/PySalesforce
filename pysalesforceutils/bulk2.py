@@ -4,10 +4,8 @@
 Salesforce Bulk API 2.0.
 """
 
-import time
-
 import pysalesforceutils
-from .util import _quote_path, _rest_json, _rest_request
+from .util import _Sleep, _api_method, _quote_path, _rest_json, _rest_request
 
 _INGEST_URI = '/jobs/ingest'
 _QUERY_URI = '/jobs/query'
@@ -25,6 +23,7 @@ class Bulk2:
     base_bulk2_uri = '/services/data/v' + pysalesforceutils.API_VERSION + '/jobs/ingest'
 
     @staticmethod
+    @_api_method
     def get_job_list(is_pk_chunking_enabled, job_type, query_locator, access_token, instance_url):
         """
         Retrieves all jobs in the org.
@@ -69,11 +68,12 @@ class Bulk2:
         if uri_params:
             uri_param_string = "?" + "&".join(uri_params)
 
-        json_response = _rest_json('GET', _INGEST_URI + uri_param_string, access_token, instance_url)
+        json_response = yield _rest_json('GET', _INGEST_URI + uri_param_string, access_token, instance_url)
 
         return json_response
 
     @staticmethod
+    @_api_method
     def create_job(object_name, operation, external_id_field_name, column_delimiter, content_type, line_ending,
                    access_token, instance_url):
         """
@@ -142,11 +142,12 @@ class Bulk2:
         if line_ending:
             post_body["lineEnding"] = line_ending
 
-        json_response = _rest_json('POST', _INGEST_URI, access_token, instance_url, post_body, headers)
+        json_response = yield _rest_json('POST', _INGEST_URI, access_token, instance_url, post_body, headers)
 
         return json_response
 
     @staticmethod
+    @_api_method
     def upload_csv_batch(data_set, job_id, access_token, instance_url):
         """
         Uploads data for a job using CSV data you provide.
@@ -165,12 +166,13 @@ class Bulk2:
         """
         headers = {"Content-Type": "text/csv", "Accept": "application/json"}
 
-        response = _rest_request('PUT', _INGEST_URI + '/' + _quote_path(job_id) + '/batches', access_token,
-                                 instance_url, data_set, headers)
+        response = yield _rest_request('PUT', _INGEST_URI + '/' + _quote_path(job_id) + '/batches', access_token,
+                                       instance_url, data_set, headers)
 
         return response.status_code
 
     @staticmethod
+    @_api_method
     def change_job_state(job_state, job_id, access_token, instance_url):
         """
         Closes or aborts a job. If you close a job, Salesforce queues the job
@@ -191,12 +193,13 @@ class Bulk2:
         """
         request_body = {"state": job_state}
 
-        json_response = _rest_json('PATCH', _INGEST_URI + '/' + _quote_path(job_id), access_token, instance_url,
-                                   request_body)
+        json_response = yield _rest_json('PATCH', _INGEST_URI + '/' + _quote_path(job_id), access_token, instance_url,
+                                         request_body)
 
         return json_response
 
     @staticmethod
+    @_api_method
     def delete_job(job_id, access_token, instance_url):
         """
         Deletes a job. To be deleted, a job must have a state of UploadComplete,
@@ -213,11 +216,12 @@ class Bulk2:
             int: Returns the http status code. Should be 204 which indicates the
                  job was deleted successfully.
         """
-        response = _rest_request('DELETE', _INGEST_URI + '/' + _quote_path(job_id), access_token, instance_url)
+        response = yield _rest_request('DELETE', _INGEST_URI + '/' + _quote_path(job_id), access_token, instance_url)
 
         return response.status_code
 
     @staticmethod
+    @_api_method
     def get_job_info(job_id, access_token, instance_url):
         """
         Retrieves detailed information about a job.
@@ -235,11 +239,12 @@ class Bulk2:
                   a failed job. More details here:
                   https://developer.salesforce.com/docs/atlas.en-us.api_bulk_v2.meta/api_bulk_v2/get_job_info.htm
         """
-        json_response = _rest_json('GET', _INGEST_URI + '/' + _quote_path(job_id), access_token, instance_url)
+        json_response = yield _rest_json('GET', _INGEST_URI + '/' + _quote_path(job_id), access_token, instance_url)
 
         return json_response
 
     @staticmethod
+    @_api_method
     def get_job_status(job_id, polling_wait, verbose, access_token, instance_url):
         """
         This method is used for printing job status. If verbose is False it will
@@ -265,7 +270,7 @@ class Bulk2:
         processed_total = 0
         finished_statuses = ['JobComplete', 'Aborted', 'Failed']
         while True:
-            json_response = Bulk2.get_job_info(job_id, access_token, instance_url)
+            json_response = yield Bulk2.get_job_info._plan(job_id, access_token, instance_url)
 
             if verbose:
                 print("Job state/failed/total: {}/{}/{}".format(json_response['state'],
@@ -279,11 +284,12 @@ class Bulk2:
                     break
 
             processed_total = json_response['numberRecordsProcessed']
-            time.sleep(polling_wait)
+            yield _Sleep(polling_wait)
 
         return json_response
 
     @staticmethod
+    @_api_method
     def get_success_results(job_id, access_token, instance_url):
         """
         Retrieves a list of successfully processed records for a completed job.
@@ -301,12 +307,13 @@ class Bulk2:
                  sf__Created (bool): Indicates if the record was created.
                  sf__Id (str): ID of the record that was successfully processed.
         """
-        response = _rest_request('GET', _INGEST_URI + '/' + _quote_path(job_id) + '/successfulResults/', access_token,
-                                 instance_url)
+        response = yield _rest_request('GET', _INGEST_URI + '/' + _quote_path(job_id) + '/successfulResults/',
+                                       access_token, instance_url)
 
         return response.text
 
     @staticmethod
+    @_api_method
     def get_failed_results(job_id, access_token, instance_url):
         """
         Retrieves a list of failed records for a completed job.
@@ -325,12 +332,13 @@ class Bulk2:
                  sf__Id (str): ID of the record that had an error during
                                processing, if applicable.
         """
-        response = _rest_request('GET', _INGEST_URI + '/' + _quote_path(job_id) + '/failedResults/', access_token,
-                                 instance_url)
+        response = yield _rest_request('GET', _INGEST_URI + '/' + _quote_path(job_id) + '/failedResults/', access_token,
+                                       instance_url)
 
         return response.text
 
     @staticmethod
+    @_api_method
     def get_unprocessed_results(job_id, access_token, instance_url):
         """
         Retrieves a list of unprocessed records for a completed job.
@@ -345,12 +353,13 @@ class Bulk2:
         Returns:
             str: Returns a CSV with all the fields that were originally supplied.
         """
-        response = _rest_request('GET', _INGEST_URI + '/' + _quote_path(job_id) + '/unprocessedrecords/', access_token,
-                                 instance_url)
+        response = yield _rest_request('GET', _INGEST_URI + '/' + _quote_path(job_id) + '/unprocessedrecords/',
+                                       access_token, instance_url)
 
         return response.text
 
     @staticmethod
+    @_api_method
     def create_query_job(query, query_all, access_token, instance_url):
         """
         Creates a job that runs a SOQL query asynchronously, which is meant
@@ -376,11 +385,12 @@ class Bulk2:
         post_body["operation"] = "queryAll" if query_all else "query"
         post_body["query"] = query
 
-        json_response = _rest_json('POST', _QUERY_URI, access_token, instance_url, post_body)
+        json_response = yield _rest_json('POST', _QUERY_URI, access_token, instance_url, post_body)
 
         return json_response
 
     @staticmethod
+    @_api_method
     def get_query_job_info(job_id, access_token, instance_url):
         """
         Retrieves detailed information about a query job.
@@ -397,11 +407,12 @@ class Bulk2:
                   succeeds, the state will be 'JobComplete' vs 'Failed' for
                   a failed job.
         """
-        json_response = _rest_json('GET', _QUERY_URI + '/' + _quote_path(job_id), access_token, instance_url)
+        json_response = yield _rest_json('GET', _QUERY_URI + '/' + _quote_path(job_id), access_token, instance_url)
 
         return json_response
 
     @staticmethod
+    @_api_method
     def get_query_job_status(job_id, polling_wait, verbose, access_token, instance_url):
         """
         This method waits for a query job to finish. If verbose is False it
@@ -427,7 +438,7 @@ class Bulk2:
 
         finished_statuses = ['JobComplete', 'Aborted', 'Failed']
         while True:
-            json_response = Bulk2.get_query_job_info(job_id, access_token, instance_url)
+            json_response = yield Bulk2.get_query_job_info._plan(job_id, access_token, instance_url)
 
             if verbose:
                 print("Job state/total: {}/{}".format(json_response['state'],
@@ -436,11 +447,12 @@ class Bulk2:
             if json_response['state'] in finished_statuses:
                 break
 
-            time.sleep(polling_wait)
+            yield _Sleep(polling_wait)
 
         return json_response
 
     @staticmethod
+    @_api_method
     def get_query_job_results(job_id, locator, max_records, access_token, instance_url):
         """
         Retrieves one set of records from a completed query job. If there are
@@ -485,8 +497,8 @@ class Bulk2:
         if uri_params:
             uri_param_string = "?" + "&".join(uri_params)
 
-        response = _rest_request('GET', _QUERY_URI + '/' + _quote_path(job_id) + '/results' + uri_param_string,
-                                 access_token, instance_url, None, {"Accept": "text/csv"})
+        response = yield _rest_request('GET', _QUERY_URI + '/' + _quote_path(job_id) + '/results' + uri_param_string,
+                                       access_token, instance_url, None, {"Accept": "text/csv"})
 
         # Salesforce sends the text null when there aren't any more records
         next_locator = response.headers.get('Sforce-Locator')
@@ -497,6 +509,7 @@ class Bulk2:
         return {'records': response.text, 'locator': next_locator}
 
     @staticmethod
+    @_api_method
     def abort_query_job(job_id, access_token, instance_url):
         """
         Aborts a query job, so it doesn't get processed.
@@ -513,12 +526,13 @@ class Bulk2:
         """
         request_body = {"state": "Aborted"}
 
-        json_response = _rest_json('PATCH', _QUERY_URI + '/' + _quote_path(job_id), access_token, instance_url,
-                                   request_body)
+        json_response = yield _rest_json('PATCH', _QUERY_URI + '/' + _quote_path(job_id), access_token, instance_url,
+                                         request_body)
 
         return json_response
 
     @staticmethod
+    @_api_method
     def delete_query_job(job_id, access_token, instance_url):
         """
         Deletes a query job. To be deleted, a job must have a state of
@@ -535,6 +549,6 @@ class Bulk2:
             int: Returns the http status code. Should be 204 which indicates the
                  job was deleted successfully.
         """
-        response = _rest_request('DELETE', _QUERY_URI + '/' + _quote_path(job_id), access_token, instance_url)
+        response = yield _rest_request('DELETE', _QUERY_URI + '/' + _quote_path(job_id), access_token, instance_url)
 
         return response.status_code

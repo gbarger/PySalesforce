@@ -7,7 +7,7 @@ Salesforce Tooling API.
 import urllib.parse
 
 import pysalesforceutils
-from .util import _quote_path, _rest_json, _rest_request
+from .util import _api_method, _quote_path, _rest_json, _rest_request
 
 
 class Tooling:
@@ -19,6 +19,7 @@ class Tooling:
     base_tooling_uri = '/services/data/v' + pysalesforceutils.API_VERSION + '/tooling'
 
     @staticmethod
+    @_api_method
     def completions(completions_type, access_token, instance_url):
         """
         Retrieves available code completions of the referenced type for Apex
@@ -38,11 +39,12 @@ class Tooling:
         completions_uri = '/tooling/completions?type='
         url_encoded_type = urllib.parse.quote(completions_type)
 
-        json_response = _rest_json('GET', completions_uri + url_encoded_type, access_token, instance_url)
+        json_response = yield _rest_json('GET', completions_uri + url_encoded_type, access_token, instance_url)
 
         return json_response
 
     @staticmethod
+    @_api_method
     def execute_anonymous(code_string, access_token, instance_url):
         """
         This function executes anonymous apex, and returns a json response
@@ -66,11 +68,12 @@ class Tooling:
         execute_anonymous_uri = '/tooling/executeAnonymous/?anonymousBody='
         url_encoded_code = urllib.parse.quote(code_string)
 
-        json_response = _rest_json('GET', execute_anonymous_uri + url_encoded_code, access_token, instance_url)
+        json_response = yield _rest_json('GET', execute_anonymous_uri + url_encoded_code, access_token, instance_url)
 
         return json_response
 
     @staticmethod
+    @_api_method
     def query(query_string, access_token, instance_url):
         """
         Executes a query against an object and returns data that matches the
@@ -96,11 +99,12 @@ class Tooling:
         query_uri = '/tooling/query/?q='
         url_encoded_query = urllib.parse.quote(query_string)
 
-        json_response = _rest_json('GET', query_uri + url_encoded_query, access_token, instance_url)
+        json_response = yield _rest_json('GET', query_uri + url_encoded_query, access_token, instance_url)
 
         return json_response
 
     @staticmethod
+    @_api_method
     def run_tests_asynchronous_list(class_ids, suite_ids, max_failed_tests, test_level, access_token, instance_url):
         """
         This method runs the tests provided with the class Ids or suite Ids, then
@@ -155,11 +159,12 @@ class Tooling:
         if test_level != None:
             data_body['testLevel'] = test_level
 
-        json_response = _rest_json('POST', test_async_uri, access_token, instance_url, data_body)
+        json_response = yield _rest_json('POST', test_async_uri, access_token, instance_url, data_body)
 
         return json_response
 
     @staticmethod
+    @_api_method
     def run_tests_asynchronous_json(test_array, access_token, instance_url):
         """
         This method runs specified tests in the test_array with more control than
@@ -191,11 +196,12 @@ class Tooling:
         test_async_uri = '/tooling/runTestsAsynchronous/'
         data_body = {'tests': test_array}
 
-        json_response = _rest_json('POST', test_async_uri, access_token, instance_url, data_body)
+        json_response = yield _rest_json('POST', test_async_uri, access_token, instance_url, data_body)
 
         return json_response
 
     @staticmethod
+    @_api_method
     def get_sobject_row(object_name, record_id, access_token, instance_url):
         """
         Provides the details for the specified Tooling API record, e.g. an
@@ -214,11 +220,12 @@ class Tooling:
         """
         get_row_uri = '/tooling/sobjects/' + _quote_path(object_name) + '/' + _quote_path(record_id)
 
-        json_response = _rest_json('GET', get_row_uri, access_token, instance_url)
+        json_response = yield _rest_json('GET', get_row_uri, access_token, instance_url)
 
         return json_response
 
     @staticmethod
+    @_api_method
     def create_sobject_row(object_name, record_json, access_token, instance_url):
         """
         Creates a Tooling API record, e.g. a TraceFlag.
@@ -240,11 +247,12 @@ class Tooling:
         """
         post_row_uri = '/tooling/sobjects/' + _quote_path(object_name) + '/'
 
-        json_response = _rest_json('POST', post_row_uri, access_token, instance_url, record_json)
+        json_response = yield _rest_json('POST', post_row_uri, access_token, instance_url, record_json)
 
         return json_response
 
     @staticmethod
+    @_api_method
     def update_sobject_row(object_name, record_id, record_json, access_token, instance_url):
         """
         Updates a specific Tooling API record with the data in the record_json
@@ -270,7 +278,7 @@ class Tooling:
         """
         patch_row_uri = '/tooling/sobjects/' + _quote_path(object_name) + '/' + _quote_path(record_id)
 
-        response = _rest_request('PATCH', patch_row_uri, access_token, instance_url, record_json)
+        response = yield _rest_request('PATCH', patch_row_uri, access_token, instance_url, record_json)
         response_text = ""
 
         if response.status_code == 204:
@@ -281,6 +289,7 @@ class Tooling:
         return response_text
 
     @staticmethod
+    @_api_method
     def delete_sobject_row(object_name, record_id, access_token, instance_url):
         """
         Deletes a specific Tooling API record.
@@ -301,7 +310,7 @@ class Tooling:
         """
         delete_row_uri = '/tooling/sobjects/' + _quote_path(object_name) + '/' + _quote_path(record_id)
 
-        response = _rest_request('DELETE', delete_row_uri, access_token, instance_url)
+        response = yield _rest_request('DELETE', delete_row_uri, access_token, instance_url)
         response_text = ""
 
         if response.status_code == 204:

@@ -4,7 +4,9 @@
 Utilities reused by the other modules in this package.
 """
 
+import functools
 import json
+import time
 import urllib.parse
 
 import pysalesforceutils
@@ -31,6 +33,71 @@ def _quote_path(value):
     return urllib.parse.quote(value, safe='')
 
 
+class _Request:
+    """
+    Describes an HTTP request for an API method to send. The keyword
+    arguments are the same as the ones for webservice.Tools.http_request.
+    """
+
+    def __init__(self, **kwargs):
+        self.kwargs = kwargs
+
+
+class _Sleep:
+    """
+    Tells the code running an API method to wait before continuing.
+    """
+
+    def __init__(self, seconds):
+        self.seconds = seconds
+
+
+def _run(plan):
+    """
+    Runs an API method that was written as a plan. A plan is a generator that
+    yields each thing it needs done and is sent back the result:
+        yield _Request(...)     sends the request, the result is the response
+        yield _Sleep(seconds)   waits
+        yield another_plan      runs it, the result is what that plan returns
+
+    Writing the methods this way means the same method can be run here, where
+    each request blocks until it's done, or asynchronously.
+    """
+    try:
+        step = next(plan)
+
+        while True:
+            try:
+                if isinstance(step, _Request):
+                    result = webservice.Tools.http_request(**step.kwargs)
+                elif isinstance(step, _Sleep):
+                    result = time.sleep(step.seconds)
+                else:
+                    result = _run(step)
+            except Exception as error:
+                # let the plan handle the error the same way it would if it
+                # had made the request itself
+                step = plan.throw(error)
+            else:
+                step = plan.send(result)
+    except StopIteration as finished:
+        return finished.value
+
+
+def _api_method(plan_function):
+    """
+    Turns a method that was written as a plan into a normal method that runs
+    the plan when it's called. The plan is kept as method._plan.
+    """
+    @functools.wraps(plan_function)
+    def method(*args, **kwargs):
+        return _run(plan_function(*args, **kwargs))
+
+    method._plan = plan_function
+
+    return method
+
+
 def _encode_body(data):
     """
     Turns a python object into a JSON request body. A str or bytes value is
@@ -44,7 +111,8 @@ def _encode_body(data):
 
 def _rest_request(method, path, access_token, instance_url, data=None, headers=None):
     """
-    Sends a request to the Salesforce REST API for the current API_VERSION.
+    Builds a request to the Salesforce REST API for the current API_VERSION.
+    An API method sends it with: response = yield _rest_request(...)
 
     Args:
         method (str): The request type: GET, POST, PATCH, PUT or DELETE
@@ -58,7 +126,7 @@ def _rest_request(method, path, access_token, instance_url, data=None, headers=N
         headers (dict): Headers to add to the standard header. Defaults to None
 
     Returns:
-        Response: Returns the response for the HTTP request.
+        _Request: Returns the request to send.
     """
     header_details = Util.get_standard_header(access_token)
 
@@ -67,15 +135,15 @@ def _rest_request(method, path, access_token, instance_url, data=None, headers=N
 
     url = instance_url + '/services/data/v' + pysalesforceutils.API_VERSION + path
 
-    return webservice.Tools.http_request(requestType=method, URL=url, data_body=_encode_body(data),
-                                         header_details=header_details)
+    return _Request(requestType=method, URL=url, data_body=_encode_body(data), header_details=header_details)
 
 
 def _rest_json(method, path, access_token, instance_url, data=None, headers=None):
     """
-    Does the same as _rest_request, but returns the parsed JSON response body.
+    Does the same as _rest_request, but the result is the parsed JSON response
+    body. An API method uses it with: json_response = yield _rest_json(...)
     """
-    response = _rest_request(method, path, access_token, instance_url, data, headers)
+    response = yield _rest_request(method, path, access_token, instance_url, data, headers)
 
     return json.loads(response.text)
 

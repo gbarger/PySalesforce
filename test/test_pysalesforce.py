@@ -18,6 +18,7 @@ except ImportError:
 import pysalesforceutils
 from pysalesforceutils import (Util, Authentication, Tooling, Standard, Bulk, Bulk2, Metadata, Salesforce,
                                Composite)
+from pysalesforceutils import util
 
 TOKEN = 'token'
 INSTANCE = 'https://example.my.salesforce.com'
@@ -819,6 +820,60 @@ class TestToolingRecords(MockedRequestTestCase):
         result = Tooling.delete_sobject_row('TraceFlag', '7tfA', TOKEN, INSTANCE)
         self.assertEqual(result, 'Delete Successful')
         self.assert_request('DELETE', self.SOBJECTS + '/TraceFlag/7tfA')
+
+
+class TestPlans(MockedRequestTestCase):
+    """
+    The API methods are written as plans, which are generators that yield the
+    requests they want sent. These tests cover the code that runs them.
+    """
+
+    def test_api_methods_keep_their_plan(self):
+        self.assertTrue(inspect.isgeneratorfunction(Standard.query._plan))
+        self.assertFalse(inspect.isgeneratorfunction(Standard.query))
+        self.assertEqual(Standard.query.__doc__, Standard.query._plan.__doc__)
+
+    def test_transport_errors_reach_the_caller(self):
+        self.http_request.side_effect = RuntimeError('connection failed')
+
+        with self.assertRaises(RuntimeError):
+            Standard.query('SELECT Id FROM Account', TOKEN, INSTANCE)
+
+    def test_error_in_a_nested_plan_reaches_the_caller(self):
+        first = mock.Mock()
+        first.text = '{"done": false, "nextRecordsUrl": "/next", "records": []}'
+        self.http_request.side_effect = [first, RuntimeError('connection failed')]
+
+        with self.assertRaises(RuntimeError):
+            Standard.query_records('SELECT Id FROM Account', TOKEN, INSTANCE)
+
+        self.assertEqual(self.http_request.call_count, 2)
+
+    def test_a_plan_can_handle_an_error_and_continue(self):
+        self.http_request.side_effect = [RuntimeError('connection failed'), mock.Mock(text='second')]
+
+        def plan():
+            try:
+                yield util._Request(requestType='GET', URL=INSTANCE + '/first')
+            except RuntimeError:
+                response = yield util._Request(requestType='GET', URL=INSTANCE + '/second')
+                return response.text
+
+        self.assertEqual(util._run(plan()), 'second')
+
+    def test_sleep_and_nested_plan_results(self):
+        def inner():
+            yield util._Sleep(3)
+            return 'inner result'
+
+        def plan():
+            result = yield inner()
+            return result
+
+        with mock.patch('time.sleep') as sleep:
+            self.assertEqual(util._run(plan()), 'inner result')
+
+        sleep.assert_called_once_with(3)
 
 
 class TestBulkPolling(MockedRequestTestCase):
