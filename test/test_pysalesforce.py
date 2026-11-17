@@ -1149,7 +1149,9 @@ class TestSoqlQuote(unittest.TestCase):
 class TestSoapClientCache(unittest.TestCase):
 
     def setUp(self):
+        # the WSDL isn't read, so the client is created with the file name
         for patcher in (mock.patch('pysalesforceutils.util.Client'),
+                        mock.patch('pysalesforceutils.util._load_wsdl', side_effect=lambda wsdl_file: wsdl_file),
                         mock.patch.dict('pysalesforceutils.util._soap_clients', clear=True)):
             patcher.start()
             self.addCleanup(patcher.stop)
@@ -1175,6 +1177,59 @@ class TestSoapClientCache(unittest.TestCase):
         Metadata.get_soap_headers('session', 'client', True, [])
 
         self.client_class.assert_called_once_with(pysalesforceutils.METADATA_WSDL_FILE)
+
+
+WSDL_WITH_MISSING_TYPE = b"""<definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:tns="urn:test" targetNamespace="urn:test">
+ <types>
+  <xsd:schema targetNamespace="urn:test">
+   <xsd:complexType name="Rule">
+    <xsd:sequence>
+     <xsd:element name="name" type="xsd:string"/>
+     <xsd:element name="domain" type="tns:Domain"/>
+    </xsd:sequence>
+   </xsd:complexType>
+  </xsd:schema>
+ </types>
+</definitions>"""
+
+
+@unittest.skipIf(util.Client is None, 'zeep is not installed')
+class TestWsdlLoading(unittest.TestCase):
+
+    def schema_type_names(self, wsdl):
+        from lxml import etree
+
+        schema = etree.fromstring(wsdl.read()).find('.//{http://www.w3.org/2001/XMLSchema}schema')
+
+        return [child.get('name') for child in schema]
+
+    def test_missing_type_is_added(self):
+        wsdl = util._load_wsdl(io.BytesIO(WSDL_WITH_MISSING_TYPE))
+
+        self.assertEqual(self.schema_type_names(wsdl), ['Rule', 'Domain'])
+
+    def test_complete_schema_is_not_changed(self):
+        complete = WSDL_WITH_MISSING_TYPE.replace(b'type="tns:Domain"', b'type="xsd:string"')
+
+        wsdl = util._load_wsdl(io.BytesIO(complete))
+
+        self.assertEqual(self.schema_type_names(wsdl), ['Rule'])
+
+    def test_bundled_wsdls_load(self):
+        wsdl_files = (pysalesforceutils.METADATA_WSDL_FILE, pysalesforceutils.METADATA_SANDBOX_WSDL_FILE,
+                      pysalesforceutils.PARTNER_WSDL_FILE, pysalesforceutils.PARTNER_SANDBOX_WSDL_FILE)
+
+        with mock.patch.dict('pysalesforceutils.util._soap_clients', clear=True):
+            for wsdl_file in wsdl_files:
+                with self.subTest(wsdl_file=wsdl_file):
+                    Util.get_soap_client(wsdl_file)
+
+            service = Util.get_soap_client_service(pysalesforceutils.METADATA_WSDL_FILE,
+                                                   pysalesforceutils.METADATA_SERVICE_BINDING,
+                                                   INSTANCE + '/services/Soap/m/68.0')
+
+        self.assertTrue(hasattr(service, 'deploy'))
 
 
 class TestMetadataValidation(unittest.TestCase):

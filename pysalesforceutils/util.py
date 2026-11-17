@@ -6,6 +6,7 @@ Utilities reused by the other modules in this package.
 
 import asyncio
 import functools
+import io
 import json
 import time
 import urllib.parse
@@ -21,6 +22,50 @@ except ImportError:
 
 # SOAP clients that have already been loaded, by WSDL file
 _soap_clients = {}
+
+
+def _load_wsdl(wsdl_file):
+    """
+    Reads a WSDL file so it can be passed to zeep. Some WSDLs that Salesforce
+    generates refer to types they never define, e.g. the v68 Metadata WSDL
+    uses PolicyRulePrincipalDomain for the PolicyRule metadata type. zeep
+    can't load a WSDL like that, so each missing type is added here as a type
+    that accepts any content. The file itself is not changed.
+
+    Args:
+        wsdl_file (str): The file location for the WSDL
+
+    Returns:
+        io.BytesIO: Returns the WSDL, with any missing types added.
+    """
+    # lxml is installed with zeep, so it's only needed when zeep is
+    from lxml import etree
+
+    xsd = 'http://www.w3.org/2001/XMLSchema'
+    tree = etree.parse(wsdl_file)
+
+    for schema in tree.iter('{' + xsd + '}schema'):
+        target_namespace = schema.get('targetNamespace')
+        defined = {child.get('name') for child in schema if child.get('name')}
+        missing = set()
+
+        for element in schema.iter():
+            for attribute in ('type', 'base'):
+                value = element.get(attribute)
+
+                if value and ':' in value:
+                    prefix, name = value.split(':', 1)
+
+                    if element.nsmap.get(prefix) == target_namespace and name not in defined:
+                        missing.add(name)
+
+        for name in sorted(missing):
+            complex_type = etree.SubElement(schema, '{' + xsd + '}complexType', name=name)
+            sequence = etree.SubElement(complex_type, '{' + xsd + '}sequence')
+            etree.SubElement(sequence, '{' + xsd + '}any', minOccurs='0', maxOccurs='unbounded',
+                             processContents='lax')
+
+    return io.BytesIO(etree.tostring(tree))
 
 
 def _quote_path(value):
@@ -373,7 +418,7 @@ class Util:
 
         # parsing a WSDL is slow, so each WSDL file is only loaded once
         if wsdl_file not in _soap_clients:
-            _soap_clients[wsdl_file] = Client(wsdl_file)
+            _soap_clients[wsdl_file] = Client(_load_wsdl(wsdl_file))
 
         return _soap_clients[wsdl_file]
 

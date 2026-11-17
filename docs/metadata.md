@@ -39,8 +39,8 @@ import time
 from pysalesforceutils import Metadata
 
 members = Metadata.get_package_type_members('ApexClass', ['*'])
-package = Metadata.get_package(version='45.0', types=[members])
-retrieve_request = Metadata.get_retrieve_request(api_version=45.0, single_package=True, unpackaged=package)
+package = Metadata.get_package(version='68.0', types=[members])
+retrieve_request = Metadata.get_retrieve_request(api_version=68.0, single_package=True, unpackaged=package)
 
 async_result = Metadata.retrieve(retrieve_request, session_id, metadata_url, None)
 
@@ -131,7 +131,7 @@ result = Metadata.read_metadata('CustomObject', ['Account', 'Invoice__c'], sessi
 from pysalesforceutils import Metadata
 
 query = Metadata.get_list_metadata_query(None, 'CustomObject')
-components = Metadata.list_metadata([query], 45.0, session_id, metadata_url, None)
+components = Metadata.list_metadata([query], 68.0, session_id, metadata_url, None)
 
 for component in components:
     print(component['fullName'])
@@ -139,7 +139,7 @@ for component in components:
 
 ## WSDL files
 
-The SOAP calls are built from WSDL files that are included with the library. They are for API version 45.0, so metadata types that Salesforce added after that version aren't available through these methods. The `API_VERSION` setting doesn't affect them.
+The SOAP calls are built from WSDL files that are included with the library. They are for API version 68.0, so metadata types that Salesforce added after that version aren't available through these methods. The `API_VERSION` setting doesn't affect them.
 
 To use a newer version, download the Metadata WSDL and Partner WSDL from Setup in your org and point the library at your files before making any calls:
 
@@ -152,3 +152,5 @@ pysalesforceutils.PARTNER_SANDBOX_WSDL_FILE = '/path/to/partner_sandbox.wsdl'
 ```
 
 Each WSDL file is only loaded once and then reused, because loading one is slow.
+
+Some WSDLs that Salesforce generates refer to types they never define. For example, the version 68.0 Metadata WSDL uses `PolicyRulePrincipalDomain` and three other types for the `PolicyRule` metadata type without defining them. When the library loads a WSDL, it adds any missing type as one that accepts any content, so the file loads and every operation works. Only the fields of those types have no fixed structure. Your WSDL file isn't changed.
